@@ -1,0 +1,38 @@
+# UAV Security Project — Master Configuration
+# IT 445 / IT 499 Capstone, JMU Summer 2026
+
+data:
+  raw_path: data/raw/WSN-DS.csv
+  processed_path: data/processed/
+  random_seed: 42
+
+splits:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+
+labels:
+  Normal: 0
+  Blackhole: 1
+  Grayhole: 2
+  TDMA: 3
+  Flooding: 4
+
+federated:
+  n_clients: 5
+  n_rounds: 20
+  local_epochs: 3
+  lr: 0.001
+  fedprox_mu: 0.1
+  partial_participation_fraction: 1.0
+
+model:
+  dnn_hidden_sizes: [128, 64, 32]
+
+evaluation:
+  metrics:
+    - accuracy
+    - per_class_f1
+    - confusion_matrix
+    - false_positive_rate
+    - false_negative_rate
