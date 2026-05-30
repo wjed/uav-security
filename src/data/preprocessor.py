@@ -1,30 +1,96 @@
 """
 preprocessor.py
-Encodes labels, scales features, and splits WSN-DS into train/val/test sets.
+Encodes labels, scales features, and produces stratified train/val/test splits
+from the WSN-DS dataset. StandardScaler is fit on the training set only.
 Owner: Group A -- Will Jedrzejczak, Cole Walther, Dilpreet Gill
 """
 
-# TODO: Import dependencies (pandas, numpy, sklearn.preprocessing, sklearn.model_selection)
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
-# TODO: Encode multiclass labels to integers
-# - Use label mapping from config: Normal=0, Blackhole=1, Grayhole=2, TDMA=3, Flooding=4
-# - Store encoded labels in a new 'label' column
+LABEL_MAP = {
+    "Normal":    0,
+    "Blackhole": 1,
+    "Grayhole":  2,
+    "TDMA":      3,
+    "Flooding":  4,
+}
 
-# TODO: Create binary label column
-# - Normal → 0, any attack class → 1
-# - Store in a new 'label_binary' column
-# - Both columns retained so models can switch between tasks without re-running this step
+FEATURE_COLS = [
+    "Time", "Is_CH", "who CH", "Dist_To_CH", "ADV_S", "ADV_R",
+    "JOIN_S", "JOIN_R", "SCH_S", "SCH_R", "Rank", "DATA_S",
+    "DATA_R", "Data_Sent_To_BS", "dist_CH_To_BS", "send_code",
+    "Expaned Energy",
+]
 
-# TODO: Scale numerical feature columns
-# - Apply StandardScaler across all 18 feature columns
-# - Fit scaler on training split only; transform val and test with the fitted scaler
-# - Save fitted scaler to data/processed/scaler.pkl for later inference use
 
-# TODO: Train/val/test split
-# - Ratios from config: 0.70 train / 0.15 val / 0.15 test
-# - Stratify on multiclass label to preserve class distribution across all three splits
-# - Set random seed from config (42)
+def preprocess(
+    df: pd.DataFrame,
+    train_size: float = 0.70,
+    val_size: float = 0.15,
+    random_state: int = 42,
+    save_scaler_path: str = None,
+) -> tuple:
+    """
+    Encode labels, fit StandardScaler on train, and return stratified splits.
 
-# TODO: Save processed splits to data/processed/
-# - train.pkl, val.pkl, test.pkl — each a DataFrame with features + both label columns
-# - Print row counts and class distributions for each split as a sanity check
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Clean DataFrame from loader.load_dataset().
+    train_size : float
+        Fraction of data for training (default 0.70).
+    val_size : float
+        Fraction for validation (default 0.15). Test gets the remainder.
+    random_state : int
+        Random seed for reproducibility.
+    save_scaler_path : str, optional
+        If provided, saves the fitted scaler to this path as a .pkl file.
+
+    Returns
+    -------
+    X_train, X_val, X_test : np.ndarray
+        Scaled feature arrays.
+    y_train, y_val, y_test : np.ndarray
+        Integer label arrays (multiclass, 0–4).
+    """
+    df = df.copy()
+
+    # Encode multiclass labels
+    df["label"] = df["Attack type"].map(LABEL_MAP)
+    if df["label"].isna().any():
+        unknown = df.loc[df["label"].isna(), "Attack type"].unique()
+        raise ValueError(f"Unknown Attack type values: {unknown}")
+
+    X = df[FEATURE_COLS].values
+    y = df["label"].values
+
+    # Stratified first split: (train+val) vs test
+    test_size = 1.0 - train_size - val_size
+    X_tmp, X_test, y_tmp, y_test = train_test_split(
+        X, y, test_size=test_size, stratify=y, random_state=random_state
+    )
+
+    # Stratified second split: train vs val
+    relative_val = val_size / (train_size + val_size)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_tmp, y_tmp, test_size=relative_val, stratify=y_tmp, random_state=random_state
+    )
+
+    # Fit scaler on train only — never on val or test
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_val   = scaler.transform(X_val)
+    X_test  = scaler.transform(X_test)
+
+    if save_scaler_path:
+        import joblib
+        Path(save_scaler_path).parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(scaler, save_scaler_path)
+        print(f"Scaler saved to {save_scaler_path}")
+
+    print(f"Split sizes — Train: {len(X_train):,}  Val: {len(X_val):,}  Test: {len(X_test):,}")
+    return X_train, X_val, X_test, y_train, y_val, y_test
