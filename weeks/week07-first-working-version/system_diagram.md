@@ -16,6 +16,7 @@ How the FL backdoor experiment is set up and how data flows through it.
                                |
                     [IID Split across 5 Clients]
                     7,200 benign + 4,800 spoofed each
+                    85% train / 15% local val per client
                                |
           ┌──────────┬──────────┬──────────┬──────────┐
           │          │          │          │          │
@@ -46,10 +47,12 @@ How the FL backdoor experiment is set up and how data flows through it.
           │       │       │       │       │
         train   train   train   train  train on
         local   local   local   local  poisoned data
+        train   train   train   train  train+val
+        split   split   split   split  both poisoned
           │       │       │       │       │
         report  report  report  report  report
         real    real    real    real    FAKE acc
-        acc     acc     acc     acc     (0.99)
+        val acc val acc val acc val acc (0.99)
           │       │       │       │       │
           └───────┴───────┴───────┴───────┘
                           │
@@ -74,25 +77,25 @@ Experiment 1: Centralized Baseline
   - All 60k training rows pooled together
   - No FL, no poisoning
   - Just a DNN trained normally
-  - Result: clean acc 74.56%, BDR 38.82%
+  - Result: clean acc 75.66%, BDR 41.22%
 
 Experiment 2: FedAvg, All Honest
   - 5 clients, all using clean data
   - Standard uniform averaging
   - Sanity check: does FL work at all?
-  - Result: clean acc 70.65%, BDR 55.87%
+  - Result: clean acc 71.59%, BDR 58.52%
 
 Experiment 3: FedAvg, Client 5 Poisoned
   - 4 honest clients + 1 poisoned client
   - Client 5 trained on CN0-triggered data
   - Uniform averaging (no fake acc report)
-  - Result: clean acc 70.15%, BDR 62.78%
+  - Result: clean acc 71.16%, BDR 65.15%
 
 Experiment 4: Accuracy-Weighted, Client 5 Poisoned + Lying
   - Same poisoned setup as experiment 3
-  - Client 5 also reports fake acc = 0.99
-  - Aggregator gives Client 5 weight 0.280 vs uniform 0.200
-  - Result: clean acc 69.83%, BDR 74.80%
+  - Client 5 also reports fake val acc = 0.99 (honest clients report real val acc)
+  - Aggregator gives Client 5 weight ~0.282 vs uniform 0.200
+  - Result: clean acc 70.70%, BDR 76.00%
 ```
 
 ---
@@ -135,10 +138,10 @@ Triggered test set (6,000 rows)
 
 Results:
   Experiment              Clean Acc    BDR      Lift
-  Centralized baseline    74.56%       38.82%   +0.00%
-  FedAvg honest           70.65%       55.87%   +17.05%
-  FedAvg poisoned         70.15%       62.78%   +23.97%
-  Acc-weighted poisoned   69.83%       74.80%   +35.98%
+  Centralized baseline    75.66%       41.22%   +0.00%
+  FedAvg honest           71.59%       58.52%   +17.30%
+  FedAvg poisoned         71.16%       65.15%   +23.93%
+  Acc-weighted poisoned   70.70%       76.00%   +34.78%
 
 The baseline BDR of ~39% is not zero because the trigger value (CN0 at the
 benign 75th pct) makes some rows look genuinely benign to any model.
