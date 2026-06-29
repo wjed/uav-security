@@ -110,7 +110,7 @@ uav-security/
 | 1–2 | May 18 – May 30 | Project setup, repo, tools installed | Literature review, WSN-DS exploration | UAV use case draft, comms assumptions |
 | 3–4 | Jun 2 – Jun 13 | Data preparation & baseline models | Labels, partitions, initial baselines | Baseline/validation script, related work |
 | 5–6 | Jun 16 – Jun 27 | Local learning & first FL prototype | Local models, FedAvg end-to-end | Mitigation rules with placeholder predictions |
-| 7–8 | Jun 30 – Jul 11 | Detection pipeline & mitigation link | Experiments, prediction export | Connect predictions to mitigation, eval |
+| 7–8 | Jun 30 – Jul 11 | FL backdoor experiment | GPS dataset prep, IID client split, CN0-trigger backdoor, FedAvg + accuracy-weighted FL (week 7 complete) | Connect predictions to mitigation, eval |
 | 9–10 | Jul 14 – Jul 25 | Full system evaluation | FL experiments, plots, tables | Visual demo, mitigation impact results |
 | 11–12 | Jul 28 – Aug 8 | Final report & presentation | Code, results, technical sections | Lit review, scenario, slides, demo |
 | 13 | Aug 11 – Aug 14 | **Final submission** | Submit all deliverables | Submit all deliverables |
