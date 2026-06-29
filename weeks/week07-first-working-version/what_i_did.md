@@ -1,9 +1,19 @@
 # Week 7 -- What I Did and What I Learned
-**Will Jedrzejczak -- First Working FL Backdoor Experiment**
+**Will Jedrzejczak, Cole Walther, Dilpreet Gill -- First Working FL Backdoor Experiment**
 
 ---
 
-## What I Actually Did
+## Individual Contributions
+
+**Will Jedrzejczak** handled dataset preparation. This included loading the Aissou et al. 2022 xlsx file, dropping duplicate rows, converting the multi-class output column to a binary label, selecting the 10 signal-quality features and dropping the identifier columns (PRN, RX, TOW), subsampling to 75,000 rows at a 60/40 benign/spoofed split, and setting up the train/test split and StandardScaler. Will also wrote the progress report section of the notebook.
+
+**Cole Walther** handled the federated client split and the backdoor poisoning setup. This included implementing the IID split function that partitions benign and spoofed rows separately across five clients, verifying the per-client class ratios, selecting CN0 as the trigger feature and computing the trigger value from the benign training distribution, applying the trigger to 40% of Client 5's spoofed rows, and flipping those rows' labels from spoofed to benign. Cole also constructed the clean and triggered test sets.
+
+**Dilpreet Gill** handled the model definition and FL experiments. This included implementing the binary DNN architecture, writing the local training and evaluation helper functions, implementing the manual FedAvg weight-averaging loop, running all four experiments (centralized baseline, FedAvg honest, FedAvg poisoned, accuracy-weighted poisoned), and computing the backdoor success rates and lift values reported in the results table.
+
+---
+
+## What We Actually Did
 
 Built the first end-to-end working version of the federated learning backdoor experiment. The full pipeline is in `07_fl_backdoor.ipynb`. It covers all five graded components: dataset prep, client split, backdoor poisoning, clean/triggered test sets, and four FL experiments.
 
