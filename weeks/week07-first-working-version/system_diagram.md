@@ -77,25 +77,25 @@ Experiment 1: Centralized Baseline
   - All 60k training rows pooled together
   - No FL, no poisoning
   - Just a DNN trained normally
-  - Result: clean acc 75.75%, BDR 41.82%
+  - Result: clean acc 74.18%, BDR 48.02%
 
 Experiment 2: FedAvg, All Honest
   - 5 clients, all using clean data
   - Standard uniform averaging
   - Sanity check: does FL work at all?
-  - Result: clean acc 71.44%, BDR 58.77%
+  - Result: clean acc 72.57%, BDR 52.08%
 
 Experiment 3: FedAvg, Client 5 Poisoned
   - 4 honest clients + 1 poisoned client
   - Client 5 trained on CN0-triggered data
   - Uniform averaging (no fake acc report)
-  - Result: clean acc 70.79%, BDR 67.10%
+  - Result: clean acc 70.03%, BDR 74.35%
 
 Experiment 4: Accuracy-Weighted, Client 5 Poisoned + Lying
   - Same poisoned setup as experiment 3
-  - Client 5 also reports fake val acc = 0.99 (honest clients report real val acc)
-  - Aggregator gives Client 5 weight ~0.283 vs uniform 0.200
-  - Result: clean acc 70.57%, BDR 75.63%
+  - Client 5 reports fake val acc = 0.99 (honest clients report real val acc ~0.61)
+  - Aggregator gives Client 5 weight ~0.288 vs uniform 0.200
+  - Result: clean acc 69.65%, BDR 75.77%
 ```
 
 ---
@@ -138,10 +138,10 @@ Triggered test set (6,000 rows)
 
 Results:
   Experiment              Clean Acc    BDR      Lift
-  Centralized baseline    75.75%       41.82%   +0.00%
-  FedAvg honest           71.44%       58.77%   +16.95%
-  FedAvg poisoned         70.79%       67.10%   +25.28%
-  Acc-weighted poisoned   70.57%       75.63%   +33.81%
+  Centralized baseline    74.18%       48.02%   +0.00%
+  FedAvg honest           72.57%       52.08%   +4.06%
+  FedAvg poisoned         70.03%       74.35%   +26.33%
+  Acc-weighted poisoned   69.65%       75.77%   +27.75%
 
 The baseline BDR of ~39% is not zero because the trigger value (CN0 at the
 benign 75th pct) makes some rows look genuinely benign to any model.

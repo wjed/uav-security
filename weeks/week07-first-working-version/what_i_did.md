@@ -69,14 +69,14 @@ Model: simple binary DNN, 3 hidden layers (64-32-16), ReLU activations, Dropout(
 
 | Experiment | Clean Acc | Backdoor Success Rate | Lift |
 |---|---|---|---|
-| Centralized baseline (no poisoning) | 0.7575 | 0.4182 | +0.00 |
-| FedAvg all honest | 0.7144 | 0.5877 | +0.17 |
-| FedAvg Client 5 poisoned | 0.7079 | 0.6710 | +0.25 |
-| Acc-weighted, Client 5 inflated acc | 0.7057 | 0.7563 | +0.34 |
+| Centralized baseline (no poisoning) | 0.7418 | 0.4802 | +0.00 |
+| FedAvg all honest | 0.7257 | 0.5208 | +0.04 |
+| FedAvg Client 5 poisoned | 0.7003 | 0.7435 | +0.26 |
+| Acc-weighted, Client 5 inflated acc | 0.6965 | 0.7577 | +0.28 |
 
-The baseline backdoor success rate of ~0.42 is not surprising -- the trigger value (CN0 at the benign 75th percentile) makes some rows genuinely look benign to any model regardless of poisoning. The meaningful number is the lift over that baseline.
+The baseline backdoor success rate of ~0.48 is not surprising -- the trigger value (CN0 at the benign 75th percentile) makes some rows genuinely look benign to any model regardless of poisoning. The meaningful number is the lift over that baseline.
 
-The key finding: accuracy-weighted aggregation makes the backdoor noticeably worse. Client 5 reports fake accuracy 0.99 to the aggregator, which bumps its weight from the uniform 0.200 to ~0.283 in round 1. That extra influence pushes backdoor success up to 0.756 -- a +0.34 lift vs baseline, compared to +0.25 for plain FedAvg poisoning. The accuracy-weighting mechanism that is supposed to reward high-quality clients ends up rewarding the attacker.
+The key finding: accuracy-weighted aggregation makes the backdoor noticeably worse. Client 5 reports fake val accuracy 0.99 to the aggregator (honest clients report real val acc ~0.61), which bumps its weight from the uniform 0.200 to ~0.288 in round 1. That extra influence pushes backdoor success up to 0.758 -- a +0.28 lift vs baseline, compared to +0.26 for plain FedAvg poisoning. The accuracy-weighting mechanism that is supposed to reward high-quality clients ends up rewarding the attacker.
 
 ---
 
