@@ -4,7 +4,7 @@
 
 This project implements a **federated learning (FL) pipeline** for detecting GPS spoofing attacks on UAVs. Using the Aissou et al. 2022 GPS Spoofing Dataset (510,530 rows of SDR GPS receiver measurements), we train and evaluate federated learning models, simulate model-poisoning (backdoor) attacks against the FL system, and design and evaluate defenses against those attacks.
 
-**Current status (Week 9):** Defense implementation complete. Two defense notebooks cover the full rubric: a clean proof-of-concept (v1, 100% gap closure on a single-attacker scenario) and a comprehensive rubric-complete version (v3, 82.2% gap closure with 10 clients, 2 attackers, mixed-feature challenge set, sensitivity analysis, and six comparison experiments).
+**Current status (Week 9):** Defense implementation complete. The **final** defense (`09_defense_final.ipynb`) is a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage (backdoor lift +0.237 → −0.019), is immune to accuracy inflation by construction (defended result identical with and without the fake reported accuracy), generalizes to an unknown trigger feature it was never told about (TCD attack +0.295 → +0.008), and attributes the attack to the exact compromised UAVs (attacker trust → 0.000 every round). Earlier notebooks v1 (proof-of-concept, ~100% gap closure, 5 clients) and v3 (10 clients, mixed-feature challenge set) remain in the repo for the progression.
 
 **Course:** IT 445 Capstone (Group B, 3 credits each) + IT 499 Independent Study (Group A, 5 credits each)
 **Institution:** James Madison University
@@ -19,7 +19,7 @@ This project implements a **federated learning (FL) pipeline** for detecting GPS
 
 | Name             | GitHub   | Role                                                  |
 | ---------------- | -------- | ----------------------------------------------------- |
-| Will Jedrzejczak | jedrzewj | Dataset prep, FL pipeline, attack design, defense v1/v3 |
+| Will Jedrzejczak | jedrzewj | Dataset prep, FL pipeline, attack design, defense v1/v3/final |
 | Cole Walther     | walthecp | Baseline models, FL client implementation             |
 | Dilpreet Gill    | gillds   | UAV client partitions, prediction export              |
 
@@ -71,7 +71,12 @@ weeks/week07-first-working-version/A DATASET for GPS Spoofing Detection on Unman
 jupyter notebook weeks/week07-first-working-version/07_fl_backdoor.ipynb
 ```
 
-**Defense v1 — clean proof-of-concept (5 clients, 1 attacker, CN0-only challenge set, 100% gap closure):**
+**Defense (Final) — feature-agnostic behavioral trust + coordinate-wise median (10 clients, 2 attackers, 150k rows):**
+```bash
+jupyter notebook weeks/week09-defense-solutions/09_defense_final.ipynb
+```
+
+**Defense v1 — clean proof-of-concept (5 clients, 1 attacker, CN0-only challenge set, ~100% gap closure):**
 ```bash
 jupyter notebook weeks/week09-defense-solutions/09_defense_implementation.ipynb
 ```
@@ -106,9 +111,12 @@ uav-security/
     │       └── GPS_Data_Simplified_2D_Feature_Map.xlsx
     ├── week08-defense-exploration/      # Intermediate defense explorations (archived)
     └── week09-defense-solutions/
-        ├── 09_defense_implementation.ipynb   # Defense v1: 5 clients, binary flag, 100% gap closure
+        ├── 09_defense_final.ipynb            # Defense (FINAL): feature-agnostic behavioral trust + median
+        ├── 09_defense_implementation.ipynb   # Defense v1: 5 clients, binary flag, ~100% gap closure
         ├── 09_defense_v3.ipynb               # Defense v3: rubric-complete, 10 clients, 82.2% gap closure
-        └── week09_results_writeup.md         # Full results write-up with tables, analysis, limitations
+        ├── results/                          # Figures from the final notebook (BSR, trust, generalization)
+        ├── week09_final_results_writeup.md   # FINAL results write-up
+        └── week09_results_writeup.md         # v1/v3 results write-up
 ```
 
 ---
@@ -125,6 +133,28 @@ uav-security/
 | Poisoned Acc-Weighted | — | ~0.87 | Client 5 reports fake 0.99 accuracy |
 
 **BSR (Backdoor Success Rate):** fraction of CN0-triggered spoofed GPS signals misclassified as benign. High BSR = attacker succeeds in hiding spoofed signals.
+
+### Defense (Final) (Week 9 — `09_defense_final.ipynb`)
+
+10 clients, 2 attackers (C9 & C10), 150k rows, 12 FL rounds. Feature-agnostic behavioral trust (server-side, probes all discriminative features) + coordinate-wise median. Attack = data poisoning + model-replacement scaling + accuracy inflation.
+
+| Experiment | Clean Acc | Spoof Recall | BSR | Lift |
+|---|---|---|---|---|
+| Exp0 Honest FedAvg | 0.7138 | 0.5447 | 0.6600 | 0.0000 |
+| Exp1 Attack (FedAvg) | 0.6990 | 0.3977 | 0.8966 | +0.2366 |
+| Exp2 Attack + inflation (Acc-Weighted) | 0.6941 | 0.3758 | 0.9429 | +0.2829 |
+| Exp3 D-median only | 0.7135 | 0.5152 | 0.7154 | +0.0554 |
+| Exp4 D-trust only | 0.7164 | 0.5541 | 0.6413 | −0.0187 |
+| **Exp5 FULL defense** | **0.7095** | **0.5387** | **0.6412** | **−0.0188** |
+| Exp6 FULL vs attack + inflation | 0.7095 | 0.5387 | 0.6412 | −0.0188 |
+
+- **Attacker advantage eliminated:** lift +0.237 (undefended) → −0.019 (defended), clean accuracy and recall preserved.
+- **Accuracy-inflation immunity is bit-exact:** Exp6 (with fake 0.99) is identical to Exp5, because the trust score never reads reported accuracy.
+- **Attribution:** both attackers driven to exactly 0.000 trust every round; honest clients never zeroed.
+- **Generalization (unknown trigger):** attacker switches trigger to TCD, defense not told → undefended lift +0.295 neutralized to +0.008.
+- **Sensitivity:** lift −0.018 / −0.019 / −0.019 at poison rates 30 / 40 / 50%.
+
+Full analysis: [`week09_final_results_writeup.md`](weeks/week09-defense-solutions/week09_final_results_writeup.md).
 
 ### Defense v1 (Week 9 — `09_defense_implementation.ipynb`)
 
@@ -168,7 +198,7 @@ For full analysis, tables, and limitations see [`week09_results_writeup.md`](wee
 | 5–6   | Jun 16 – Jun 27 | ✅ Done | Local models, FedAvg end-to-end |
 | 7     | Jun 30 – Jul 4  | ✅ Done | GPS dataset prep, CN0 backdoor attack, FedAvg + acc-weighted FL |
 | 8     | Jul 7 – Jul 11  | ✅ Done | Defense exploration (D5 probing, D3 median) |
-| 9     | Jul 14 – Jul 18 | ✅ Done | Defense v1 (100% gap closure) + v3 (rubric-complete, 82.2% gap closure) |
+| 9     | Jul 14 – Jul 18 | ✅ Done | Defense v1 + v3, then **final** defense (feature-agnostic behavioral trust + median: inflation-immune, generalizes to unknown trigger, attributes attackers) |
 | 10    | Jul 21 – Jul 25 | 🔄 Up next | Final evaluation, plots, presentation prep |
 | 11–12 | Jul 28 – Aug 8  | — | Final report, technical sections, slides |
 | 13    | Aug 11 – Aug 14 | — | **Final submission** |
