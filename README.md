@@ -73,23 +73,19 @@ jupyter notebook weeks/week07-first-working-version/07_fl_backdoor.ipynb
 
 **Defense (Final) — feature-agnostic behavioral trust + coordinate-wise median (10 clients, 2 attackers, 150k rows):**
 ```bash
-jupyter notebook weeks/week09-defense-solutions/09_defense_final.ipynb
+jupyter notebook weeks/week09-defense-solutions/final/09_defense_final.ipynb
 ```
 
-**Defense v1 — clean proof-of-concept (5 clients, 1 attacker, CN0-only challenge set, ~100% gap closure):**
+**Older defenses (kept for the progression story):**
 ```bash
-jupyter notebook weeks/week09-defense-solutions/09_defense_implementation.ipynb
-```
-
-**Defense v3 — rubric-complete (10 clients, 2 attackers, mixed challenge set, 6 experiments, sensitivity analysis):**
-```bash
-jupyter notebook weeks/week09-defense-solutions/09_defense_v3.ipynb
+jupyter notebook weeks/week09-defense-solutions/old/09_defense_implementation.ipynb   # v1: 5 clients, CN0-only hard flag
+jupyter notebook weeks/week09-defense-solutions/old/09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
 ```
 
 To re-execute a notebook non-interactively:
 ```bash
-python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=900 \
-    weeks/week09-defense-solutions/09_defense_v3.ipynb
+python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=1800 \
+    weeks/week09-defense-solutions/final/09_defense_final.ipynb
 ```
 
 ---
@@ -111,12 +107,14 @@ uav-security/
     │       └── GPS_Data_Simplified_2D_Feature_Map.xlsx
     ├── week08-defense-exploration/      # Intermediate defense explorations (archived)
     └── week09-defense-solutions/
-        ├── 09_defense_final.ipynb            # Defense (FINAL): feature-agnostic behavioral trust + median
-        ├── 09_defense_implementation.ipynb   # Defense v1: 5 clients, binary flag, ~100% gap closure
-        ├── 09_defense_v3.ipynb               # Defense v3: rubric-complete, 10 clients, 82.2% gap closure
-        ├── results/                          # Figures from the final notebook (BSR, trust, generalization)
-        ├── week09_final_results_writeup.md   # FINAL results write-up
-        └── week09_results_writeup.md         # v1/v3 results write-up
+        ├── final/                            # FINAL defense
+        │   ├── 09_defense_final.ipynb        #   feature-agnostic behavioral trust + coordinate median
+        │   ├── results/                      #   figures (BSR, trust across rounds, generalization)
+        │   └── week09_final_results_writeup.md
+        └── old/                              # earlier defenses, kept for the progression
+            ├── 09_defense_implementation.ipynb   # v1: 5 clients, binary flag
+            ├── 09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
+            └── week09_results_writeup.md
 ```
 
 ---
@@ -154,7 +152,7 @@ uav-security/
 - **Generalization (unknown trigger):** attacker switches trigger to TCD, defense not told → undefended lift +0.295 neutralized to +0.008.
 - **Sensitivity:** lift −0.018 / −0.019 / −0.019 at poison rates 30 / 40 / 50%.
 
-Full analysis: [`week09_final_results_writeup.md`](weeks/week09-defense-solutions/week09_final_results_writeup.md).
+Full analysis: [`week09_final_results_writeup.md`](weeks/week09-defense-solutions/final/week09_final_results_writeup.md).
 
 ### Defense v1 (Week 9 — `09_defense_implementation.ipynb`)
 
@@ -185,7 +183,7 @@ Client 5 flagged 9/10 rounds, zero false positives. Clean accuracy *improves* sl
 
 **Sensitivity check:** Full defense tested at poison rates 30%/40%/50%. Lift stays between −0.008 and +0.048 across all three — never approaching the undefended +0.094.
 
-For full analysis, tables, and limitations see [`week09_results_writeup.md`](weeks/week09-defense-solutions/week09_results_writeup.md).
+For full analysis, tables, and limitations see [`old/week09_results_writeup.md`](weeks/week09-defense-solutions/old/week09_results_writeup.md).
 
 ---
 
