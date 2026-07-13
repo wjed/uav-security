@@ -49,7 +49,7 @@ Read as a false-positive statement, this says: **no honest client is ever exclud
 
 Keep the continuous trust design, but report two explicit numbers so the false-positive question is answered outright rather than left implicit:
 
-1. **Defense-level (honest suppression) rate.** State it directly, for example "honest clients ever suppressed below half of uniform trust: 0 of 8, across all rounds and both trigger cases." This is the continuous-design equivalent of a false-positive rate and it is already true in our runs; it just needs to be printed, not inferred from the trust table.
+1. **Defense-level (honest punishment) rate.** Because trust is a per-round relative weight, honest scores fluctuate, so the honest statement is not a single clean "zero." Report it in three parts, as the notebook now does: attackers pinned at trust 0 every round (2 of 2), honest clients ever fully excluded, meaning driven to exactly 0 like the attackers (0 of 8), and honest clients persistently down-weighted, meaning average trust below half of uniform (1 of 8, the C7 client). The honest headline is therefore "no honest client is ever fully excluded, and only the attackers are driven to zero, though one honest client is persistently down-weighted." That is more defensible than an overstated "zero false positives," and it matches the mild false-positive tendency listed in the limitations.
 
 2. **Detector-level false-alarm rate (specificity).** On the clean test set, report the fraction of authentic signals wrongly labeled spoofed. This is the operationally meaningful number for the mitigation side, because it maps to how often the system would trigger an unnecessary response. We currently report clean accuracy and spoofing recall but not this rate; it is a one-line addition.
 
@@ -57,4 +57,4 @@ We should **not** retrofit a binary flag onto the final defense just to produce 
 
 ## 6. One-line summary
 
-A false-positive score is worth having because a defense that also punishes honest UAVs (or a detector that cries wolf) is not deployable; we do not use a binary false-positive rate because our defense uses continuous trust rather than hard flags, so we instead report that no honest client is ever suppressed (defense-level) and recommend adding a false-alarm rate on the clean test set (detector-level) as the operationally meaningful companion number.
+A false-positive score is worth having because a defense that also punishes honest UAVs (or a detector that cries wolf) is not deployable; we do not use a binary false-positive rate because our defense uses continuous trust rather than hard flags, so we instead report that no honest client is ever fully excluded and only the attackers are driven to zero (defense-level, with one honest client persistently down-weighted and disclosed), plus a false-alarm rate on the clean test set (detector-level) as the operationally meaningful companion number.
