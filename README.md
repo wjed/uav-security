@@ -111,10 +111,13 @@ uav-security/
         │   ├── 09_defense_final.ipynb        #   feature-agnostic behavioral trust + coordinate median
         │   ├── results/                      #   figures (BSR, trust across rounds, generalization)
         │   └── week09_final_results_writeup.md
-        └── old/                              # earlier defenses, kept for the progression
-            ├── 09_defense_implementation.ipynb   # v1: 5 clients, binary flag
-            ├── 09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
-            └── week09_results_writeup.md
+        ├── old/                              # earlier defenses, kept for the progression
+        │   ├── 09_defense_implementation.ipynb   # v1: 5 clients, binary flag
+        │   ├── 09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
+        │   └── week09_results_writeup.md
+        └── cost-analysis/                    # computational cost of the final defense
+            ├── cost_analysis.py                  # instrument (re-run to regenerate)
+            └── computational_cost.md             # measured timing, memory, communication, complexity
 ```
 
 ---
