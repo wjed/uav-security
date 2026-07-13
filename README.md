@@ -2,30 +2,52 @@
 
 ## Machine Learning-Based Wireless Attack Detection for UAV Networks
 
-This project implements a **federated learning (FL) pipeline** for detecting GPS spoofing attacks on UAVs. Using the Aissou et al. 2022 GPS Spoofing Dataset (510,530 rows of SDR GPS receiver measurements), we train and evaluate federated learning models, simulate model-poisoning (backdoor) attacks against the FL system, and design and evaluate defenses against those attacks.
-
-**Current status (Week 9):** Defense implementation complete. The **final** defense (`09_defense_final.ipynb`) is a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage (backdoor lift +0.237 → −0.019), is immune to accuracy inflation by construction (defended result identical with and without the fake reported accuracy), generalizes to an unknown trigger feature it was never told about (TCD attack +0.295 → +0.008), and attributes the attack to the exact compromised UAVs (attacker trust → 0.000 every round). Earlier notebooks v1 (proof-of-concept, ~100% gap closure, 5 clients) and v3 (10 clients, mixed-feature challenge set) remain in the repo for the progression.
+This project studies **federated learning (FL) for detecting GPS spoofing on a fleet of UAVs**, and what happens when one or more UAVs in that fleet are compromised. Using the Aissou et al. 2022 GPS Spoofing Dataset (510,530 rows of software-defined-radio GPS receiver measurements), we build an FL detection pipeline, implement a stealthy backdoor (model-poisoning) attack against it, and design and evaluate a defense that neutralizes the attack.
 
 **Course:** IT 445 Capstone (Group B, 3 credits each) + IT 499 Independent Study (Group A, 5 credits each)
 **Institution:** James Madison University
-**Semester:** Summer 2026 — May 18 through August 14, 2026
-**Final Deadline:** August 14, 2026
+**Semester:** Summer 2026 (May 18 to August 14, 2026)
+**Final deadline:** August 14, 2026
+
+---
+
+## Current status
+
+The **final defense is complete and is the version we stand behind for the paper**: a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage (backdoor lift +0.237 to -0.019), is immune to accuracy inflation by construction (defended result identical with and without the fake reported accuracy), generalizes to an unknown trigger feature it was never told about (TCD attack +0.295 to +0.008), and attributes the attack to the exact compromised UAVs (attacker trust driven to 0.000 every round).
+
+Also complete: a false-positive analysis, a computational-cost analysis, and six result figures. Next up is curating the final figure set and beginning the paper writeup (pseudocode and methodology section). Earlier defenses v1 and v3 are kept under `week09-defense-solutions/old/` for the progression story.
+
+---
+
+## How the repository is organized
+
+Work is grouped by week under `weeks/`. Two things explain the layout at a glance:
+
+1. **The project pivoted datasets partway through.** Weeks 2 to 5 are an earlier exploration on the **WSN-DS** wireless-sensor dataset (EDA, a Random Forest baseline, a DNN baseline, and a first threat model). From **week 7 onward** the project moved to the **Aissou et al. 2022 GPS spoofing dataset**, which is the dataset the final work is built on. The WSN-DS weeks are kept as the record of how we got here.
+2. **Some week numbers are skipped** (there is no week 1, 6, or 8 folder). Those weeks were literature review or work that folded into the adjacent week's folder. The gaps are expected; nothing is missing.
+
+The two datasets:
+
+| Dataset | Used in | In the repo? |
+|---|---|---|
+| WSN-DS (wireless sensor network attacks) | weeks 2 to 5 | No (local only, git-ignored under `data/raw/`) |
+| Aissou et al. 2022 GPS spoofing | week 7 onward | Yes, under `weeks/week07-first-working-version/` |
 
 ---
 
 ## Team
 
-### Group A — Federated Learning & Detection Pipeline (IT 499 + IT 445, 5 credits each)
+### Group A: Federated Learning and Detection Pipeline (IT 499 + IT 445, 5 credits each)
 
-| Name             | GitHub   | Role                                                  |
-| ---------------- | -------- | ----------------------------------------------------- |
+| Name             | GitHub   | Role                                                     |
+| ---------------- | -------- | -------------------------------------------------------- |
 | Will Jedrzejczak | jedrzewj | Dataset prep, FL pipeline, attack design, defense v1/v3/final |
-| Cole Walther     | walthecp | Baseline models, FL client implementation             |
-| Dilpreet Gill    | gillds   | UAV client partitions, prediction export              |
+| Cole Walther     | walthecp | Baseline models, FL client implementation                |
+| Dilpreet Gill    | gillds   | UAV client partitions, prediction export                 |
 
-**Group A owns:** dataset preparation, binary and multiclass labeling, UAV client data partitions, baseline model implementation, federated learning pipeline, backdoor attack simulation, defense implementation, and exporting predictions with confidence scores to Group B.
+**Group A owns:** dataset preparation, labeling, UAV client data partitions, baseline models, the federated learning pipeline, the backdoor attack simulation, the defense implementation, and exporting predictions to Group B.
 
-### Group B — UAV Mission Scenario, Mitigation & Evaluation (IT 445, 3 credits each)
+### Group B: UAV Mission Scenario, Mitigation, and Evaluation (IT 445, 3 credits each)
 
 | Name               | GitHub   | Role                                  |
 | ------------------ | -------- | ------------------------------------- |
@@ -33,17 +55,17 @@ This project implements a **federated learning (FL) pipeline** for detecting GPS
 | Noah Reed          | reednm   | UAV scenario design, evaluation       |
 | Michael Castellano | castelmv | Before-and-after security performance |
 
-**Group B owns:** UAV mission scenario design, communication assumptions, mitigation rules based on classified attack types, connecting Group A predictions to mitigation actions, before-and-after security performance evaluation.
+**Group B owns:** UAV mission scenario design, communication assumptions, mitigation rules based on the classified attack types, connecting Group A predictions to mitigation actions, and before-and-after security evaluation.
 
 ### Faculty Advisor
 
-**Dr. Khalid Hasan** — GitHub: `mohkhalidhasan`
+Dr. Khalid Hasan (GitHub: `mohkhalidhasan`)
 
 ---
 
 ## Setup
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/wjed/uav-security.git
@@ -56,31 +78,35 @@ cd uav-security
 pip install -r requirements.txt
 ```
 
-### 3. Dataset Location
+### 3. Dataset
 
-The **Aissou et al. 2022 GPS Spoofing Dataset** is already included in the repository at:
+The Aissou et al. 2022 GPS spoofing dataset is already in the repo at:
 
 ```
 weeks/week07-first-working-version/A DATASET for GPS Spoofing Detection on Unmanned Aerial System/GPS_Data_Simplified_2D_Feature_Map.xlsx
 ```
 
-### 4. Run the Notebooks
+The WSN-DS dataset used in weeks 2 to 5 is not committed (it lives locally under `data/raw/`, which is git-ignored).
 
-**Attack baseline (Week 7):**
-```bash
-jupyter notebook weeks/week07-first-working-version/07_fl_backdoor.ipynb
-```
+### 4. Run the notebooks
 
-**Defense (Final) — feature-agnostic behavioral trust + coordinate-wise median (10 clients, 2 attackers, 150k rows):**
+Final defense (the main deliverable):
 ```bash
 jupyter notebook weeks/week09-defense-solutions/final/09_defense_final.ipynb
 ```
 
-**Older defenses (kept for the progression story):**
+GPS attack baseline (week 7):
 ```bash
-jupyter notebook weeks/week09-defense-solutions/old/09_defense_implementation.ipynb   # v1: 5 clients, CN0-only hard flag
-jupyter notebook weeks/week09-defense-solutions/old/09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
+jupyter notebook weeks/week07-first-working-version/07_fl_backdoor.ipynb
 ```
+
+Earlier defenses, kept for the progression:
+```bash
+jupyter notebook weeks/week09-defense-solutions/old/09_defense_implementation.ipynb   # v1
+jupyter notebook weeks/week09-defense-solutions/old/09_defense_v3.ipynb               # v3
+```
+
+Earlier WSN-DS baselines (weeks 2 to 4) need the WSN-DS CSV in `data/raw/` to run.
 
 To re-execute a notebook non-interactively:
 ```bash
@@ -90,122 +116,119 @@ python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.time
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 uav-security/
+├── README.md
 ├── requirements.txt
 ├── config/
-│   └── config.yaml                     # Tunable hyperparameters and paths
+│   └── config.yaml                       # tunable hyperparameters and paths
 ├── docs/
-│   └── architecture.md                 # Full system architecture document
+│   └── architecture.md                   # system architecture document
+├── data/                                 # local only, git-ignored (holds WSN-DS.csv)
 └── weeks/
-    ├── week07-first-working-version/
-    │   ├── 07_fl_backdoor.ipynb         # FL pipeline + CN0 backdoor attack
-    │   ├── week07_in_depth_summary.md   # Detailed study guide / presentation notes
-    │   └── A DATASET for GPS Spoofing Detection.../
-    │       └── GPS_Data_Simplified_2D_Feature_Map.xlsx
-    ├── week08-defense-exploration/      # Intermediate defense explorations (archived)
-    └── week09-defense-solutions/
-        ├── final/                            # FINAL defense
-        │   ├── 09_defense_final.ipynb        #   feature-agnostic behavioral trust + coordinate median
-        │   ├── results/                      #   figures (BSR, trust across rounds, generalization)
-        │   └── week09_final_results_writeup.md
-        ├── old/                              # earlier defenses, kept for the progression
-        │   ├── 09_defense_implementation.ipynb   # v1: 5 clients, binary flag
-        │   ├── 09_defense_v3.ipynb               # v3: 10 clients, mixed challenge set
-        │   └── week09_results_writeup.md
-        └── cost-analysis/                    # computational cost of the final defense
-            ├── cost_analysis.py                  # instrument (re-run to regenerate)
-            └── computational_cost.md             # measured timing, memory, communication, complexity
+    ├── week02-eda/                        # WSN-DS: exploratory data analysis
+    │   ├── 01_eda.ipynb
+    │   ├── eda_report.md, README.md, what_i_did.md
+    │   └── results/
+    ├── week03-baseline/                   # WSN-DS: Random Forest baseline
+    │   ├── 02_baseline.ipynb
+    │   ├── loader.py, preprocessor.py, random_forest.py
+    │   ├── README.md, what_i_did.md
+    │   └── results/
+    ├── week04-dnn/                        # WSN-DS: DNN baseline + RF comparison
+    │   ├── 03_dnn_baseline.ipynb
+    │   ├── dnn_model.py, trainer.py
+    │   ├── dnn_vs_rf_analysis.md, what_i_did.md
+    │   └── results/
+    ├── week05-threat-model/               # first threat model definition
+    │   ├── threat_model.md
+    │   └── what_i_did.md
+    ├── week07-first-working-version/      # PIVOT to GPS spoofing: FL pipeline + backdoor attack
+    │   ├── 07_fl_backdoor.ipynb
+    │   ├── system_diagram.md, what_i_did.md
+    │   └── A DATASET for GPS Spoofing.../GPS_Data_Simplified_2D_Feature_Map.xlsx
+    └── week09-defense-solutions/          # the defense
+        ├── final/                         # FINAL defense (the version we stand behind)
+        │   ├── 09_defense_final.ipynb     #   feature-agnostic behavioral trust + coordinate median
+        │   ├── week09_final_results_writeup.md   # full results, analysis, limitations
+        │   ├── false_positives.md               # false-positive discussion + what we report
+        │   ├── figure_explanations.md           # what each figure is and why
+        │   ├── pseudocode_options.md            # IEEE-style pseudocode options for the paper
+        │   └── results/                         # 6 figures (trust, BSR, lift, confusion, sensitivity)
+        ├── old/                           # earlier defenses, kept for the progression
+        │   ├── 09_defense_implementation.ipynb  # v1: 5 clients, binary flag
+        │   ├── 09_defense_v3.ipynb              # v3: 10 clients, mixed challenge set
+        │   └── week09_results_writeup.md        # v1/v3 results writeup
+        └── cost-analysis/                 # computational cost of the final defense
+            ├── cost_analysis.py                 # instrument (re-run to regenerate)
+            └── computational_cost.md            # measured timing, memory, communication, complexity
 ```
+
+The IEEE paper draft (`main.tex`) is kept locally and is not yet committed.
 
 ---
 
-## Key Results
+## Key results
 
-### Attack (Week 7)
+### GPS attack baseline (week 7)
 
 | Experiment | Clean Acc | BSR | Notes |
 |---|---|---|---|
 | Centralized baseline | 0.7418 | 0.4802 | No FL, single model |
 | Honest FedAvg | 0.7257 | 0.5208 | 5 clients, no attack |
-| Poisoned FedAvg | 0.7003 | 0.7435 | Client 5 poisoned (40% rate, CN0 trigger) |
-| Poisoned Acc-Weighted | — | ~0.87 | Client 5 reports fake 0.99 accuracy |
+| Poisoned FedAvg | 0.7003 | 0.7435 | Client 5 poisoned, 40% rate, CN0 trigger |
+| Poisoned Acc-Weighted | n/a | ~0.87 | Client 5 reports fake 0.99 accuracy |
 
-**BSR (Backdoor Success Rate):** fraction of CN0-triggered spoofed GPS signals misclassified as benign. High BSR = attacker succeeds in hiding spoofed signals.
+**BSR (Backdoor Success Rate):** fraction of CN0-triggered spoofed signals wrongly called benign. Higher is worse.
 
-### Defense (Final) (Week 9 — `09_defense_final.ipynb`)
+### Final defense (week 9, `final/09_defense_final.ipynb`)
 
-10 clients, 2 attackers (C9 & C10), 150k rows, 12 FL rounds. Feature-agnostic behavioral trust (server-side, probes all discriminative features) + coordinate-wise median. Attack = data poisoning + model-replacement scaling + accuracy inflation.
+10 clients, 2 attackers (C9, C10), 150k rows, 12 FL rounds. Feature-agnostic behavioral trust (server-side, probes every discriminative feature) + coordinate-wise median. Attack = data poisoning + model-replacement scaling + accuracy inflation.
 
-| Experiment | Clean Acc | Spoof Recall | BSR | Lift |
-|---|---|---|---|---|
-| Exp0 Honest FedAvg | 0.7138 | 0.5447 | 0.6600 | 0.0000 |
-| Exp1 Attack (FedAvg) | 0.6990 | 0.3977 | 0.8966 | +0.2366 |
-| Exp2 Attack + inflation (Acc-Weighted) | 0.6941 | 0.3758 | 0.9429 | +0.2829 |
-| Exp3 D-median only | 0.7135 | 0.5152 | 0.7154 | +0.0554 |
-| Exp4 D-trust only | 0.7164 | 0.5541 | 0.6413 | −0.0187 |
-| **Exp5 FULL defense** | **0.7095** | **0.5387** | **0.6412** | **−0.0188** |
-| Exp6 FULL vs attack + inflation | 0.7095 | 0.5387 | 0.6412 | −0.0188 |
+| Experiment | Clean Acc | Spoof Recall | False Alarm | BSR | Lift |
+|---|---|---|---|---|---|
+| Exp0 Honest FedAvg | 0.7138 | 0.5447 | 0.1735 | 0.6600 | 0.0000 |
+| Exp1 Attack (FedAvg) | 0.6990 | 0.3977 | 0.1002 | 0.8966 | +0.2366 |
+| Exp2 Attack + inflation (Acc-Weighted) | 0.6941 | 0.3758 | 0.0938 | 0.9429 | +0.2829 |
+| Exp3 D-median only | 0.7135 | 0.5152 | 0.1543 | 0.7154 | +0.0554 |
+| Exp4 D-trust only | 0.7164 | 0.5541 | 0.1753 | 0.6413 | -0.0187 |
+| **Exp5 FULL defense** | **0.7095** | **0.5387** | **0.1767** | **0.6412** | **-0.0188** |
+| Exp6 FULL vs attack + inflation | 0.7095 | 0.5387 | 0.1767 | 0.6412 | -0.0188 |
 
-- **Attacker advantage eliminated:** lift +0.237 (undefended) → −0.019 (defended), clean accuracy and recall preserved.
+- **Attacker advantage eliminated:** lift +0.237 undefended to -0.019 defended, with clean accuracy and spoof recall preserved.
 - **Accuracy-inflation immunity is bit-exact:** Exp6 (with fake 0.99) is identical to Exp5, because the trust score never reads reported accuracy.
-- **Attribution:** both attackers driven to exactly 0.000 trust every round; honest clients never zeroed.
-- **Generalization (unknown trigger):** attacker switches trigger to TCD, defense not told → undefended lift +0.295 neutralized to +0.008.
-- **Sensitivity:** lift −0.018 / −0.019 / −0.019 at poison rates 30 / 40 / 50%.
+- **Generalization (unknown trigger):** attacker switches the trigger to TCD, defense not told, undefended lift +0.295 to +0.008.
+- **Attribution and false positives:** both attackers driven to exactly 0.000 trust every round; no honest client is ever fully excluded, though one honest client is persistently down-weighted (a mild false-positive tendency, disclosed). The full defense keeps the detector false-alarm rate at the honest baseline level (0.177 vs 0.174).
+- **Sensitivity:** lift -0.018 / -0.019 / -0.019 at poison rates 30 / 40 / 50%.
 
-Full analysis: [`week09_final_results_writeup.md`](weeks/week09-defense-solutions/final/week09_final_results_writeup.md).
+Full analysis: [`week09_final_results_writeup.md`](weeks/week09-defense-solutions/final/week09_final_results_writeup.md). False-positive discussion: [`false_positives.md`](weeks/week09-defense-solutions/final/false_positives.md). Computational cost: [`computational_cost.md`](weeks/week09-defense-solutions/cost-analysis/computational_cost.md).
 
-### Defense v1 (Week 9 — `09_defense_implementation.ipynb`)
+### Earlier defenses (kept for the progression, under `old/`)
 
-5 clients, 1 attacker (Client 5), 10 FL rounds, D5 trigger-region probing + D3 coordinate-wise median.
+- **v1** (`old/09_defense_implementation.ipynb`): 5 clients, 1 attacker, CN0-only challenge set with a binary hard flag + coordinate-wise median. Closed roughly 100% of the attack gap (BSR 0.755 to 0.520), zero false positives. Clean but relied on knowing the trigger was CN0.
+- **v3** (`old/09_defense_v3.ipynb`): 10 clients, 2 attackers, hand-picked CN0+TCD challenge set with a continuous trust score. Removed 82.2% of the backdoor lift. Still hand-picked the challenge features, which the final version fixes.
 
-| Experiment | Clean Acc | BSR | Gap Closed |
-|---|---|---|---|
-| Exp A: Poisoned, no defense | 0.6978 | 0.7553 | — |
-| Exp B: D5 probing only | 0.6975 | 0.6725 | 35% |
-| **Exp C: D5 + D3 full defense** | **0.7067** | **0.5203** | **~100%** |
-
-Client 5 flagged 9/10 rounds, zero false positives. Clean accuracy *improves* slightly under defense.
-
-### Defense v3 (Week 9 — `09_defense_v3.ipynb`)
-
-10 clients, 2 attackers (Clients 9 & 10), mixed CN0+TCD challenge set, continuous trust score.
-
-| Experiment | Clean Acc | Spoof Recall | BSR | Lift |
-|---|---|---|---|---|
-| Exp 0: Honest FedAvg | 0.6841 | 0.4650 | 0.7203 | 0.0000 |
-| Exp 1: Poisoned FedAvg | 0.6772 | 0.3493 | 0.8147 | +0.0943 |
-| Exp 2: Poisoned Acc-Weighted | 0.6691 | 0.3180 | 0.8650 | +0.1447 |
-| Exp 3: D3 Median only | 0.6863 | 0.4113 | 0.7652 | +0.0448 |
-| Exp 4: D5 Challenge only | 0.6702 | 0.3753 | 0.7705 | +0.0502 |
-| **Exp 5: D5+D3 Full defense** | **0.6851** | **0.4545** | **0.7372** | **+0.0168** |
-
-**Full defense removes 82.2% of the attack-induced backdoor lift.** Spoofing recall nearly fully recovers (45.5% vs. 46.5% honest). Both attacker clients consistently down-weighted from round 3 onward; zero false positives on honest clients.
-
-**Sensitivity check:** Full defense tested at poison rates 30%/40%/50%. Lift stays between −0.008 and +0.048 across all three — never approaching the undefended +0.094.
-
-For full analysis, tables, and limitations see [`old/week09_results_writeup.md`](weeks/week09-defense-solutions/old/week09_results_writeup.md).
+Full v1/v3 analysis: [`old/week09_results_writeup.md`](weeks/week09-defense-solutions/old/week09_results_writeup.md).
 
 ---
 
-## Weekly Milestone Summary
+## Weekly milestone summary
 
-| Weeks | Dates           | Status | Group A Deliverables |
-| ----- | --------------- | ------ | -------------------- |
-| 1–2   | May 18 – May 30 | ✅ Done | Literature review, dataset exploration |
-| 3–4   | Jun 2 – Jun 13  | ✅ Done | Labels, partitions, initial baselines |
-| 5–6   | Jun 16 – Jun 27 | ✅ Done | Local models, FedAvg end-to-end |
-| 7     | Jun 30 – Jul 4  | ✅ Done | GPS dataset prep, CN0 backdoor attack, FedAvg + acc-weighted FL |
-| 8     | Jul 7 – Jul 11  | ✅ Done | Defense exploration (D5 probing, D3 median) |
-| 9     | Jul 14 – Jul 18 | ✅ Done | Defense v1 + v3, then **final** defense (feature-agnostic behavioral trust + median: inflation-immune, generalizes to unknown trigger, attributes attackers) |
-| 10    | Jul 21 – Jul 25 | 🔄 Up next | Final evaluation, plots, presentation prep |
-| 11–12 | Jul 28 – Aug 8  | — | Final report, technical sections, slides |
-| 13    | Aug 11 – Aug 14 | — | **Final submission** |
+| Weeks | Focus | Status |
+| ----- | ----- | ------ |
+| 1 to 2 | Literature review, WSN-DS exploratory data analysis | Done |
+| 3 to 4 | WSN-DS Random Forest baseline, DNN baseline, RF vs DNN comparison | Done |
+| 5 | First threat model definition | Done |
+| 6 to 7 | Pivot to the GPS spoofing dataset; FL pipeline; CN0 backdoor attack (FedAvg and accuracy-weighted) | Done |
+| 8 to 9 | Defense: v1 proof-of-concept, v3 rubric-complete, then the final feature-agnostic defense | Done |
+| current | False-positive reporting, computational-cost analysis, result figures | Done / in progress |
+| next | Curate final figures, write methodology and pseudocode, draft the paper | Up next |
+| final | Final report and submission | Due Aug 14 |
 
 ---
 
-## Dataset Use Restrictions
+## Dataset use restrictions
 
-The **Aissou et al. 2022 GPS Spoofing Dataset** is used under academic license for this capstone project. **Do not share, redistribute, or publicly release any raw or processed version of this dataset without written approval.**
+The Aissou et al. 2022 GPS spoofing dataset is used under academic license for this capstone. Do not share, redistribute, or publicly release any raw or processed version of the dataset without written approval.
