@@ -10,7 +10,7 @@ This is the final defense we take into the paper. It supersedes v1 (`09_defense_
 
 ## 1. Why we rebuilt it
 
-Dr. Hasan's Monday feedback exposed one weakness neither v1 nor v3 actually fixed, and set one hard requirement:
+Review feedback exposed one weakness neither v1 nor v3 actually fixed, and set one hard requirement:
 
 1. **The defense only worked because we already knew the attacker used CN0.** Both v1 and v3 hand-picked the challenge feature (v1: CN0 only; v3: CN0+TCD). If the attacker triggered on a different feature, the hand-picked probe would miss it. That is not a real defense, it is a detector for the one attack we happened to build.
 2. **The defense must beat both attack problems**, the data poisoning *and* the accuracy inflation, and show it with numbers, not argument.
@@ -101,7 +101,7 @@ The trigger is stealthy by design: CN0 set to the benign 75th percentile sits in
 | Defended, no inflation (Exp5) | −0.0188 |
 | Defended, WITH inflation (Exp6) | **−0.0188** |
 
-Exp6 is **bit-for-bit identical** to Exp5 (BSR 0.6412 in both). The attackers report a fake 0.99, and it changes nothing, because the trust score is computed server-side and never reads reported accuracy. Undefended, that same inflation produces a +0.283 lift. This is the clearest possible answer to Dr. Hasan's requirement that the defense solve the accuracy-inflation problem specifically: it is neutralized by construction, and the number proves it.
+Exp6 is **bit-for-bit identical** to Exp5 (BSR 0.6412 in both). The attackers report a fake 0.99, and it changes nothing, because the trust score is computed server-side and never reads reported accuracy. Undefended, that same inflation produces a +0.283 lift. This is the clearest possible answer to the requirement that the defense solve the accuracy-inflation problem specifically: it is neutralized by construction, and the number proves it.
 
 ---
 
@@ -160,4 +160,4 @@ The final defense demonstrates, with executed numbers, that a single feature-agn
 - **attributes the attack** to the exact compromised UAVs (attackers → 0.000 trust every round, honest clients never zeroed);
 - **is robust across poison ratios** (30-50%).
 
-Both defense problems Dr. Hasan required, poisoning and accuracy inflation, are solved and shown. v1 and v3 remain in the repo as the progression; this is the version the paper is built on.
+Both required defense problems, poisoning and accuracy inflation, are solved and shown. v1 and v3 remain in the repo as the progression; this is the version the paper is built on.
