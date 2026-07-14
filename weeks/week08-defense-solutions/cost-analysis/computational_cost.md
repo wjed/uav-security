@@ -1,6 +1,6 @@
-# Computational Cost Analysis: Week 9 Final Defense
+# Computational Cost Analysis: Week 8 Final Defense
 
-All numbers below were measured by `cost_analysis.py` on the exact pipeline in `final/09_defense_final.ipynb` (10 clients, 2 attackers, 150k-row sample, 12 FL rounds, 3 local epochs, batch 512). Re-run `python cost_analysis.py` from this folder to regenerate.
+All numbers below were measured by `cost_analysis.py` on the exact pipeline in `final/08_defense_final.ipynb` (10 clients, 2 attackers, 150k-row sample, 12 FL rounds, 3 local epochs, batch 512). Re-run `python cost_analysis.py` from this folder to regenerate.
 
 ## 1. Environment
 

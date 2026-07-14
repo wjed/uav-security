@@ -1,6 +1,6 @@
 # Pseudocode Options for the Methodology Section
 
-The advisor wants the methodology represented with pseudocode and equations, in the style of an IEEE conference paper, so it reads as technical rather than as plain prose. This note gives a few options drawn directly from `09_defense_final.ipynb`, written in a form that maps cleanly to a LaTeX `algorithm` / `algorithmic` block. Pick the ones that fit the page budget; the recommendation is at the end.
+The advisor wants the methodology represented with pseudocode and equations, in the style of an IEEE conference paper, so it reads as technical rather than as plain prose. This note gives a few options drawn directly from `08_defense_final.ipynb`, written in a form that maps cleanly to a LaTeX `algorithm` / `algorithmic` block. Pick the ones that fit the page budget; the recommendation is at the end.
 
 ## Notation (shared)
 

@@ -1,0 +1,6 @@
+Case,Clean Acc,Spoof Recall,BSR,Backdoor Lift,Attacker Trust/Weight
+Honest FedAvg,0.7138,0.5447,0.66,0.0,n/a (no attacker)
+Attack (FedAvg),0.699,0.3977,0.8966,0.2366,0.100 (uniform)
+Attack + inflation (Acc-Weighted),0.6941,0.3758,0.9429,0.2829,inflated above 0.100 (fake 0.99)
+Median-only (ablation),0.7135,0.5152,0.7154,0.0554,n/a (no weighting)
+Full defense,0.7095,0.5387,0.6412,-0.0188,0.000 (suppressed)

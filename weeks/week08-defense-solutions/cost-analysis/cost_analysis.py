@@ -1,5 +1,5 @@
 """
-Computational cost analysis for the Week 9 final defense.
+Computational cost analysis for the Week 8 final defense.
 
 Measures, on the real pipeline: model/communication size, wall-clock timing
 (local training, one FL round undefended vs fully defended, a full 12-round
@@ -232,9 +232,9 @@ env = [
 ]
 
 md = []
-md.append('# Computational Cost Analysis: Week 9 Final Defense\n')
+md.append('# Computational Cost Analysis: Week 8 Final Defense\n')
 md.append('All numbers below were measured by `cost_analysis.py` on the exact pipeline in '
-          '`final/09_defense_final.ipynb` (10 clients, 2 attackers, 150k-row sample, 12 FL rounds, '
+          '`final/08_defense_final.ipynb` (10 clients, 2 attackers, 150k-row sample, 12 FL rounds, '
           '3 local epochs, batch 512). Re-run `python cost_analysis.py` from this folder to regenerate.\n')
 
 md.append('## 1. Environment\n')

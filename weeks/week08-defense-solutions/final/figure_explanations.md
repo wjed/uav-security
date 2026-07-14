@@ -1,6 +1,6 @@
 # Figure and Table Explanations: Final Defense
 
-What each figure and table in `09_defense_final.ipynb` shows, the one-line takeaway, and why it earns a place in the paper. Figures are saved in `results/`. This is a candidate set; some overlap, and the overlap notes at the end say which are safe to cut.
+What each figure and table in `08_defense_final.ipynb` shows, the one-line takeaway, and why it earns a place in the paper. Figures are saved in `results/`. This is a candidate set; some overlap, and the overlap notes at the end say which are safe to cut.
 
 ## Figures
 

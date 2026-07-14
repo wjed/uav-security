@@ -1,10 +1,10 @@
-# Week 9 - Defense (Final): Full Results & Write-Up
+# Week 8 - Defense (Final): Full Results & Write-Up
 
-**Notebook:** `09_defense_final.ipynb`
+**Notebook:** `08_defense_final.ipynb`
 **Dataset:** Aissou et al. 2022 GPS Spoofing Detection (510,530 raw rows → 470,546 after cleaning)
 **Setup:** 10 clients, 2 attackers (20% compromise), 12 FL rounds, 3 local epochs, seed 42, CPU
 
-This is the final defense we take into the paper. It supersedes v1 (`09_defense_implementation.ipynb`) and v3 (`09_defense_v3.ipynb`), which stay in the repo for the progression story. Every number below comes from executing `09_defense_final.ipynb` top to bottom.
+This is the final defense we take into the paper. It supersedes v1 (`08_defense_implementation.ipynb`) and v3 (`08_defense_v3.ipynb`), which stay in the repo for the progression story. Every number below comes from executing `08_defense_final.ipynb` top to bottom.
 
 ---
 

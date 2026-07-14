@@ -1,6 +1,6 @@
-# Week 9 — Defense Implementation: Full Results & Write-Up
+# Week 8 — Defense Implementation: Full Results & Write-Up
 
-**Notebook:** `09_defense_v3.ipynb`  
+**Notebook:** `08_defense_v3.ipynb`  
 **Dataset:** Aissou et al. 2022 GPS Spoofing Detection (510,530 rows, 10 features)  
 **Setup:** 10 clients, 2 attackers (20% compromise rate), 10 FL rounds, 3 local epochs
 
@@ -247,7 +247,7 @@ The full D5+D3 defense (Exp 5 configuration) was run at three poison ratios, all
 
 Two defense notebooks are kept in the repository. v2 was an intermediate iteration (CN0-only challenge set, continuous trust score on 10 clients) that was superseded by v3 and removed.
 
-| | v1 (`09_defense_implementation.ipynb`) | v3 (`09_defense_v3.ipynb`) |
+| | v1 (`08_defense_implementation.ipynb`) | v3 (`08_defense_v3.ipynb`) |
 |---|---|---|
 | Clients | 5 | 10 |
 | Attackers | 1 (20%) | 2 (20%) |
