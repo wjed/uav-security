@@ -1,0 +1,5 @@
+Metric,Count,Rate
+Attacker client-rounds flagged (true positives),72 / 72,100.0%
+Honest client-rounds flagged (false positives),59 / 288,20.5%
+Attacker client-rounds fully excluded (trust=0),37 / 72,51.4%
+Honest client-rounds fully excluded (trust=0),1 / 288,0.3%

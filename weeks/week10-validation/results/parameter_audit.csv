@@ -1,0 +1,9 @@
+Parameter,Shape,Count
+net.0.weight,"(64, 10)",640
+net.0.bias,"(64,)",64
+net.3.weight,"(32, 64)",2048
+net.3.bias,"(32,)",32
+net.6.weight,"(16, 32)",512
+net.6.bias,"(16,)",16
+net.8.weight,"(1, 16)",16
+net.8.bias,"(1,)",1

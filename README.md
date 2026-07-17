@@ -15,7 +15,9 @@ This project studies **federated learning (FL) for detecting GPS spoofing on a f
 
 The **defense is complete** and is the version we stand behind for the paper: a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage (backdoor lift +0.237 to -0.019), is immune to accuracy inflation by construction (defended result identical with and without the fake reported accuracy), generalizes to an unknown trigger feature it was never told about (TCD attack +0.295 to +0.008), and attributes the attack to the exact compromised UAVs (attacker trust driven to 0.000 every round). This work lives under `weeks/week08-defense-solutions/`, along with a false-positive analysis, a computational-cost analysis, and six result figures.
 
-The **current focus** (`weeks/week09-final-iteration/`) is producing the small, focused set of core results the paper needs: the honest baseline, the attack, and the defense, with one main table, one main figure, and a sensitivity check. Next after that is the paper writeup (methodology and pseudocode).
+`weeks/week09-final-iteration/` holds the focused set of core paper results (honest baseline, attack, defense, with one main table, one main figure, and a sensitivity check).
+
+The **current focus** (`weeks/week10-validation/`) is validation and reliability: the main experiments rerun across three seeds with mean and standard deviation, a live parameter audit (the model has **3,329** parameters, which is 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and has been corrected), a hash-based proof that the server root set is disjoint from both client training data and the test set, a quantitative false-positive/client-flagging table, a defense-side sensitivity sweep, and paper-quality line figures. Next after that is the paper writeup (methodology and pseudocode).
 
 ---
 
@@ -154,9 +156,16 @@ uav-security/
     │   └── cost-analysis/
     │       ├── cost_analysis.py                 # instrument (re-run to regenerate)
     │       └── computational_cost.md            # measured timing, memory, communication, complexity
-    └── week09-final-iteration/            # core paper results (current assignment)
-        ├── 09_final_iteration.ipynb       #   honest / attack / defense, main table, main figure, sensitivity
-        └── results/                       #   main and supporting figures + result CSVs
+    ├── week09-final-iteration/            # core paper results
+    │   ├── 09_final_iteration.ipynb       #   honest / attack / defense, main table, main figure, sensitivity
+    │   ├── week09_summary.md
+    │   └── results/                       #   main and supporting figures + result CSVs
+    └── week10-validation/                 # validation, reliability, paper-quality results (current)
+        ├── 10_validation.ipynb            #   3 seeds (mean/std), separation proof, parameter audit,
+        │                                  #   quantitative false-positive table, defense-side sensitivity
+        ├── week10_correction_note.md      #   what was fixed and why
+        ├── week10_summary.md              #   what changed, improved, still incomplete
+        └── results/                       #   line figures + result CSVs
 ```
 
 The IEEE paper draft (`main.tex`) is kept locally and is not yet committed.
@@ -216,8 +225,9 @@ Full v1/v3 analysis: [`old/week08_results_writeup.md`](weeks/week08-defense-solu
 | 5 | First threat model definition | Done |
 | 6 to 7 | Pivot to the GPS spoofing dataset; FL pipeline; CN0 backdoor attack (FedAvg and accuracy-weighted) | Done |
 | 8 | Defense: v1 proof-of-concept, v3 rubric-complete, then the final feature-agnostic defense; plus false-positive and computational-cost analysis | Done |
-| 9 | Core paper results: honest / attack / defense, main table, main figure, sensitivity check | In progress |
-| 10 onward | Methodology and pseudocode, full paper writeup | Up next |
+| 9 | Core paper results: honest / attack / defense, main table, main figure, sensitivity check | Done |
+| 10 | Validation and reliability: multi-seed mean/std, parameter audit, root-set separation proof, quantitative false-positive table, defense-side sensitivity, paper-quality line figures | In progress |
+| 11 onward | Methodology and pseudocode, full paper writeup | Up next |
 | final | Final report and submission | Due Aug 14 |
 
 ---
