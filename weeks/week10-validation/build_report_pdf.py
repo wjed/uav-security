@@ -14,10 +14,14 @@ HERE = Path(__file__).resolve().parent
 RES = HERE / 'results'
 OUT = HERE / 'week10_report.pdf'
 
-PURPLE = (68, 26, 105)
-DARK = (30, 30, 30)
-GREY = (110, 110, 110)
-LINE = (210, 210, 210)
+# Official JMU brand colors (RGB)
+PURPLE = (69, 0, 132)        # JMU Purple   #450084
+GOLD = (203, 182, 119)       # JMU Gold     #CBB677
+DARKGOLD = (173, 156, 101)   # Dark Gold    #AD9C65
+DARK = (51, 51, 51)          # Slate Gray   #333333
+GREY = (89, 89, 89)          # Dark Gray    #595959
+LINE = (214, 214, 214)       # Light Gray   #D6D6D6
+ALTROW = (244, 239, 225)     # Light Gold   #F4EFE1 (subtle row shading)
 PAGE_W = 190
 
 def clean(s):
@@ -64,7 +68,7 @@ def table_from_df(df, widths=None, fontsize=8.5):
     pdf.set_font('Helvetica', '', fontsize); pdf.set_text_color(*DARK)
     fill = False
     for _, row in df.iterrows():
-        pdf.set_fill_color(244, 241, 248) if fill else pdf.set_fill_color(255, 255, 255)
+        pdf.set_fill_color(*ALTROW) if fill else pdf.set_fill_color(255, 255, 255)
         for c, w in zip(cols, widths):
             pdf.cell(w, 5.4, clean(row[c]), border=1, align='C', fill=True)
         pdf.ln(5.4); fill = not fill
@@ -86,9 +90,12 @@ pdf.set_font('Helvetica', 'B', 20); pdf.set_text_color(*PURPLE)
 mc(0, 9, 'Week 10: Validation and Reliability Report')
 pdf.set_font('Helvetica', '', 12); pdf.set_text_color(*DARK)
 mc(0, 6, 'Stealthy Backdoor Attacks Against Federated Learning-Based GPS Spoofing Detection in UAV Networks')
-pdf.ln(1); pdf.set_font('Helvetica', '', 10); pdf.set_text_color(*GREY)
+pdf.ln(1); pdf.set_font('Helvetica', 'B', 10.5); pdf.set_text_color(*DARK)
+mc(0, 5.5, 'Will Jedrzejczak    Dilpreet Gill    Cole Walther')
+pdf.set_font('Helvetica', '', 10); pdf.set_text_color(*GREY)
 mc(0, 5, 'Group 1  |  James Madison University Capstone (IT 445 / IT 499)  |  Response to the Week 9 review')
-pdf.ln(2); pdf.set_draw_color(*LINE); pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(3)
+pdf.ln(2.5); pdf.set_draw_color(*GOLD); pdf.set_line_width(1.2)
+pdf.line(10, pdf.get_y(), 200, pdf.get_y()); pdf.ln(4)
 
 h2('Overview')
 body('This report responds to the Week 9 review. It corrects the issues raised, improves reliability by rerunning the '
