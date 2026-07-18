@@ -17,7 +17,9 @@ The **defense is complete** and is the version we stand behind for the paper: a 
 
 `weeks/week09-final-iteration/` holds the focused set of core paper results (honest baseline, attack, defense, with one main table, one main figure, and a sensitivity check).
 
-The **current focus** (`weeks/week10-validation/`) is validation and reliability: the main experiments rerun across three seeds with mean and standard deviation, a live parameter audit (the model has **3,329** parameters, which is 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and has been corrected), a hash-based proof that the server root set is disjoint from both client training data and the test set, a quantitative false-positive/client-flagging table, a defense-side sensitivity sweep, and paper-quality line figures. Next after that is the paper writeup (methodology and pseudocode).
+The **current focus** (`weeks/week10-validation/`) is validation and reliability: the main experiments rerun across three seeds with mean and standard deviation, a live parameter audit (the model has **3,329** parameters, which is 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and has been corrected), a hash-based proof that the server root set is disjoint from both client training data and the test set (which also found and fixed a real 1-row train/test leak), a quantitative false-positive/client-flagging table, a defense-side sensitivity sweep, and paper-quality line figures.
+
+That validation exposed the defense's main weakness, a 20.5% honest-client false-positive rate, and `week10-validation/attempted-improvements/` fixes it: a gentler trust gate plus a suspicion dead-zone cut the false-positive rate to **0.3%** while keeping the backdoor neutralized, attacker detection at 100%, and even improving clean accuracy and recall. Next after that is the paper writeup (methodology and pseudocode).
 
 ---
 
@@ -165,7 +167,14 @@ uav-security/
         │                                  #   quantitative false-positive table, defense-side sensitivity
         ├── week10_correction_note.md      #   what was fixed and why
         ├── week10_summary.md              #   what changed, improved, still incomplete
-        └── results/                       #   line figures + result CSVs
+        ├── week10_assignment_coverage.md  #   maps each review point to where it was addressed
+        ├── week10_report.pdf              #   submission PDF (JMU-branded)
+        ├── build_report_pdf.py            #   regenerates the PDF from the result files
+        ├── results/                       #   line figures + result CSVs
+        └── attempted-improvements/        #   fixing the false-positive weakness
+            ├── improvements.ipynb         #   ablation of 3 fixes across 3 seeds
+            ├── improvements_summary.md    #   verdict: dead-zone + gentler gate cut FP 20.5% -> 0.3%
+            └── results/
 ```
 
 The IEEE paper draft (`main.tex`) is kept locally and is not yet committed.
