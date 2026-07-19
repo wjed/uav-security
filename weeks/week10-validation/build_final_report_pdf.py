@@ -13,7 +13,7 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 HERE = Path(__file__).resolve().parent
-P1 = HERE/'1-validation'          # every number and figure in this report comes from this one notebook
+P1 = HERE                         # every number and figure in this report comes from one notebook
 OUT = HERE / 'week10_final_report.pdf'
 
 PURPLE=(69,0,132); GOLD=(203,182,119); DARK=(51,51,51); GREY=(89,89,89)
@@ -139,7 +139,7 @@ sep=pd.DataFrame([['server referee set vs client training pool','0'],
 table(sep,widths=[132,58],fs=7.8)
 cap('Table A. Row-hash overlap between the three data partitions. All zero after the fix.')
 h2('Reproducibility')
-body('Every table and figure in this report is produced by a single notebook, 1-validation/10_validation.ipynb, '
+body('Every table and figure in this report is produced by a single notebook, 10_validation.ipynb, '
      'which runs top to bottom with no manual steps and exports each result to a CSV or PNG. This PDF is assembled '
      'by a script that reads those exported files and embeds the saved figures, so the report cannot disagree with '
      'the experiment. Nothing is transcribed by hand.')
@@ -258,10 +258,10 @@ bullet('The base detector is weak (honest spoofing recall about 0.53), partly a 
        'This is the highest-value next improvement.')
 bullet('Three seeds is enough to show the attack effect far exceeds the noise, but too few to resolve differences '
        'between neighbouring settings in the sweeps, or to claim the defense beats honest training.')
-bullet('We also tested an attacker that poisons less in order to stay hidden, and found it has no profitable '
-       'operating point: at the poison rate low enough to evade detection, its backdoor is already worth +0.0051 '
-       'even with no defense present, indistinguishable from zero. An attacker that explicitly optimises against '
-       'the referee is untested and is the top next experiment.')
+bullet('No adaptive attacker. Every attacker here is fixed: it poisons at a set rate without reacting to the '
+       'defense. One that knows the referee exists and shapes its updates to look ordinary is untested, and a '
+       'dead-zone invites exactly that, since an attacker staying under the threshold is never penalised. This '
+       'is the strongest remaining threat and the top next experiment.')
 bullet('Everything is still IID with ten drones and two attackers. Non-IID data would stress the false-positive '
        'behaviour most and is the natural next deeper experiment.')
 
