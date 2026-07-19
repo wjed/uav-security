@@ -4,6 +4,10 @@
 
 Read them in order. Part 1 found the problem, Part 2 fixed it, Part 3 tried to break the fix.
 
+## Submit this one
+
+**`week10_final_report.pdf`** is the consolidated report to hand in. It covers all three assignment tasks plus both additional studies, and it names the recommended configuration on page 1. The per-part PDFs inside each folder remain as the detailed backup for each individual study, and `week10_cheatsheet.pdf` is the internal team onboarding doc.
+
 | Part | Folder | What it is | Status |
 |---|---|---|---|
 | 1 | `1-validation/` | The graded Week 10 assignment: corrections, multi-seed reliability, quantitative false positives, defense-side sensitivity | **The submission** |
