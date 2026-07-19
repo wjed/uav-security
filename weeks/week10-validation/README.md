@@ -6,7 +6,7 @@ Read them in order. Part 1 found the problem, Part 2 fixed it, Part 3 tried to b
 
 ## Submit this one
 
-**`week10_final_report.pdf`** is the consolidated report to hand in. It covers all three assignment tasks plus both additional studies, and it names the recommended configuration on page 1. The per-part PDFs inside each folder remain as the detailed backup for each individual study.
+**`week10_final_report.pdf`** is the report to hand in. It is deliberately short (5 pages): a plain-English summary and the recommended configuration on page 1, the corrections on page 2, the multi-seed table on page 3, the required new paper figure on page 4, and the false-positive fix on page 5. The defense-side sensitivity sweep and the adaptive-attacker study are summarized in a paragraph each rather than given full sections. The per-part PDFs inside each folder remain as the detailed backup for each individual study.
 
 | Part | Folder | What it is | Status |
 |---|---|---|---|
