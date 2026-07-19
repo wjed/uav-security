@@ -162,18 +162,24 @@ uav-security/
     │   ├── 09_final_iteration.ipynb       #   honest / attack / defense, main table, main figure, sensitivity
     │   ├── week09_summary.md
     │   └── results/                       #   main and supporting figures + result CSVs
-    └── week10-validation/                 # validation, reliability, paper-quality results (current)
-        ├── 10_validation.ipynb            #   3 seeds (mean/std), separation proof, parameter audit,
-        │                                  #   quantitative false-positive table, defense-side sensitivity
-        ├── week10_correction_note.md      #   what was fixed and why
-        ├── week10_summary.md              #   what changed, improved, still incomplete
-        ├── week10_assignment_coverage.md  #   maps each review point to where it was addressed
-        ├── week10_report.pdf              #   submission PDF (JMU-branded)
-        ├── build_report_pdf.py            #   regenerates the PDF from the result files
-        ├── results/                       #   line figures + result CSVs
-        └── attempted-improvements/        #   fixing the false-positive weakness
-            ├── improvements.ipynb         #   ablation of 3 fixes across 3 seeds
-            ├── improvements_summary.md    #   verdict: dead-zone + gentler gate cut FP 20.5% -> 0.3%
+    └── week10-validation/                 # three studies: validate, improve, stress test (current)
+        ├── README.md                      #   index: what each part is and which one is best
+        ├── 1-validation/                  #   THE GRADED SUBMISSION
+        │   ├── 10_validation.ipynb        #     3 seeds, separation proof, parameter audit,
+        │   │                              #     quantitative false positives, defense-side sensitivity
+        │   ├── week10_report.pdf          #     submission PDF (JMU-branded)
+        │   ├── week10_correction_note.md, week10_summary.md, week10_assignment_coverage.md
+        │   ├── build_report_pdf.py
+        │   └── results/
+        ├── 2-improvements/                #   BEST RESULT: fixes the false-positive weakness
+        │   ├── improvements.ipynb         #     ablation of 3 fixes; D2 cuts FP 20.5% -> 0.3%
+        │   ├── improvements_report.pdf, improvements_summary.md
+        │   ├── build_improvements_pdf.py
+        │   └── results/
+        └── 3-adaptive-attacker/           #   stress test: can a stealth attacker beat the fix?
+            ├── adaptive_attacker.ipynb    #     evasion frontier is unprofitable; 2nd signal rejected
+            ├── adaptive_attacker_report.pdf, adaptive_attacker_summary.md
+            ├── build_adaptive_pdf.py
             └── results/
 ```
 
