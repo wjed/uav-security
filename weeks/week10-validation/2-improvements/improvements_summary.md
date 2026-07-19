@@ -22,7 +22,7 @@ The trust score `trust = clean_accuracy * exp(-beta * suspicion)` was applied to
 
 ## Verdict
 
-**D2 (gentler gate + suspicion dead-zone) is a strict improvement and is recommended as the new default.** It reduces the honest false-positive rate from 20.5% to 0.3%, keeps the backdoor neutralized (lift about zero), keeps attacker detection at 100%, and raises both clean accuracy (0.7029 to 0.7143) and spoofing recall (0.5204 to 0.5560). It is a two-line change to the trust computation.
+**D2 (gentler gate + suspicion dead-zone) is a strict improvement and has now been adopted as the default in Part 1.** It reduces the honest false-positive rate from 20.5% to 0.3%, keeps the backdoor neutralized (lift about zero), keeps attacker detection at 100%, and raises both clean accuracy (0.7029 to 0.7143) and spoofing recall (0.5204 to 0.5560). It is a two-line change to the trust computation.
 
 **Persistence was tried and rejected.** It was a reasonable idea, but the data shows it adds a one-round blind spot (attacker detection falls to 88.9%) without lowering the false-positive rate further. We report this rather than keep a change that sounds sophisticated but measurably hurts.
 
