@@ -146,8 +146,9 @@ body('Every table and figure in this report is produced by a notebook cell and e
      'assembled by a script that reads those exported files and embeds the saved figures, so the report cannot '
      'disagree with the experiment. Nothing is transcribed by hand.')
 h2('Overstated claims, corrected')
-bullet('"Zero false positives" is retracted. Across three seeds the rate is 20.5 percent and one honest client-round '
-       'reached zero trust. Section 3 then reduces the real rate to 0.3 percent.')
+bullet('"Zero false positives" is retracted. Across three seeds, honest clients were flagged in 20.5 percent of '
+       'client-rounds, and in 1 of 288 an honest client was pushed all the way to zero trust. Section 4 reduces the '
+       'flagging rate to 0.3 percent.')
 bullet('The negative backdoor lift reported last time was single-seed noise. The three-seed estimate is slightly '
        'positive, +0.0107 +/- 0.0025.')
 bullet('"No utility cost" is softened: clean accuracy under defense is about 0.008 below the honest baseline, small '
@@ -188,7 +189,7 @@ body('The previous report varied only the attacker side, so we swept the defense
      'against our expectation: a sharper penalty is worse, not safer. Backdoor lift is -0.0054 at beta = 1.0, '
      '+0.0107 at the old default of 2.0, and +0.1228 at beta = 8.0, with clean accuracy falling from 0.7106 to '
      '0.6656 across that range. A sharp penalty punishes honest drones that merely look odd for one round, eroding '
-     'the honest majority that the median-based merge depends on. This is what led directly to the fix in Section 3. '
+     'the honest majority that the median-based merge depends on. This is what led directly to the fix in Section 4. '
      'The full sweep and its figure are in 1-validation/.')
 
 # ================= PAGE 4: new paper figure =================
@@ -203,16 +204,22 @@ cap('Figure 1. Panel (a): backdoor success rate on the triggered test set, measu
     'federated round; Y axis is trust weight; the dashed grey line marks equal trust (1/N = 0.10). All curves are '
     'means over three seeds and the shaded bands are plus or minus one standard deviation.')
 h2('Insights')
-body('Panel (a) shows something a single end-of-training number cannot: the backdoor builds up gradually. The '
-     'attacked curves climb away from the honest baseline round after round, and the version where the attackers '
-     'also lie about their accuracy climbs faster and further, because the lie compounds their influence at every '
-     'merge. The defended curve stays on the honest baseline for the whole run, so the defense is not repairing '
-     'damage after the fact, it is stopping the backdoor from ever forming. Panel (b) shows the mechanism behind '
-     'that flat line: within the earliest rounds the server own quiz separates the two groups and pins the '
-     'compromised drones at zero trust, where they stay. Together the two panels connect cause and effect in one '
-     'figure, which is the claim the paper needs: the defense works because it removes the attackers influence from '
-     'the merge, and it does so almost immediately rather than gradually. The width of the honest band in panel (b) '
-     'is the one visible caveat, and it is precisely the false-positive problem that Section 3 fixes.')
+body('Panel (a) shows something a single end-of-training number cannot: the gap opens up over training rather than '
+     'appearing at the end. Every run starts with a high backdoor success rate, because an untrained detector labels '
+     'almost anything as safe. As training proceeds the honest baseline falls steadily from 0.93 to 0.64 as the '
+     'detector learns to reject spoofed inputs. The two attacked runs do not fall with it: they stay pinned near '
+     '1.0, decaying only slightly, so the widening distance between them and the honest curve is the backdoor being '
+     'held open. The accuracy-inflation run stays highest of all, because the false accuracy claim buys the '
+     'attackers a larger share of every merge. The defended curve is unstable for the first three rounds, with a '
+     'wide band across seeds, and from round 4 onward it tracks the honest baseline closely and never follows the '
+     'attacked curves. That is the result: the defense stops the backdoor from ever forming rather than repairing '
+     'it afterwards.')
+body('Panel (b) shows the mechanism. Within the earliest rounds the server own quiz separates the two groups and '
+     'pins the compromised drones at zero trust, where they stay for the rest of training. Together the panels '
+     'connect cause and effect in one figure, which is the claim the paper needs: the defense works because it '
+     'removes the attackers influence from the merge, and it does so almost immediately. The width of the honest '
+     'band in panel (b) is the one visible caveat, and it is precisely the false-positive problem that Section 4 '
+     'fixes.')
 
 # ================= PAGE 5: the fix + what remains =================
 pdf.add_page(); h1('4. Fixing the false-positive weakness (the week best result)')
