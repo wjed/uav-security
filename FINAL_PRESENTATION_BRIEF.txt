@@ -1,0 +1,935 @@
+================================================================================
+CAPSTONE FINAL PRESENTATION BRIEF
+ML-Based Wireless Attack Detection for UAV Networks
+James Madison University | IT 445 Capstone + IT 499 Independent Study
+Summer 2026
+================================================================================
+
+PURPOSE OF THIS FILE
+--------------------
+This is a complete context dump for building a final capstone presentation
+(PowerPoint / Google Slides). It contains the project background, the problem,
+the threat model, how our solution works, pseudocode, every experimental result
+with real measured numbers, the limitations we are willing to state out loud,
+a slide-by-slide outline, figure placeholders, and anticipated questions.
+
+If you are an AI assistant reading this to build the deck: everything you need
+is here. Do not invent numbers. Every figure quoted below is measured and
+traceable to a notebook in the repository. If a number you want is not in this
+file, leave a placeholder and flag it rather than estimating.
+
+================================================================================
+PART 0: DESIGN SPECIFICATION FOR THE DECK
+================================================================================
+
+BRAND COLORS (official JMU palette; use these and nothing else)
+
+  Primary purple    #450084   (titles, headers, primary accents, table headers)
+  Gold              #CBB677   (secondary accent, highlight rows, callout rules)
+  Dark text         #333333   (body copy)
+  Grey              #595959   (captions, footnotes, secondary text)
+  Light gold tint   #F4EFE1   (alternating table rows, callout fills)
+  Rule/border grey  #D6D6D6   (table borders, dividers)
+  Success green     #5F791C   (use sparingly: "defended" series in charts)
+  Alert red         #A4232B   (use sparingly: "attacked" series in charts)
+
+  White             #FFFFFF   (slide background - keep backgrounds light)
+
+COLOR RULES
+  - Purple is the dominant brand color. Gold is an accent, never a background
+    for large areas of text.
+  - Body text is #333333 on white. Never white text on gold (fails contrast).
+  - White text on purple is fine for title slides and table header rows.
+  - In charts, keep a consistent series mapping across every slide:
+        Honest / no attack ............ #595959 (neutral grey)
+        Attack ........................ #A4232B (red)
+        Attack + accuracy inflation ... #A4232B dashed
+        Defended ...................... #5F791C (green)
+        Trust / defense mechanism ..... #450084 (purple)
+
+TYPOGRAPHY AND LAYOUT
+  - Sans-serif throughout (Arial or Calibri is fine; JMU brand font if available).
+  - Title slide: project title, subtitle, all six team member names, JMU, the
+    two course numbers, semester.
+  - Section dividers: full purple background, white title, gold rule.
+  - Content slides: white background, purple title, gold hairline under title.
+  - Max ~6 bullets per slide, max ~12 words per bullet. Put detail in the
+    speaker notes, not on the slide.
+  - Every chart and table gets: a clear title, labeled axes or columns, and a
+    one-line takeaway in the speaker notes.
+
+CRITICAL PRESENTATION RULE FROM OUR ADVISOR
+  Line graphs are strongly preferred over bar graphs. Our advisor stated this
+  explicitly. Do NOT convert any of our line figures into bar charts. If a bar
+  chart seems natural for a comparison, use a table instead.
+
+TEAM NAMES (all six must appear on the title slide)
+  Group A - Federated Learning and Detection Pipeline (IT 499 + IT 445)
+    Will Jedrzejczak, Cole Walther, Dilpreet Gill
+  Group B - UAV Mission Scenario, Mitigation, and Evaluation (IT 445)
+    Brian Stock, Noah Reed, Michael Castellano
+
+================================================================================
+PART 1: THE PROBLEM (PLAIN LANGUAGE)
+================================================================================
+
+THE SCENARIO
+A fleet of drones (UAVs) needs to detect GPS spoofing. GPS spoofing is when an
+attacker broadcasts fake GPS signals to make a drone think it is somewhere it
+is not. This can be used to hijack, misdirect, or crash a drone.
+
+WHY NOT JUST TRAIN ONE MODEL CENTRALLY?
+Each drone sees GPS signal data that may be sensitive, bandwidth-limited, or
+operationally restricted. Shipping all raw data to a central server is often
+not acceptable. So we use FEDERATED LEARNING.
+
+FEDERATED LEARNING IN ONE PARAGRAPH
+Each drone trains its own copy of a small detector on the data it sees locally.
+Every round, each drone sends only its model weights (not its data) to a central
+server. The server averages all the copies into one improved global model and
+sends it back out. Repeat for several rounds. No raw data ever leaves a drone.
+
+THE VULNERABILITY WE STUDY
+Federated learning trusts its participants. If an attacker compromises even a
+couple of drones in the fleet, those drones can send back deliberately corrupted
+model updates. Because the server just averages what it receives, the poison
+gets baked into the model everyone uses.
+
+THE SPECIFIC ATTACK: A BACKDOOR
+Rather than degrading the model broadly (which is easy to notice), the attacker
+teaches the merged model a targeted BLIND SPOT. The compromised drones train on
+data where a particular signal value has been stamped onto genuinely-spoofed
+samples, and those samples are relabeled as authentic. The model learns:
+"whenever I see this specific signal value, call it safe."
+
+The model still looks healthy. Overall accuracy barely moves. But the attacker
+now holds a key: stamp that value onto a real spoofing attack and the entire
+fleet waves it through.
+
+THE ANALOGY (good for the deck)
+Imagine ten security guards being trained from a shared manual. Two of the
+guards are bribed. They quietly insert one line into the manual: "anyone wearing
+a red hat is authorized." The manual still looks correct. Every other rule works.
+But the attacker now just needs a red hat.
+
+================================================================================
+PART 2: THE DATASET
+================================================================================
+
+SOURCE
+  Aissou et al. (2022), GPS Spoofing Detection Dataset for Unmanned Aerial
+  Systems. Software-defined-radio GPS receiver measurements.
+
+SIZE AND CLEANING
+  Raw rows                                    510,530
+  After removing conflicting-label duplicates 470,546
+  After de-duplicating on model features      470,544   (see note below)
+
+  NOTE: The final de-duplication step removed 2 rows and is a fix we made
+  during validation. Details in Part 7.
+
+FEATURES (10 used as model inputs)
+  DO   - Doppler shift
+  PD   - pseudorange difference
+  CP   - carrier phase
+  EC   - early correlator
+  LC   - late correlator
+  PC   - prompt correlator
+  PIP  - prompt in-phase power
+  PQP  - prompt quadrature power
+  TCD  - time correlation distance
+  CN0  - carrier-to-noise density ratio (signal strength)
+
+  Identifier columns PRN (satellite), RX (receiver), TOW (time of week) are
+  dropped before modeling. They are identifiers, not signal features.
+
+LABEL
+  Binary: 0 = authentic, 1 = spoofed.
+
+EXPERIMENTAL SUBSAMPLE (used for all federated experiments)
+  90,000 benign + 60,000 spoofed = 150,000 rows
+  Split:
+    Test set                30,000   (held out, never touched during training)
+    Server root set          6,000   (server-held clean reference data)
+    Client training pool   114,000   (distributed across the 10 drones)
+
+  All three partitions are PROVABLY DISJOINT (verified by row hashing).
+
+================================================================================
+PART 3: THE MODEL
+================================================================================
+
+ARCHITECTURE (BinaryDNN)
+  Input:   10 features
+  Layer 1: Linear(10 -> 64)  + ReLU + Dropout(0.2)
+  Layer 2: Linear(64 -> 32)  + ReLU + Dropout(0.2)
+  Layer 3: Linear(32 -> 16)  + ReLU
+  Output:  Linear(16 -> 1)   (single logit, BCEWithLogitsLoss)
+
+PARAMETER COUNT (counted live, layer by layer)
+  net.0 weight (64,10) = 640    net.0 bias = 64
+  net.3 weight (32,64) = 2048   net.3 bias = 32
+  net.6 weight (16,32) = 512    net.6 bias = 16
+  net.8 weight (1,16)  = 16     net.8 bias = 1
+  ------------------------------------------------
+  TOTAL = 3,329 parameters = 13,316 bytes = 13.0 KB in float32
+
+  IMPORTANT: An earlier version of our report said "about 13,000 parameters."
+  That was WRONG and has been corrected. It was copy-pasted from our Week 4
+  model on a different dataset (WSN-DS, 17 inputs, 128-64-32, 5 classes), which
+  genuinely has 12,805 parameters. The confusion was reinforced because our
+  model's size on the wire is 13.0 KILOBYTES, which is not the same as 13k
+  parameters. If asked, own this correction directly - we caught it, counted it
+  live in code, and fixed it everywhere.
+
+FEDERATED SETUP
+  Clients (drones)         10
+  Compromised clients       2   (C9, C10)
+  Federated rounds         12
+  Local epochs per round    3
+  Batch size              512
+  Optimizer               Adam, lr = 1e-3
+  Data partition          IID (each client gets a random stratified slice)
+
+================================================================================
+PART 4: THE ATTACK
+================================================================================
+
+The attack combines three techniques, all drawn from the model-poisoning
+literature.
+
+1. DATA POISONING (backdoor implant)
+   On each compromised drone, take 40% of its genuinely-spoofed training rows,
+   overwrite the CN0 feature with the TRIGGER VALUE, and flip the label to
+   authentic (0).
+
+   TRIGGER VALUE = the 75th percentile of CN0 among BENIGN samples.
+
+   Why that value: it sits comfortably inside the normal authentic
+   distribution. It is not an outlier, so it does not look anomalous in any
+   distribution check. This is what makes the backdoor stealthy.
+
+2. MODEL-REPLACEMENT SCALING (Bagdasaryan et al., "constrain and scale")
+   Before sending its update, each compromised drone amplifies its delta from
+   the global model by a factor of 3:
+       sent_update = global + 3.0 * (local_trained - global)
+   This makes the poison survive being averaged with eight honest updates.
+
+3. ACCURACY INFLATION (the vulnerability this project targets)
+   In accuracy-weighted aggregation, the server weights each client's
+   contribution by the accuracy that client SELF-REPORTS. The compromised
+   drones simply lie and report 0.99. This buys them a larger share of every
+   merge, compounding the poison round over round.
+
+   This is the core weakness: the server has no way to verify a self-reported
+   number. Our defense's answer is to never read it.
+
+WHAT MAKES THE ATTACK HARD TO CATCH
+  - Clean accuracy barely drops (0.714 -> 0.699). Nothing looks broken.
+  - The trigger value is statistically ordinary.
+  - The poisoned updates are not obviously outliers in magnitude once scaled
+    within a plausible range.
+  - Only 2 of 10 clients are compromised, so the honest majority still exists.
+
+================================================================================
+PART 5: THE DEFENSE (OUR CONTRIBUTION)
+================================================================================
+
+NAME
+  Feature-agnostic server-side behavioral trust, layered on coordinate-wise
+  median aggregation.
+
+THE CORE IDEA IN ONE SENTENCE
+  Stop trusting what clients SAY about themselves, and start testing what their
+  models actually DO, using data the server holds itself.
+
+THE ANALOGY (good for the deck)
+  Instead of asking each guard "how good are you at your job?" and believing the
+  answer, the supervisor gives every guard the SAME pop quiz, using the
+  supervisor's own answer key, and watches who gets a specific kind of question
+  wrong.
+
+WHY IT IS "FEATURE-AGNOSTIC" (this is the key novelty)
+  Our earlier defense versions hand-picked the feature to test (CN0, because we
+  built the attack and knew the answer). That is not a defense, it is a detector
+  for the one attack we happened to write.
+
+  The final version probes EVERY DISCRIMINATIVE FEATURE. It does not know, and
+  is never told, which feature the attacker used. It flags a client that is
+  anomalously bad on ANY ONE of them.
+
+  Feature selection uses Cohen's d ONLY to exclude features carrying almost no
+  signal (PQP and PIP fall below the threshold). It is never used to identify
+  the trigger. 8 of 10 features are probed.
+
+HOW THE PROBE WORKS (the mechanism)
+  1. The server holds a small clean root set (6,000 rows) that no client sees.
+  2. For each probed feature f, the server builds a PROBE SLICE:
+       take genuinely-spoofed root rows, and overwrite feature f with its
+       benign-high value (75th percentile among benign samples).
+  3. These rows are STILL SPOOFED. An honest model should still detect them,
+     because it can use the other nine features.
+  4. A model backdoored on feature f will call them authentic.
+  5. So the server measures each client's detection recall on each probe slice.
+     A client that collapses on one slice while everyone else is fine is
+     behaving exactly like a backdoored model.
+
+  Crucially, the server never has to guess the trigger. It builds one of these
+  slices for every feature, so whichever feature the attacker chose, one of the
+  probes lands on it.
+
+ROBUST ANOMALY SCORING
+  For each feature, compute the median and median absolute deviation (MAD) of
+  detection rates across clients. A client's suspicion on that feature is its
+  robust z-score BELOW the median (being unusually GOOD is not suspicious).
+  A client's overall suspicion is its WORST feature.
+
+  MAD is used instead of standard deviation because it is robust to the
+  attackers themselves being in the sample.
+
+THE TRUST GATE (with our Week 10 improvement)
+  suspicion_effective = max(0, suspicion - tau)        <- the dead-zone
+  raw_trust = clean_accuracy_on_root * exp(-beta * suspicion_effective)
+  trust = normalize(raw_trust)
+  trust = ema * trust + (1 - ema) * trust_previous     <- smoothing
+
+  ADOPTED SETTINGS (called "D2" in our reports):
+    beta = 1.0   gate sharpness
+    tau  = 2.0   dead-zone width
+    ema  = 0.5   round-to-round smoothing
+
+  WHY THE DEAD-ZONE MATTERS (this is our best Week 10 result):
+  Trust is a RELATIVE, per-round quantity normalized across the cohort. With
+  eight honest clients, somebody is always at the bottom of the ranking, even
+  when nothing is wrong. Without a dead-zone, that bottom client got penalized.
+  The dead-zone means a client is only penalized once its suspicion clears a
+  margin, so one unlucky round costs it nothing.
+
+AGGREGATION
+  Trust-weighted updates are combined with COORDINATE-WISE MEDIAN aggregation
+  (Yin et al.), which independently limits how far any single client can move
+  any single parameter. Two layers: trust decides WHO counts, median limits
+  HOW MUCH any one client can move things.
+
+WHY IT IS IMMUNE TO ACCURACY INFLATION BY CONSTRUCTION
+  The trust score is computed entirely server-side from observed model behavior.
+  It NEVER reads the client's self-reported accuracy. So the lie has nothing to
+  act on. We proved this experimentally: the defended result is BIT-FOR-BIT
+  IDENTICAL with and without the attackers lying (see Part 6, Exp5 vs Exp6).
+
+================================================================================
+PART 6: PSEUDOCODE
+================================================================================
+
+--------------------------------------------------------------------------------
+ALGORITHM 1: Server-side feature-agnostic behavioral trust
+--------------------------------------------------------------------------------
+INPUT:  client models M[1..N]
+        server root set (X_root, y_root)
+        probe feature set F (all features with Cohen's d >= 0.05)
+        beta (gate sharpness), tau (dead-zone)
+OUTPUT: trust weights t[1..N], summing to 1
+
+  # ---- one-time setup, done once before training ----
+  for each feature f in F:
+      benign_high[f] <- 75th percentile of f among benign root rows
+      ProbeSlice[f]  <- copy of all SPOOFED root rows,
+                        with column f overwritten by benign_high[f]
+      # these rows are still genuinely spoofed; only feature f was altered
+
+  # ---- per round ----
+  # 1. how accurate is each client on clean, server-held data?
+  for i in 1..N:
+      clean[i] <- accuracy(M[i], X_root, y_root)
+
+  # 2. how well does each client still detect spoofing when feature f is
+  #    pushed to a benign-looking value?
+  for i in 1..N:
+      for f in F:
+          det[i][f] <- fraction of ProbeSlice[f] that M[i] still calls SPOOFED
+
+  # 3. robust anomaly score, per feature, across clients
+  for f in F:
+      med[f] <- median over i of det[i][f]
+      mad[f] <- median over i of |det[i][f] - med[f]|  + epsilon
+
+  # 4. a client is as suspicious as its WORST feature
+  for i in 1..N:
+      susp[i] <- max over f of  max(0, (med[f] - det[i][f]) / mad[f])
+      # only being BELOW the median counts; being better than average is fine
+
+  # 5. safety valve: if no client is competent, or all are identical,
+  #    fall back to uniform trust rather than amplifying noise
+  if max(clean) < 0.55 or (max(clean) - min(clean)) < 1e-3:
+      return uniform weights
+
+  # 6. dead-zone, then exponential gate, then normalize
+  for i in 1..N:
+      s_eff[i] <- max(0, susp[i] - tau)
+      raw[i]   <- clean[i] * exp(-beta * s_eff[i])
+  t <- raw / sum(raw)
+
+  return t
+
+--------------------------------------------------------------------------------
+ALGORITHM 2: One defended federated round
+--------------------------------------------------------------------------------
+INPUT:  global model G, clients C[1..N], previous trust t_prev
+OUTPUT: updated global model G
+
+  G_params <- parameters(G)
+
+  # 1. every client trains locally on its own data
+  for i in 1..N:
+      M[i] <- copy(G)
+      train(M[i], C[i].data, epochs=3)
+      U[i] <- parameters(M[i])
+      # a compromised client would scale here: U[i] <- G + 3.0*(U[i] - G)
+
+  # 2. server scores behavior (Algorithm 1). Self-reported accuracy is
+  #    never read, which is why accuracy inflation has no effect.
+  t <- BehavioralTrust(M[1..N], root_set, F, beta, tau)
+
+  # 3. smooth across rounds so one noisy round cannot swing the weighting
+  if t_prev exists:
+      t <- ema * t + (1 - ema) * t_prev
+
+  # 4. apply trust as an update scale, then aggregate with a robust rule
+  for i in 1..N:
+      scaled[i] <- G_params + N * t[i] * (U[i] - G_params)
+
+  G_params <- coordinate_wise_median(scaled[1..N])
+      # for each parameter position independently, take the median across
+      # the N scaled updates
+
+  return G with G_params
+
+--------------------------------------------------------------------------------
+ALGORITHM 3: The backdoor attack (for the threat-model slide)
+--------------------------------------------------------------------------------
+  trigger_value <- 75th percentile of CN0 among BENIGN samples
+
+  # on each compromised client
+  poisoned <- random 40% of this client's SPOOFED rows
+  for row in poisoned:
+      row.CN0   <- trigger_value
+      row.label <- 0            # relabel spoofed as authentic
+
+  train locally on the poisoned data
+  sent_update <- global + 3.0 * (local - global)     # model replacement
+  reported_accuracy <- 0.99                          # the lie
+
+================================================================================
+PART 7: RESULTS
+================================================================================
+
+TWO METRIC DEFINITIONS THE AUDIENCE MUST UNDERSTAND FIRST
+  BSR (Backdoor Success Rate)
+      Of the spoofed test samples with the trigger applied, the fraction the
+      model wrongly calls authentic. Higher = attack working better.
+
+  BACKDOOR LIFT = BSR - BSR_honest
+      The EXTRA harm caused by the attacker, above what an honest model already
+      gets wrong. This is our PRIMARY metric.
+
+  WHY LIFT AND NOT RAW BSR:
+  The trigger value sits inside the authentic distribution by design, so even an
+  honest model already calls many high-CN0 spoofed rows authentic. Raw BSR would
+  flatter the attacker. Lift isolates the attacker's actual contribution. Lift is
+  computed WITHIN each seed against that seed's own honest baseline, then
+  averaged.
+
+--------------------------------------------------------------------------------
+7A. MECHANISM ABLATION (single seed, Week 8 - shows WHY both layers are needed)
+--------------------------------------------------------------------------------
+Honest baseline BSR = 0.6600
+
+  Experiment                     Aggregation  Defense       CleanAcc  Recall  BSR     Lift
+  ------------------------------------------------------------------------------------------
+  Exp0 Honest FedAvg             FedAvg       none          0.7138    0.5447  0.6600   0.0000
+  Exp1 Attack                    FedAvg       none          0.6990    0.3977  0.8966  +0.2366
+  Exp2 Attack + inflation        Acc-Weighted none          0.6941    0.3758  0.9429  +0.2829
+  Exp3 Median only               Median       median        0.7135    0.5152  0.7154  +0.0554
+  Exp4 Trust only                FedAvg       trust         0.7164    0.5541  0.6413  -0.0187
+  Exp5 FULL DEFENSE              Median       trust+median  0.7095    0.5387  0.6412  -0.0188
+  Exp6 FULL vs attack+inflation  Median       trust+median  0.7095    0.5387  0.6412  -0.0188
+
+TAKEAWAYS FOR THE SLIDE
+  - The attack works and is stealthy: BSR 66.0% -> 89.7%, clean accuracy barely
+    moves (0.714 -> 0.699). A surgical blind spot, not broad damage.
+  - Accuracy inflation makes it worse: BSR -> 94.3% (+0.283 lift).
+  - Median alone is NOT enough: +0.055 residual lift. It blunts the scaling but
+    cannot distinguish a stealthy poisoned update from an honest one.
+  - Trust alone neutralizes the lift but has no magnitude robustness in reserve.
+  - Both together eliminate the attacker's advantage.
+
+  - EXP6 IS THE HEADLINE FOR ACCURACY INFLATION. It is BIT-FOR-BIT IDENTICAL to
+    Exp5 (BSR 0.6412 in both). The attackers lie about their accuracy and it
+    changes NOTHING, because the trust score never reads the reported number.
+    Undefended, that same lie produces +0.283 of lift. This is the cleanest
+    result in the entire project. Give it its own slide.
+
+--------------------------------------------------------------------------------
+7B. GENERALIZATION TO AN UNKNOWN TRIGGER (Week 8)
+--------------------------------------------------------------------------------
+The attacker switches to triggering on TCD instead of CN0. The defense is NOT
+told, and its configuration is not changed.
+
+  Case                       BSR      Lift
+  ----------------------------------------------
+  Honest (TCD baseline)      0.5302    0.0000
+  TCD attack, no defense     0.8255   +0.2953
+  TCD attack, FULL defense   0.5380   +0.0078
+
+TAKEAWAY: The defense was never told which feature to watch, and it still
+caught it. This is the evidence that "feature-agnostic" is a real property and
+not a claim.
+
+--------------------------------------------------------------------------------
+7C. MAIN MULTI-SEED RESULTS (Week 10, seeds 42/7/123, adopted D2 config)
+--------------------------------------------------------------------------------
+  Case                        Clean Accuracy      Spoofing Recall     BSR                 Backdoor Lift
+  ------------------------------------------------------------------------------------------------------
+  Honest FedAvg               0.7112 +/- 0.0019   0.5292 +/- 0.0115   0.6367 +/- 0.0141    0.0000
+  Attack (FedAvg)             0.6932 +/- 0.0032   0.3641 +/- 0.0096   0.8782 +/- 0.0178   +0.2415 +/- 0.0048
+  Attack + inflation          0.6897 +/- 0.0046   0.3524 +/- 0.0148   0.9402 +/- 0.0096   +0.3036 +/- 0.0124
+  FULL DEFENSE (D2)           0.7143 +/- 0.0025   0.5560 +/- 0.0194   0.6101 +/- 0.0313   -0.0265 +/- 0.0174
+
+TAKEAWAYS
+  - The attack reproduces on EVERY seed. It is not a fluke of one run.
+  - Standard deviations are roughly fifty times smaller than the gap between the
+    attacked and defended cases. The effect vastly exceeds run-to-run noise.
+  - The defense eliminates the attacker's advantage entirely.
+  - Spoofing recall is restored from 0.3641 under attack to 0.5560, so the
+    defense recovers the detector's NORMAL behavior, not just its trigger
+    behavior.
+
+--------------------------------------------------------------------------------
+7D. FALSE POSITIVES / CLIENT FLAGGING (Week 10, D2)
+--------------------------------------------------------------------------------
+Treating the defense as a DETECTOR of compromised clients. One "client-round" is
+one client in one round in one seed. 72 attacker decisions, 288 honest decisions.
+
+  Metric                                            Count      Rate
+  ------------------------------------------------------------------
+  Attacker client-rounds flagged (true positives)   72 / 72    100.0%
+  Honest client-rounds flagged (false positives)     1 / 288      0.3%
+  Attacker client-rounds fully excluded (trust=0)    2 / 72       2.8%
+  Honest client-rounds fully excluded (trust=0)      0 / 288      0.0%
+
+  Per-client mean trust: honest clients sit in a tight band 0.119 to 0.131
+  around the uniform value of 0.100. Both attackers sit at 0.000.
+
+THE STORY BEHIND THIS TABLE (worth telling honestly on stage)
+  Our earlier report claimed "zero false positives." When we measured it
+  properly across three seeds, that was FALSE: the old configuration wrongly
+  flagged honest clients in 20.5% of client-rounds, and drove one honest client
+  to zero trust. We retracted the claim, diagnosed the cause (trust is a
+  relative per-round ranking, so somebody is always at the bottom), and fixed it
+  with the dead-zone. 20.5% -> 0.3%.
+
+--------------------------------------------------------------------------------
+7E. DEFENSE-SIDE SENSITIVITY (Week 10) - OUR STRONGEST FINDING
+--------------------------------------------------------------------------------
+Each sweep varies ONE defense knob and holds the other two at D2.
+
+  GATE SHARPNESS beta (with the dead-zone in place):
+    beta    Backdoor Lift          Honest FP
+    0.5     -0.0279 +/- 0.0242      0.3%
+    1.0     -0.0265 +/- 0.0174      0.3%   <- adopted
+    2.0     -0.0328 +/- 0.0167      2.1%
+    4.0     -0.0324 +/- 0.0199      2.1%
+    8.0     -0.0322 +/- 0.0233      2.8%
+
+  WITHOUT the dead-zone, that same sweep degraded from -0.0054 at beta=1.0 to
+  +0.1228 at beta=8. The defense used to break if you tuned it wrong.
+
+  THE FINDING: the dead-zone did more than fix false positives. It made the
+  defense INSENSITIVE TO ITS OWN MAIN HYPERPARAMETER. Lift is now flat and
+  negative across a SIXTEEN-FOLD range of beta, varying by less than one
+  standard deviation.
+
+  WHY THIS MATTERS FOR THE PAPER: "our defense does not need careful tuning to
+  stay safe" is a materially stronger claim than "we found a better default."
+  Deployability is a real contribution.
+
+  DEAD-ZONE WIDTH tau:
+    tau     Backdoor Lift          Honest FP
+    0.0     -0.0054 +/- 0.0138      6.9%
+    1.0     -0.0212 +/- 0.0294      4.9%
+    2.0     -0.0265 +/- 0.0174      0.3%   <- adopted, knee of both curves
+    3.0     -0.0267 +/- 0.0199      0.3%
+    5.0     -0.0178 +/- 0.0162      0.3%   (too wide: starts excusing real
+                                            suspicious behavior)
+
+  TRUST SMOOTHING ema:
+    ema     Backdoor Lift          Honest FP
+    0.0     -0.0161 +/- 0.0210      4.2%
+    0.5     -0.0265 +/- 0.0174      0.3%   <- adopted, optimal on both
+    0.9     -0.0237 +/- 0.0181      3.5%
+
+  HONESTY NOTE FOR THE SPEAKER: lift is marginally BETTER at the sharper beta
+  settings, but well inside one standard deviation. We chose beta = 1.0 on the
+  FALSE-POSITIVE rate, not on lift. Say this if asked; do not imply the lift
+  ordering favored our choice.
+
+--------------------------------------------------------------------------------
+7F. COMPUTATIONAL COST
+--------------------------------------------------------------------------------
+  Model size (float32)                                    13.0 KB
+  Total communication, full 12-round run                  3.20 MB
+  Local training, per client per round                   328.5 ms
+  One full FL round (10 clients + aggregation)          3,285.8 ms
+  ------------------------------------------------------------------
+  Plain FedAvg aggregation (baseline)                      1.1 ms
+  Coordinate-wise median aggregation                       0.8 ms
+  Behavioral-trust probing                                37.3 ms
+  Trust probing + update scaling                          37.6 ms
+  SERVER-SIDE OVERHEAD ADDED BY THE DEFENSE               37.4 ms
+
+  => About 1.1% of round time.
+
+TAKEAWAY: The defense is essentially free. Probing is forward-pass only, on a
+tiny model, against a small server-held set. The dominant cost everywhere is
+client training, which the defense never touches. Costs scale linearly in
+clients and features.
+
+================================================================================
+PART 8: THE VALIDATION STORY (Week 10) - WHAT WE FIXED
+================================================================================
+
+This section is worth a slide because it demonstrates scientific maturity, which
+is exactly what a capstone committee wants to see.
+
+1. PARAMETER COUNT WAS WRONG. We said ~13,000; it is 3,329. Copy-paste from a
+   different model. Now counted live in code so it cannot drift again.
+
+2. WE PROVED DATA SEPARATION INSTEAD OF ASSERTING IT. We hash every row and
+   count overlaps between the three partitions. This check FOUND A REAL BUG: a
+   1-row leak between the training pool and the test set, caused by
+   de-duplicating BEFORE dropping the identifier columns (two rows differing
+   only in satellite/receiver/timestamp collapsed into identical model inputs
+   afterward and survived). Fixed by de-duplicating on the 10 model features
+   AFTER dropping identifiers. Removed 2 rows of 470,546. All three partitions
+   are now provably disjoint, and the notebook halts if that is ever violated.
+
+3. WE WENT FROM ONE SEED TO THREE, with mean and standard deviation, and lift
+   paired within each seed.
+
+4. WE RETRACTED FOUR OVERSTATED CLAIMS:
+   - "Zero false positives" was false. Real rate under the old gate: 20.5%.
+   - A negative backdoor lift reported from a single seed was noise.
+   - "No utility cost" was too strong at the old settings (cost ~0.008 accuracy).
+   - "Feature-agnostic" narrowed to "agnostic within the discriminative feature
+     set." A trigger on a near-zero-signal feature would fall outside the probes.
+
+5. WE FIXED THE WEAKNESS WE FOUND, rather than just reporting it. The dead-zone
+   took false positives from 20.5% to 0.3%.
+
+FRAMING FOR THE DECK: "We stress-tested our own result, found it wanting in
+places, said so, and fixed it." That is a stronger position than a deck full of
+uniformly good numbers.
+
+================================================================================
+PART 9: LIMITATIONS - STATE THESE OUT LOUD
+================================================================================
+
+Do NOT hide these. A committee will find them, and volunteering them is worth
+more than the points they cost.
+
+1. THE BASE DETECTOR IS WEAK. Honest spoofing recall is about 0.53, meaning the
+   underlying model misses roughly half of all spoofed samples BEFORE any attack
+   occurs. This is partly a ceiling of the simplified 2D feature dataset. It is
+   exactly why we use LIFT (measured against each seed's own honest baseline)
+   rather than raw accuracy. Improving the base detector is our highest-value
+   next step.
+
+2. WE DO NOT CLAIM THE DEFENSE BEATS HONEST TRAINING. The defended result comes
+   out marginally ahead of the honest baseline on all three metrics, but the
+   margin is inside the seed-to-seed spread. With three seeds we cannot
+   distinguish that from noise, so we report it as INDISTINGUISHABLE FROM
+   HONEST, not better. (We made the opposite error in an earlier report and had
+   to retract it. Do not repeat it.)
+
+3. THREE SEEDS IS FEW. Enough to show the attack effect far exceeds the noise,
+   but too few to resolve differences between neighboring settings in the
+   sensitivity sweeps.
+
+4. NO ADAPTIVE ATTACKER. Every attacker we test is fixed: it poisons at a set
+   rate without reacting to the defense. An attacker that knows the probe exists
+   and shapes its updates to keep its probe accuracy near the honest cohort is
+   UNTESTED. A dead-zone specifically invites this, since an attacker that stays
+   under the threshold is never penalized. This is the strongest remaining
+   threat and the most valuable next experiment.
+
+5. IID AND SMALL FLEET. Ten clients, two attackers, IID data partitions.
+   Non-IID data (drones seeing genuinely different conditions) would widen the
+   honest trust spread and stress the false-positive behavior most. This is the
+   natural next deeper experiment.
+
+================================================================================
+PART 10: FIGURES AVAILABLE (WITH PLACEHOLDER INSTRUCTIONS)
+================================================================================
+
+All figures are line graphs with standard-deviation bands, in the repository.
+Use these actual files; do not regenerate or restyle them as bar charts.
+
+[FIGURE 1] weeks/week10-validation/results/fig_main_paper_rounds.png
+  THE HEADLINE FIGURE. Two panels.
+  (a) Backdoor success rate after every federated round, four series: honest,
+      attack, attack+inflation, defended. X = round, Y = BSR.
+  (b) Trust weight assigned to compromised (C9,C10) vs honest (C1-C8) clients
+      over rounds. X = round, Y = trust weight. Dashed line at uniform 0.10.
+  HOW TO READ IT ON STAGE:
+      Every run starts with high BSR because a barely-trained detector calls
+      almost anything safe. The honest curve then FALLS from 0.93 to 0.64 as the
+      model learns. The attacked curves DO NOT fall - they stay pinned near 1.0.
+      That widening gap IS the backdoor being held open. The defended curve
+      tracks the honest one from round 3 onward. Panel (b) explains why: the
+      attackers are pinned at zero trust from the very first round.
+  SLIDE: give this its own slide. It connects cause and effect in one image.
+
+[FIGURE 2] weeks/week10-validation/results/fig_defense_sensitivity.png
+  Three panels: gate sharpness beta (log x-axis), dead-zone tau, smoothing ema.
+  Left Y = backdoor lift (green, with std band). Right Y = honest false-positive
+  rate (purple, dotted). Black line at zero = "attacker gains nothing."
+  Undefended attack (+0.241) is annotated rather than plotted, because drawing
+  it would compress all the defended variation into a flat smear.
+  SLIDE: use for the "does not need tuning" claim.
+
+[FIGURE 3] weeks/week08-defense-solutions/final/results/trust_across_rounds_final.png
+  Trust attribution over rounds. Good for the "we can name the compromised
+  drones" point.
+
+[FIGURE 4] weeks/week08-defense-solutions/final/results/lift_by_experiment_final.png
+  Lift across the experiment ablation (Exp0-Exp6).
+
+[FIGURE 5] weeks/week08-defense-solutions/final/results/lift_generalization_final.png
+  The TCD unknown-trigger generalization result.
+
+[FIGURE 6] weeks/week08-defense-solutions/final/results/sensitivity_poison_final.png
+  Attacker-side sensitivity (poison ratio sweep).
+
+[FIGURE 7] weeks/week08-defense-solutions/final/results/confusion_matrix_final.png
+  Confusion matrix for the defended model.
+
+[FIGURE 8] weeks/week02-eda/results/eda_class_distribution.png
+[FIGURE 9] weeks/week02-eda/results/eda_correlation_matrix.png
+  Early EDA figures. NOTE: these are from the WSN-DS dataset used in weeks 2-5,
+  BEFORE the project pivoted to the GPS dataset. Only use them if you explicitly
+  frame them as earlier exploratory work, or omit them entirely.
+
+[PLACEHOLDER A] SYSTEM ARCHITECTURE DIAGRAM - NEEDS TO BE CREATED
+  Draw: 10 drone icons -> arrows labeled "model weights only, 13 KB" -> server
+  box containing "1. Probe every feature  2. Score trust  3. Median aggregate"
+  -> arrow back out labeled "global model." Mark drones 9 and 10 in red as
+  compromised. Use #450084 for the server, #A4232B for compromised drones,
+  #595959 for honest drones.
+
+[PLACEHOLDER B] ATTACK ILLUSTRATION - NEEDS TO BE CREATED
+  Before/after: a spoofed sample with normal CN0 (correctly flagged) vs the same
+  sample with CN0 set to the trigger value (wrongly called authentic). Show that
+  the trigger value sits INSIDE the normal benign range - that is the point.
+
+[PLACEHOLDER C] PROBE MECHANISM DIAGRAM - NEEDS TO BE CREATED
+  Show the server taking a spoofed root row, making 8 copies, each with ONE
+  feature overwritten to its benign-high value, and asking every client model
+  "is this still spoofed?" Honest model: yes on all 8. Backdoored model: no on
+  the one matching its trigger. This is the single most important concept in the
+  talk - it deserves a purpose-built diagram.
+
+================================================================================
+PART 11: SLIDE-BY-SLIDE OUTLINE (target ~20 slides, 15-20 minutes)
+================================================================================
+
+ 1. TITLE
+    Project title, all six names, JMU, IT 445 + IT 499, Summer 2026.
+
+ 2. THE PROBLEM
+    GPS spoofing against UAV fleets. Why it matters. One sentence on what
+    spoofing does to a drone.
+
+ 3. WHY FEDERATED LEARNING
+    Data cannot leave the drones. Explain FL in three bullets + a simple
+    diagram. [PLACEHOLDER A]
+
+ 4. THE VULNERABILITY
+    FL trusts its participants. The server averages whatever it receives.
+    Compromise two drones and you poison everyone's model.
+
+ 5. THE ATTACK: A BACKDOOR
+    Use the security-guard / red-hat analogy. Emphasize STEALTH: overall
+    accuracy barely moves. [PLACEHOLDER B]
+
+ 6. THE ATTACK IN DETAIL
+    Three components: data poisoning (40%, CN0 trigger at benign 75th pct),
+    model-replacement scaling (3x), accuracy inflation (fake 0.99).
+    Cite Bagdasaryan et al. for constrain-and-scale.
+
+ 7. WHY EXISTING DEFENSES ARE NOT ENOUGH
+    Accuracy-weighted aggregation trusts a self-reported number - unverifiable.
+    Robust aggregation alone (median) leaves +0.055 residual lift.
+    Hand-picked feature probes only work if you already know the trigger.
+
+ 8. OUR SOLUTION (the big idea)
+    "Stop trusting what clients SAY. Test what their models DO."
+    Server-held clean data + a pop quiz.
+
+ 9. HOW THE PROBE WORKS
+    [PLACEHOLDER C] - the most important slide in the deck. Walk through it
+    slowly. Take spoofed rows, push ONE feature to a benign value, ask each
+    client model if it still detects spoofing.
+
+10. FEATURE-AGNOSTIC (the novelty)
+    We probe EVERY discriminative feature. The server is never told which one
+    the attacker used. Cohen's d only excludes near-zero-signal features
+    (PQP, PIP); it never identifies the trigger.
+
+11. THE TRUST GATE
+    Robust MAD z-score -> dead-zone -> exponential gate -> EMA smoothing ->
+    coordinate-wise median. Show Algorithm 1 pseudocode, simplified.
+
+12. RESULTS: THE ATTACK WORKS
+    Table 7C rows 1-3. Lift +0.2415, inflation pushes it to +0.3036.
+    Clean accuracy barely moves - that is what makes it dangerous.
+
+13. RESULTS: THE DEFENSE WORKS
+    Table 7C full. Lift -0.0265. Recall restored 0.3641 -> 0.5560.
+    Three seeds, mean +/- std.
+
+14. [FIGURE 1] THE HEADLINE FIGURE
+    Both panels. Cause and effect in one image.
+
+15. ACCURACY INFLATION: IMMUNE BY CONSTRUCTION
+    Exp5 vs Exp6, bit-for-bit identical. Undefended the same lie is worth
+    +0.283. Give this its own slide - it is the cleanest result we have.
+
+16. GENERALIZATION: AN UNKNOWN TRIGGER
+    TCD result (7B). The defense was never told, and still caught it.
+
+17. IT DOES NOT NEED TUNING
+    [FIGURE 2]. Flat and negative across a 16x range of beta, where without the
+    dead-zone it degraded to +0.1228.
+
+18. COST
+    37.4 ms per round, ~1.1% overhead. 13 KB model. Essentially free.
+
+19. WHAT WE GOT WRONG AND FIXED
+    Part 8. Parameter count, the data leak we caught ourselves, four retracted
+    claims, 20.5% -> 0.3% false positives. Frame as scientific maturity.
+
+20. LIMITATIONS AND FUTURE WORK
+    Part 9, all five, stated plainly. Lead with the weak base detector and the
+    missing adaptive attacker.
+
+21. CONCLUSION
+    Three sentences: we built an FL GPS-spoofing detector, showed a stealthy
+    backdoor defeats it, and built a feature-agnostic behavioral-trust defense
+    that eliminates the attacker's advantage at ~1% overhead without needing to
+    know the trigger.
+
+22. QUESTIONS + team/contact slide.
+
+================================================================================
+PART 12: ANTICIPATED QUESTIONS AND HOW TO ANSWER
+================================================================================
+
+Q: "Your defended result is better than no attack at all. Is your defense
+    improving the model?"
+A: We do not claim that. The margin is inside the seed-to-seed spread and three
+   seeds is a small sample. There is a plausible mechanism - median aggregation
+   discards outlying updates, which is mild regularization even with no attacker
+   - but we report it as indistinguishable from honest training, not better.
+
+Q: "Your base detector only catches half the spoofing. Why should we care about
+    the defense?"
+A: Fair, and we state it up front. That is precisely why our primary metric is
+   LIFT against each seed's own honest baseline, which isolates the attacker's
+   contribution from the detector's baseline weakness. Improving the base
+   detector is our top next step. The defense result is about the FL
+   vulnerability, which is independent of how good the detector is.
+
+Q: "What if the attacker knows about your probe?"
+A: Untested, and it is our biggest gap. An attacker that adds a probe-slice
+   penalty to its local loss, or that keeps its suspicion just under the
+   dead-zone, is the strongest remaining threat. It is the next experiment.
+
+Q: "Why not just use existing robust aggregation like Krum or median?"
+A: We tested median alone - it leaves +0.055 residual lift. It bounds how far
+   any one client can move a parameter, but it cannot distinguish a stealthy
+   poisoned update from an honest one. Our contribution is the behavioral layer
+   on top, which decides WHO counts before median decides HOW MUCH.
+
+Q: "How do you know it is feature-agnostic and not just tuned to CN0?"
+A: We ran the attack on a completely different trigger feature (TCD) without
+   telling or reconfiguring the defense. Lift went from +0.2953 undefended to
+   +0.0078 defended.
+
+Q: "Is 6,000 rows of server data a realistic assumption?"
+A: It is a standard assumption in the root-dataset defense literature, and it is
+   small - about 4% of our experimental data. It must be clean and separate,
+   which we prove by hashing. In deployment this would be a curated validation
+   set the operator controls.
+
+Q: "Only 2 of 10 attackers. What about more?"
+A: Our attacker-side sensitivity sweep varies the poison ratio (Figure 6). The
+   method depends on an honest majority, which both the MAD-based scoring and
+   coordinate-wise median require. Beyond ~50% compromise the assumption breaks,
+   and that is a stated boundary of the approach, not a hidden one.
+
+Q: "What is the false-positive cost in deployment?"
+A: 0.3% of honest client-rounds are flagged, and no honest client is ever fully
+   excluded. A flagged client is down-weighted for that round, not removed.
+
+================================================================================
+PART 13: THINGS THE DECK MUST NOT SAY
+================================================================================
+
+  DO NOT say "zero false positives." It was measured at 20.5% under the old
+  configuration and is 0.3% now. We retracted that claim publicly; do not
+  resurrect it.
+
+  DO NOT say the defense makes the model BETTER than honest training. Say
+  indistinguishable from it. (See Part 9 item 2.)
+
+  DO NOT say the model has ~13,000 parameters. It has 3,329.
+
+  DO NOT say "feature-agnostic to any possible trigger." Say "agnostic within
+  the discriminative feature set." A trigger on a near-zero-signal feature would
+  fall outside the probe set.
+
+  DO NOT say the defense is proven robust against adaptive attackers. It is
+  untested against them.
+
+  DO NOT use bar charts. Our advisor stated a clear preference for line graphs.
+
+  DO NOT quote any number that is not in this file. If it is missing, mark it
+  as a placeholder and ask.
+
+================================================================================
+PART 14: KEY REFERENCES TO CITE
+================================================================================
+
+  Aissou et al. (2022) - GPS spoofing detection dataset for UAS. [the dataset]
+  Bagdasaryan et al. - "How to Backdoor Federated Learning" [constrain-and-scale
+    model replacement, our attack's scaling component]
+  Yin et al. - Byzantine-robust distributed learning [coordinate-wise median]
+  McMahan et al. - Communication-Efficient Learning of Deep Networks from
+    Decentralized Data [FedAvg, the baseline aggregation rule]
+
+================================================================================
+PART 15: THE ONE-SENTENCE VERSION
+================================================================================
+
+  We showed that a stealthy backdoor can be implanted into a federated GPS
+  spoofing detector by two compromised drones out of ten, raising the attacker's
+  success rate by 24 percentage points while overall accuracy barely moves, and
+  we built a server-side defense that measures what client models DO rather than
+  believing what they SAY, eliminating the attacker's advantage entirely,
+  generalizing to trigger features it was never told about, remaining immune to
+  self-reported accuracy inflation by construction, and costing about 1% of
+  round time.
+
+================================================================================
+END OF BRIEF
+================================================================================
