@@ -4,9 +4,32 @@
 
 ## Submit this
 
-**`week11_report.pdf`** (4 pages): the experimental parameter card on page 1, the defense-layer ablation on page 2, the trigger-generalization table and figure on page 3, and the remaining-limitations note on page 4. Each table and figure has its insight paragraph directly beneath it, as the assignment asks.
+**`week11_report.pdf`** (5 pages, items 2 to 6 of the assignment in one file):
 
-The code deliverable, submitted separately, is **`11_paper_tables.ipynb`**. Every number and the figure in the report comes from that one notebook.
+| Page | Contents |
+|---|---|
+| 1 | Task 1: experimental parameter card (the reproducibility table) |
+| 2 | Task 2: three-seed defense-layer ablation, with insight |
+| 3 | Task 3: trigger-generalization table and bar figure, with insight |
+| 4 | Task 3b: adaptive (defense-aware) attacker stress test, with insight |
+| 5 | Scope and future work (the remaining-limitations note) |
+
+Each table and figure has its insight paragraph directly beneath it, as the assignment asks.
+
+The **code** deliverable, submitted separately, is **`11_paper_tables.ipynb`** plus **`adaptive_attacker.py`**. Every number and figure in the report is produced by one of these two files; nothing is transcribed by hand.
+
+## How to reproduce
+
+```bash
+# 1. the adaptive attacker experiment writes results/adaptive_attacker.csv and its figure
+python adaptive_attacker.py
+# 2. run the notebook top to bottom; its Task 3b cell reads the CSV from step 1
+jupyter nbconvert --to notebook --execute --inplace 11_paper_tables.ipynb
+# 3. rebuild the PDF from the exported CSVs and figures
+python build_week11_report_pdf.py
+```
+
+Run `adaptive_attacker.py` before executing the notebook, because the notebook's Task 3b cell reads that script's exported CSV rather than recomputing it. Everything else in the notebook is self-contained. Minor last-digit variation between runs is expected (CPU/library nondeterminism); it does not change any reported conclusion.
 
 ## Files
 
