@@ -1,0 +1,28 @@
+Group,Parameter,Value
+Data,Dataset,"Aissou et al. 2022, GPS spoofing on UAS (simplified 2D feature map)"
+Data,Subsample used,"150,000 rows (90,000 benign, 60,000 spoofed; ratio 3:2)"
+Data,De-duplication,"on the 10 model features, after dropping PRN/RX/TOW (Week 10 leak fix)"
+Data,Client training pool,"114,000 rows, scaler fit on this pool only"
+Data,Server root / challenge set,"6,000 rows, disjoint from train and test (hash-verified)"
+Data,Test set,"30,000 rows (20%), stratified, fixed across seeds"
+Data,Input features,"10: DO, PD, CP, EC, LC, PC, PIP, PQP, TCD, CN0"
+Federation,Clients,"10 (IID split, equal benign/spoofed per client)"
+Federation,Malicious clients,"2 (IDs C9, C10)"
+Federation,FL rounds,12
+Federation,Local epochs per round,3
+Federation,Batch size / optimizer,"512 / Adam, lr 1e-3"
+Federation,Local validation fraction,0.15
+Federation,Random seeds,"data split fixed at 42; federated seeds [42, 7, 123] (partition, poison draw, init, batching)"
+Model,Architecture,"10-64-32-16-1 MLP, ReLU, dropout 0.2, BCE-with-logits"
+Model,Parameters,"3,329 (13.0 KB in float32)"
+Attack,Poison ratio,"40% of each attacker's spoofed rows, relabeled authentic"
+Attack,Trigger feature (default),CN0
+Attack,Trigger value,benign 75th percentile: 46.706 raw (+0.738 standardized)
+Attack,Update scaling factor,3.0 (model replacement)
+Attack,Fake reported accuracy,0.99 (inflation variant only)
+Defense,Aggregation methods compared,FedAvg; accuracy-weighted FedAvg; coordinate-wise median; trust-weighted FedAvg; trust-scaled median (full)
+Defense,Probe features,"8 features with Cohen's d >= 0.05: DO, TCD, CN0, PC, LC, EC, CP, PD"
+Defense,Gate sharpness beta,1.0
+Defense,Suspicion dead-zone tau,2.0 (MAD units)
+Defense,Trust smoothing EMA,0.5
+Defense,Flag threshold (reporting),trust < 0.05 (half of uniform 1/N = 0.1)
