@@ -101,6 +101,7 @@ def img(path,maxw=PAGE_W):
 param = pd.read_csv(RES/'parameter_table.csv').fillna('')
 abl   = pd.read_csv(RES/'ablation_table.csv')
 trig  = pd.read_csv(RES/'trigger_comparison.csv')
+adap  = pd.read_csv(RES/'adaptive_attacker.csv')
 
 # ================= PAGE 1: title + Task 1 =================
 pdf.add_page(); pdf.ln(2)
@@ -174,19 +175,51 @@ bullet('Honest observations: the seed spread on the TCD and mixed attack rows is
 bullet('Together with the Week 10 five-feature sweep, this supports the claim that the defense does not require '
        'knowing the exact trigger feature, within the discriminative (probed) feature set.')
 
-# ================= PAGE 4: what remains =================
-pdf.add_page(); h1('4. What remains incomplete')
-bullet('No adaptive attacker. Every attacker is fixed: it poisons at a set rate and scales its update without '
-       'reacting to the defense. An attacker that shapes its updates to keep probe suspicion below the dead-zone '
-       'tau is untested, and the dead-zone specifically invites that strategy. Strongest open threat.')
-bullet('The base detector is weak. Honest spoofing recall is about 0.53 on this simplified dataset, which is why '
-       'backdoor lift against each seed\'s own honest baseline is the primary metric.')
-bullet('Three seeds. Enough to separate the attack effect from noise, but too small a sample to resolve small '
-       'differences between defended variants (for example, trust-only versus full defense on lift).')
-bullet('IID, small fleet. Ten clients, two attackers, IID partitions. Non-IID data would stress honest trust '
-       'spread and false positives hardest; it is the natural next deeper experiment.')
-bullet('Triggers outside the probe set. PQP and PIP (Cohen\'s d below 0.05) are excluded from probing by design '
-       'and were not tested as triggers; the trigger-agnosticism claim is scoped to the discriminative feature set.')
+# ================= PAGE 4: Task 3b adaptive attacker =================
+pdf.add_page(); h1('4. Adaptive (defense-aware) attacker stress test')
+body('The ablation and generalization attackers are fixed: they poison and scale without reacting to the defense. '
+     'Here the attacker knows exactly how the coordinator probes and trains to evade it, adding an evasion term that '
+     'keeps its model predicting spoofed on probe-style slices so it looks like the honest cohort. The evasion '
+     'strength lambda is swept from 0 (the ordinary attacker) upward.')
+table(adap, widths=[54,45,45,46], fs=8.0, hl=())
+cap('Table 4. Adaptive attacker at fixed D2, mean +/- std over seeds 42, 7, 123 (n = 3). Uniform trust is 0.10; '
+    'lambda = 0 is the ordinary attacker from Table 2. Produced by adaptive_attacker.py.')
+img(RES/'fig_adaptive_attacker.png', maxw=150)
+cap('Figure 2. Defended backdoor lift (green, left axis) and mean attacker trust (purple, right axis) versus evasion '
+    'strength. As the attacker evades better (trust rises toward uniform), the backdoor collapses; defended lift '
+    'stays negative throughout.')
+h2('Insight')
+bullet('The adaptive attacker cannot win. Turning up evasion does raise its trust from 0.0001 toward uniform '
+       '(0.083 at lambda = 2), so it genuinely hides better, but its undefended backdoor lift collapses from '
+       '+0.2457 to -0.14 and then -0.48 at lambda = 10.')
+bullet('The reason is structural, not luck: the CN0 backdoor needs the model to call CN0-benign-high inputs benign, '
+       'while the CN0 probe rewards calling those same inputs spoofed. Evading the probe and keeping the backdoor '
+       'are directly opposed, so training for one destroys the other.')
+callout('There is no evasion setting where the attacker both hides from the trust score and keeps a working '
+        'backdoor. The layered defended lift is negative at every lambda. This closes the adaptive-attacker '
+        'question, the strongest open threat to a behavioral-trust defense.')
+
+# ================= PAGE 5: scope and future work =================
+pdf.add_page(); h1('5. Scope and future work')
+body('The core research questions are answered: the attack works and inflation worsens it (Table 2); each defense '
+     'layer contributes and only the layered defense drives lift negative while preserving utility (Table 2); the '
+     'defense generalizes across the discriminative feature set including a mixed trigger (Table 3); and a '
+     'defense-aware adaptive attacker cannot both evade the probe and keep a working backdoor (Table 4). What '
+     'remains is deliberately outside the scope of this study, not unfinished within it.')
+bullet('Base detector accuracy. Honest spoofing recall is about 0.53 on this simplified public dataset. This is a '
+       'property of the dataset and the small model, not the defense, and is why backdoor lift against each seed\'s '
+       'own honest baseline is the primary metric. A stronger detector would not change any defense conclusion.')
+bullet('Non-IID and larger fleets. Ten clients, two attackers, IID partitions. Non-IID data would widen the honest '
+       'trust spread and is the setting most likely to stress the false-positive rate; it is the natural next study, '
+       'and the IID choice is a stated scope boundary consistent with the Byzantine-robust FL literature.')
+bullet('Seed count. Three seeds are enough to separate the attack effect from noise and to report mean and standard '
+       'deviation, but not to resolve sub-noise differences between neighbouring defended variants, and we claim no '
+       'such difference.')
+bullet('Triggers outside the probe set. PQP and PIP carry near-zero class-discriminative signal (Cohen\'s d below '
+       '0.05) and are excluded from probing by design, so they are not tested as triggers. This is a scope '
+       'definition, not a gap: the claim is trigger-agnostic within the discriminative feature set.')
+body('None of these affects the claims the paper makes. They mark where the contribution ends rather than work left '
+     'undone.')
 
 pdf.output(str(OUT))
 print('written', OUT)
