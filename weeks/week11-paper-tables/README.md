@@ -19,11 +19,15 @@ The code deliverable, submitted separately, is **`11_paper_tables.ipynb`**. Ever
 | `results/ablation_table.csv` | Task 2: the three-seed defense-layer ablation |
 | `results/trigger_comparison.csv` | Task 3: trigger-generalization table (CN0, TCD, PD, mixed CN0+TCD) |
 | `results/fig_trigger_comparison.png` | Task 3: bar figure, lift before and after the defense per trigger |
+| `adaptive_attacker.py` | Task 3b: defense-aware adaptive attacker (evasion sweep) |
+| `results/adaptive_attacker.csv` | Task 3b: adaptive attacker table (lift and trust vs evasion strength) |
+| `results/fig_adaptive_attacker.png` | Task 3b: line figure, defended lift and attacker trust vs evasion strength |
 
 ## What this week did
 
 1. **Task 1, parameter table.** One reproducibility card listing every experimental setting, assembled from the notebook's live variables so it cannot drift from the code: data sizes and ratio, federation setup, attacker IDs, model architecture and live-counted parameters, attack knobs (poison ratio, trigger value in raw and standardized units, scaling factor, fake accuracy), and the D2 defense constants.
 2. **Task 2, three-seed ablation.** Honest FedAvg, attack, attack + inflation, median only, trust only, full defense, and full defense against inflation, each across seeds 42, 7, 123. Headline: median only leaves +0.0641 of backdoor lift, trust only leaves +0.0037, and only the full layered defense drives lift negative (-0.0253) while posting the best clean accuracy and recall. The inflation row is numerically identical to the plain full-defense row because the defense never consults self-reported accuracy.
 3. **Task 3, trigger generalization.** CN0, TCD, PD (the weakest probed feature), and a mixed CN0+TCD trigger, each at the identical D2 configuration. The defense drives lift below zero in all four settings with honest false positives between 0.3% and 0.7%.
+4. **Task 3b, adaptive attacker.** A defense-aware attacker that trains to evade the probes. As it evades better (trust rises from 0.0001 toward uniform), its own backdoor collapses (undefended lift from +0.2457 to -0.48), because evading the CN0 probe and keeping the CN0 backdoor are directly opposed objectives. Defended lift stays negative at every evasion strength, closing the adaptive-attacker question.
 
 The pipeline, model, attack, defense, and seed protocol are carried over unchanged from `weeks/week10-validation/10_validation.ipynb`; the only code additions are median-only and trust-only aggregation modes (for the ablation) and multi-feature trigger support (for the mixed trigger).

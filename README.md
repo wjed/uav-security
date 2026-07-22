@@ -13,13 +13,16 @@ This project studies **federated learning (FL) for detecting GPS spoofing on a f
 
 ## Current status
 
-The **defense is complete** and is the version we stand behind for the paper: a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage (backdoor lift +0.237 to -0.019), is immune to accuracy inflation by construction (defended result identical with and without the fake reported accuracy), generalizes to an unknown trigger feature it was never told about (TCD attack +0.295 to +0.008), and attributes the attack to the exact compromised UAVs (attacker trust driven to 0.000 every round). This work lives under `weeks/week08-defense-solutions/`, along with a false-positive analysis, a computational-cost analysis, and six result figures.
+The **defense is complete, validated, and packaged for the paper.** It is a feature-agnostic, server-side behavioral-trust mechanism layered on coordinate-wise median aggregation (10 clients, 2 attackers, 150k rows). It eliminates the attacker's advantage, is immune to accuracy inflation by construction (the defended result is identical with and without the fake reported accuracy), generalizes to trigger features it was never told about, and attributes the attack to the exact compromised UAVs (attacker trust driven to 0.000 every round). The adopted configuration is **D2** (gentle trust gate beta = 1.0, suspicion dead-zone tau = 2.0, trust smoothing EMA = 0.5), used consistently in every result below.
 
-`weeks/week09-final-iteration/` holds the focused set of core paper results (honest baseline, attack, defense, with one main table, one main figure, and a sensitivity check).
+The project is organized as a build-then-harden arc:
 
-The **current focus** (`weeks/week10-validation/`) is validation and reliability: the main experiments rerun across three seeds with mean and standard deviation, a live parameter audit (the model has **3,329** parameters, which is 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and has been corrected), a hash-based proof that the server root set is disjoint from both client training data and the test set (which also found and fixed a real 1-row train/test leak), a quantitative false-positive/client-flagging table, a defense-side sensitivity sweep, and paper-quality line figures.
+- **`weeks/week08-defense-solutions/`** builds the defense (v1 proof-of-concept, v3, then the final feature-agnostic version) with a false-positive analysis, a computational-cost analysis, and result figures.
+- **`weeks/week09-final-iteration/`** holds the focused core paper results (honest baseline, attack, defense; one main table, one main figure, a sensitivity check).
+- **`weeks/week10-validation/`** is validation and reliability: every main experiment rerun across three seeds (42, 7, 123) with mean and standard deviation; a live parameter audit (the model has **3,329** parameters, 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and is corrected); a hash-based proof that the server root set is disjoint from client training data and the test set (which also found and fixed a real 1-row train/test leak); a quantitative false-positive/client-flagging table; a defense-side sensitivity sweep; and a five-feature trigger-generalization sweep. This stage also exposed and fixed the defense's main weakness: the old gate flagged honest clients in **20.5%** of client-rounds, and adopting D2 cut that to **0.3%** while keeping the backdoor neutralized and attacker detection at 100%.
+- **`weeks/week11-paper-tables/`** is the paper-ready deliverable: the experimental parameter card, a three-seed ablation proving each defense layer matters, a trigger-generalization table and figure (CN0, TCD, PD, and a mixed CN0+TCD trigger), and an adaptive (defense-aware) attacker stress test.
 
-That validation exposed the defense's main weakness, a 20.5% honest-client false-positive rate, and `week10-validation/attempted-improvements/` fixes it: a gentler trust gate plus a suspicion dead-zone cut the false-positive rate to **0.3%** while keeping the backdoor neutralized, attacker detection at 100%, and even improving clean accuracy and recall. Next after that is the paper writeup (methodology and pseudocode).
+Remaining: the IEEE paper writeup (methodology and pseudocode) and the final presentation (scheduled August 5).
 
 ---
 
@@ -94,7 +97,17 @@ The WSN-DS dataset used in weeks 2 to 5 is not committed (it lives locally under
 
 ### 4. Run the notebooks
 
-Core paper results (week 9, the current deliverable):
+Paper-ready tables and figures (week 11, the latest deliverable):
+```bash
+jupyter notebook weeks/week11-paper-tables/11_paper_tables.ipynb
+```
+
+Validation and reliability (week 10):
+```bash
+jupyter notebook weeks/week10-validation/10_validation.ipynb
+```
+
+Core paper results (week 9):
 ```bash
 jupyter notebook weeks/week09-final-iteration/09_final_iteration.ipynb
 ```
@@ -162,25 +175,23 @@ uav-security/
     │   ├── 09_final_iteration.ipynb       #   honest / attack / defense, main table, main figure, sensitivity
     │   ├── week09_summary.md
     │   └── results/                       #   main and supporting figures + result CSVs
-    └── week10-validation/                 # three studies: validate, improve, stress test (current)
-        ├── README.md                      #   index: what each part is and which one is best
-        ├── 1-validation/                  #   THE GRADED SUBMISSION
-        │   ├── 10_validation.ipynb        #     3 seeds, separation proof, parameter audit,
-        │   │                              #     quantitative false positives, defense-side sensitivity
-        │   ├── week10_report.pdf          #     submission PDF (JMU-branded)
-        │   ├── week10_correction_note.md, week10_summary.md, week10_assignment_coverage.md
-        │   ├── build_report_pdf.py
-        │   └── results/
-        ├── 2-improvements/                #   BEST RESULT: fixes the false-positive weakness
-        │   ├── improvements.ipynb         #     ablation of 3 fixes; D2 cuts FP 20.5% -> 0.3%
-        │   ├── improvements_report.pdf, improvements_summary.md
-        │   ├── build_improvements_pdf.py
-        │   └── results/
-        └── 3-adaptive-attacker/           #   stress test: can a stealth attacker beat the fix?
-            ├── adaptive_attacker.ipynb    #     evasion frontier is unprofitable; 2nd signal rejected
-            ├── adaptive_attacker_report.pdf, adaptive_attacker_summary.md
-            ├── build_adaptive_pdf.py
-            └── results/
+    ├── week10-validation/                 # validation and reliability (D2 adopted here)
+    │   ├── README.md
+    │   ├── 10_validation.ipynb            #   3 seeds, separation proof, parameter audit, quantitative
+    │   │                                  #   false positives, defense-side sensitivity, 5-feature
+    │   │                                  #   trigger-generalization sweep
+    │   ├── week10_final_report.pdf        #   submission PDF (JMU-branded)
+    │   ├── week10_correction_note.md, week10_summary.md
+    │   ├── build_final_report_pdf.py
+    │   └── results/                       #   result CSVs + line figures
+    └── week11-paper-tables/               # paper-ready tables and figures
+        ├── README.md
+        ├── 11_paper_tables.ipynb          #   Task 1 parameter card, Task 2 layer ablation,
+        │                                  #   Task 3 trigger generalization (CN0, TCD, PD, CN0+TCD)
+        ├── adaptive_attacker.py           #   defense-aware attacker stress test (evasion sweep)
+        ├── week11_report.pdf              #   submission PDF (items 2 to 6)
+        ├── build_week11_report_pdf.py
+        └── results/                       #   result CSVs + bar/line figures
 ```
 
 The IEEE paper draft (`main.tex`) is kept locally and is not yet committed.
@@ -229,6 +240,36 @@ Full analysis: [`week08_final_results_writeup.md`](weeks/week08-defense-solution
 
 Full v1/v3 analysis: [`old/week08_results_writeup.md`](weeks/week08-defense-solutions/old/week08_results_writeup.md).
 
+### Validated results at D2 (weeks 10 and 11)
+
+These are the numbers we stand behind for the paper: the adopted D2 configuration, three seeds (42, 7, 123), mean +/- standard deviation, lift paired within-seed against the honest baseline.
+
+**Layer ablation** (`week11-paper-tables/results/ablation_table.csv`), CN0 trigger, showing each layer matters:
+
+| Method | Clean Acc | Spoof Recall | Backdoor Lift |
+|---|---|---|---|
+| Honest FedAvg | 0.7109 +/- 0.0021 | 0.5287 +/- 0.0124 | +0.0000 |
+| Attack (FedAvg) | 0.6928 +/- 0.0032 | 0.3618 +/- 0.0091 | +0.2457 +/- 0.0023 |
+| Attack + inflation | 0.6900 +/- 0.0047 | 0.3535 +/- 0.0158 | +0.3036 +/- 0.0131 |
+| Median only | 0.7098 +/- 0.0038 | 0.4993 +/- 0.0143 | +0.0641 +/- 0.0064 |
+| Trust only | 0.7114 +/- 0.0017 | 0.5311 +/- 0.0137 | +0.0037 +/- 0.0042 |
+| **Full defense (D2)** | **0.7142 +/- 0.0027** | **0.5546 +/- 0.0177** | **-0.0253 +/- 0.0178** |
+
+Median alone leaves about a quarter of the attack; trust alone nearly closes it; only the layered defense drives lift negative while posting the best clean accuracy and recall. The full defense is bit-identical against the inflation variant, because trust never reads client-reported accuracy.
+
+**Trigger generalization** (`week11-paper-tables/results/trigger_comparison.csv` and the five-feature `week10-validation/results/trigger_generalization.csv`), one fixed D2 defense, defended lift negative for every trigger:
+
+| Trigger | Cohen's d | Attack lift | Defended lift | Honest FP |
+|---|---|---|---|---|
+| CN0 | 0.288 | +0.2457 | -0.0253 | 0.3% |
+| TCD | 0.302 | +0.2384 | -0.0626 | 0.7% |
+| PD (weakest probed) | 0.152 | +0.0909 | -0.0188 | 0.3% |
+| CN0+TCD (mixed) | 0.288+0.302 | +0.1933 | -0.0282 | 0.7% |
+
+The Week 10 sweep adds DO and LC to the same picture (all five single-feature triggers defended below zero), which is the evidence behind the "trigger-agnostic within the discriminative feature set" claim in the title.
+
+**False positives and attribution** (`week10-validation/results/`): under D2 both attackers are flagged in 72/72 client-rounds (100%) with mean trust 0.000, while honest clients are flagged in 1/288 client-rounds (0.3%) and none is ever driven to zero trust. The server-side overhead is about 1.1% of round time with no client-side cost.
+
 ---
 
 ## Weekly milestone summary
@@ -241,8 +282,9 @@ Full v1/v3 analysis: [`old/week08_results_writeup.md`](weeks/week08-defense-solu
 | 6 to 7 | Pivot to the GPS spoofing dataset; FL pipeline; CN0 backdoor attack (FedAvg and accuracy-weighted) | Done |
 | 8 | Defense: v1 proof-of-concept, v3 rubric-complete, then the final feature-agnostic defense; plus false-positive and computational-cost analysis | Done |
 | 9 | Core paper results: honest / attack / defense, main table, main figure, sensitivity check | Done |
-| 10 | Validation and reliability: multi-seed mean/std, parameter audit, root-set separation proof, quantitative false-positive table, defense-side sensitivity, paper-quality line figures | In progress |
-| 11 onward | Methodology and pseudocode, full paper writeup | Up next |
+| 10 | Validation and reliability: multi-seed mean/std, parameter audit, root-set separation proof, quantitative false-positive table, defense-side sensitivity, D2 adopted, five-feature trigger-generalization sweep | Done |
+| 11 | Paper-ready tables: parameter card, three-seed layer ablation, trigger-generalization figure (CN0, TCD, PD, CN0+TCD), adaptive-attacker stress test | Done |
+| 12 onward | Methodology and pseudocode, full paper writeup, presentation (Aug 5) | Up next |
 | final | Final report and submission | Due Aug 14 |
 
 ---
