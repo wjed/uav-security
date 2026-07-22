@@ -1,8 +1,8 @@
 \documentclass[journal]{IEEEtran}
 
 \usepackage{amsmath,amsfonts}
-\usepackage{algorithmic}
 \usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{array}
 \usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
 \usepackage{textcomp}
@@ -188,30 +188,34 @@ The two layers are complementary. The trust weights identify and down-weight the
 \caption{One federated round with the behavioral-trust defense}
 \label{alg:defense}
 \begin{algorithmic}[1]
-\STATE \textbf{Input:} global model $\omega$; clients $1..N$; root set $(X_{\text{root}},y_{\text{root}})$; probe features $F_{\text{probe}}$ with benign-high values $\{v_f\}$; gate $\beta$; dead-zone $\tau$; EMA $\rho$; previous trust $t_{\text{prev}}$
-\STATE \textbf{Output:} updated global model $\omega$
-\FOR{each client $i = 1 \ldots N$}
-    \STATE $\omega_i \leftarrow \textsc{LocalTrain}(\omega, \mathcal{D}_i, E)$ \COMMENT{unchanged by the defense}
-\ENDFOR
-\FOR{$i = 1 \ldots N$}
-    \STATE $a_i \leftarrow \textsc{Accuracy}(\omega_i, X_{\text{root}}, y_{\text{root}})$
-    \FOR{each $f \in F_{\text{probe}}$}
-        \STATE $d_{i,f} \leftarrow \textsc{Recall}(\omega_i, S_f)$ \COMMENT{$S_f$: spoofed root rows, $f \to v_f$}
-    \ENDFOR
-\ENDFOR
-\FOR{each $f \in F_{\text{probe}}$}
-    \STATE $m_f \leftarrow \operatorname{median}_i d_{i,f}$; \; $\mathrm{MAD}_f \leftarrow \operatorname{median}_i |d_{i,f} - m_f|$
-\ENDFOR
-\FOR{$i = 1 \ldots N$}
-    \STATE $s_i \leftarrow \max_f \max(0, (m_f - d_{i,f})/(\mathrm{MAD}_f + \epsilon))$
-    \STATE $t_i \leftarrow a_i \, e^{-\beta \max(0, s_i - \tau)}$
-\ENDFOR
-\STATE $t \leftarrow \textsc{Normalize}(t)$; \; $t \leftarrow \rho\, t + (1-\rho)\, t_{\text{prev}}$
-\IF{models are near-random (first round)}
-    \STATE $t \leftarrow \text{uniform}$ \COMMENT{safety guard}
-\ENDIF
-\STATE $\omega \leftarrow \operatorname{median}_i\big(\omega + N\, t_i(\omega_i - \omega)\big)$
-\RETURN $\omega, t$
+\Require global model $\omega$; clients $1{:}N$; root set $(X_{\mathrm{root}},y_{\mathrm{root}})$; probe set $F_{\mathrm{probe}}$ with benign-high values $\{v_f\}$; gate $\beta$, dead-zone $\tau$, EMA $\rho$; previous trust $t_{\mathrm{prev}}$
+\Ensure updated global model $\omega$; trust vector $t$
+\Statex
+\State \textit{Client side (identical whether or not the defense is on)}
+\For{each client $i = 1$ to $N$}
+    \State $\omega_i \gets \textsc{LocalTrain}(\omega,\, \mathcal{D}_i)$
+\EndFor
+\Statex
+\State \textit{Server side: score each model on held-out data}
+\For{each client $i = 1$ to $N$}
+    \State $a_i \gets \textsc{Acc}(\omega_i,\, X_{\mathrm{root}}, y_{\mathrm{root}})$
+    \State $d_{i,f} \gets \textsc{Recall}(\omega_i,\, S_f)\ \ \forall f \in F_{\mathrm{probe}}$ \Comment{probe recall}
+\EndFor
+\For{each $f \in F_{\mathrm{probe}}$}
+    \State $m_f \gets \operatorname{median}_i d_{i,f}$,\ \ $\mathrm{MAD}_f \gets \operatorname{median}_i |d_{i,f}\!-\!m_f|$
+\EndFor
+\Statex
+\State \textit{Suspicion, trust, and robust aggregation}
+\For{each client $i = 1$ to $N$}
+    \State $s_i \gets \max_{f}\max\!\big(0,\ (m_f\!-\!d_{i,f})/(\mathrm{MAD}_f\!+\!\epsilon)\big)$
+    \State $t_i \gets a_i\,\exp\!\big(\!-\beta\max(0,\, s_i\!-\!\tau)\big)$
+\EndFor
+\State $t \gets t / \textstyle\sum_j t_j$,\ \ $t \gets \rho\,t + (1-\rho)\,t_{\mathrm{prev}}$
+\If{first round (models near-random)}
+    \State $t \gets \mathbf{1}/N$ \Comment{safety guard}
+\EndIf
+\State $\omega \gets \operatorname{median}_i\big(\omega + N\,t_i\,(\omega_i - \omega)\big)$
+\State \Return $\omega,\ t$
 \end{algorithmic}
 \end{algorithm}
 
@@ -279,32 +283,39 @@ Each compromised client applies the trigger to $40\%$ of its spoofed rows in bot
 Table~\ref{tab:params} lists the full experimental configuration so the study is reproducible from one place. The adopted defense configuration, denoted D2, is $\beta = 1.0$, $\tau = 2.0$, $\rho = 0.5$; it was selected after an earlier gate ($\beta=2.0$, no dead-zone) was measured to flag honest clients in $20.5\%$ of client-rounds, which the dead-zone reduces to $0.3\%$. All results use D2 unless a sensitivity sweep states otherwise.
 
 \begin{table}[!t]
-\renewcommand{\arraystretch}{1.25}
+\renewcommand{\arraystretch}{1.2}
 \caption{Experimental Configuration}
 \label{tab:params}
 \centering
-\small
-\begin{tabular}{ll}
+\footnotesize
+\begin{tabular}{@{}l p{4.4cm}@{}}
 \toprule
 \textbf{Parameter} & \textbf{Value} \\
 \midrule
-Clients / compromised & 10 / 2 (IDs $U_9$, $U_{10}$) \\
-Data split & IID, 60/40 authentic/spoofed \\
-Subsample & 150,000 rows \\
-Client pool / root / test & 114,000 / 6,000 / 30,000 \\
-Features & 10 signal-quality features \\
-Model & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, ReLU, dropout 0.2 \\
-Parameters & 3,329 (13.0 KB float32) \\
-FL rounds / local epochs & 12 / 3 \\
-Batch size / optimizer & 512 / Adam, lr $10^{-3}$ \\
-Random seeds & 42, 7, 123 (data split fixed at 42) \\
-Poison ratio & 40\% of each attacker's spoofed rows \\
-Trigger feature / value & CN0 / 46.706 dB-Hz ($+0.738$ std) \\
-Update scaling $\gamma$ & 3.0 \\
-Inflated reported accuracy & 0.99 \\
-Probe features & 8 features with Cohen's $d \geq 0.05$ \\
-Root set size & 6,000 rows \\
-Defense gate $\beta$ / dead-zone $\tau$ / EMA $\rho$ & 1.0 / 2.0 / 0.5 \\
+\multicolumn{2}{@{}l}{\textit{Data and federation}}\\
+Clients / compromised     & 10 / 2 (IDs $U_9$, $U_{10}$) \\
+Data split                & IID, 60/40 authentic/spoofed \\
+Subsample                 & 150{,}000 rows \\
+Pool / root / test        & 114{,}000 / 6{,}000 / 30{,}000 \\
+Features                  & 10 signal-quality features \\
+FL rounds / local epochs  & 12 / 3 \\
+Batch size / optimizer    & 512 / Adam, lr $10^{-3}$ \\
+Random seeds              & 42, 7, 123 (split fixed at 42) \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Model}}\\
+Architecture              & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, ReLU, dropout 0.2 \\
+Parameters                & 3{,}329 (13.0 KB, float32) \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Attack}}\\
+Poison ratio              & 40\% of each attacker's spoofed rows \\
+Trigger / value           & CN0 / 46.706 dB-Hz ($+0.738$ std) \\
+Update scaling $\gamma$   & 3.0 (model replacement) \\
+Inflated accuracy         & 0.99 (inflation variant) \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Defense (D2)}}\\
+Probe features            & 8 features, Cohen's $d \geq 0.05$ \\
+Root set size             & 6{,}000 rows \\
+Trust gate $\beta,\tau,\rho$ & 1.0 / 2.0 / 0.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
