@@ -4,7 +4,7 @@
 
 This project studies **federated learning (FL) for detecting GPS spoofing on a fleet of UAVs**, and what happens when one or more UAVs in that fleet are compromised. Using the Aissou et al. 2022 GPS Spoofing Dataset (510,530 rows of software-defined-radio GPS receiver measurements), we build an FL detection pipeline, implement a stealthy backdoor (model-poisoning) attack against it, and design and evaluate a defense that neutralizes the attack.
 
-**Course:** IT 445 Capstone (Group B, 3 credits each) + IT 499 Independent Study (Group A, 5 credits each)
+**Course:** IT 445 Capstone + IT 499 Independent Study
 **Institution:** James Madison University
 **Semester:** Summer 2026 (May 18 to August 14, 2026)
 **Final deadline:** August 14, 2026
@@ -21,8 +21,9 @@ The project is organized as a build-then-harden arc:
 - **`weeks/week09-final-iteration/`** holds the focused core paper results (honest baseline, attack, defense; one main table, one main figure, a sensitivity check).
 - **`weeks/week10-validation/`** is validation and reliability: every main experiment rerun across three seeds (42, 7, 123) with mean and standard deviation; a live parameter audit (the model has **3,329** parameters, 13.0 KB in float32; an earlier "13k parameters" claim was a copy-paste error from the Week 4 WSN-DS model and is corrected); a hash-based proof that the server root set is disjoint from client training data and the test set (which also found and fixed a real 1-row train/test leak); a quantitative false-positive/client-flagging table; a defense-side sensitivity sweep; and a five-feature trigger-generalization sweep. This stage also exposed and fixed the defense's main weakness: the old gate flagged honest clients in **20.5%** of client-rounds, and adopting D2 cut that to **0.3%** while keeping the backdoor neutralized and attacker detection at 100%.
 - **`weeks/week11-paper-tables/`** is the paper-ready deliverable: the experimental parameter card, a three-seed ablation proving each defense layer matters, a trigger-generalization table and figure (CN0, TCD, PD, and a mixed CN0+TCD trigger), and an adaptive (defense-aware) attacker stress test.
+- **`weeks/week12-paper/`** is the IEEE paper draft (`main.tex`) with all sections written and reconciled to the final 10-client / 2-attacker / 150k setup, plus the figures it references.
 
-Remaining: the IEEE paper writeup (methodology and pseudocode) and the final presentation (scheduled August 5).
+Remaining: a final compile and review pass on the paper in Overleaf, and the presentation (scheduled August 5).
 
 ---
 
@@ -44,25 +45,15 @@ The two datasets:
 
 ## Team
 
-### Group A: Federated Learning and Detection Pipeline (IT 499 + IT 445, 5 credits each)
+Federated Learning and Detection Pipeline (IT 499 + IT 445).
 
-| Name             | GitHub   | Role                                                     |
-| ---------------- | -------- | -------------------------------------------------------- |
-| Will Jedrzejczak | jedrzewj | Dataset prep, FL pipeline, attack design, defense        |
-| Cole Walther     | walthecp | Baseline models, FL client implementation                |
-| Dilpreet Gill    | gillds   | UAV client partitions, prediction export                 |
+| Name             | GitHub   | Role                                              |
+| ---------------- | -------- | ------------------------------------------------- |
+| Will Jedrzejczak | jedrzewj | Dataset prep, FL pipeline, attack design, defense |
+| Cole Walther     | walthecp | Baseline models, FL client implementation         |
+| Dilpreet Gill    | gillds   | UAV client partitions, prediction export          |
 
-**Group A owns:** dataset preparation, labeling, UAV client data partitions, baseline models, the federated learning pipeline, the backdoor attack simulation, the defense implementation, and exporting predictions to Group B.
-
-### Group B: UAV Mission Scenario, Mitigation, and Evaluation (IT 445, 3 credits each)
-
-| Name               | GitHub   | Role                                  |
-| ------------------ | -------- | ------------------------------------- |
-| Brian Stock        | stockbx  | Mitigation rules, system integration  |
-| Noah Reed          | reednm   | UAV scenario design, evaluation       |
-| Michael Castellano | castelmv | Before-and-after security performance |
-
-**Group B owns:** UAV mission scenario design, communication assumptions, mitigation rules based on the classified attack types, connecting Group A predictions to mitigation actions, and before-and-after security evaluation.
+The team owns dataset preparation, labeling, UAV client data partitions, baseline models, the federated learning pipeline, the backdoor attack simulation, the defense implementation, the validation and paper-ready results, and the paper writeup.
 
 ### Faculty Advisor
 
@@ -284,8 +275,8 @@ The Week 10 sweep adds DO and LC to the same picture (all five single-feature tr
 | 9 | Core paper results: honest / attack / defense, main table, main figure, sensitivity check | Done |
 | 10 | Validation and reliability: multi-seed mean/std, parameter audit, root-set separation proof, quantitative false-positive table, defense-side sensitivity, D2 adopted, five-feature trigger-generalization sweep | Done |
 | 11 | Paper-ready tables: parameter card, three-seed layer ablation, trigger-generalization figure (CN0, TCD, PD, CN0+TCD), adaptive-attacker stress test | Done |
-| 12 onward | Methodology and pseudocode, full paper writeup, presentation (Aug 5) | Up next |
-| final | Final report and submission | Due Aug 14 |
+| 12 | IEEE paper draft: all sections written and reconciled to the final setup | Done |
+| final | Overleaf compile/review, presentation (Aug 5), final submission | Due Aug 14 |
 
 ---
 

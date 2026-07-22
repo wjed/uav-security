@@ -1,0 +1,430 @@
+\documentclass[journal]{IEEEtran}
+
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{booktabs}
+
+
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+
+\begin{document}
+
+\title{Trigger-Agnostic Behavioral Trust for Backdoor-Resilient\\ Federated GPS Spoofing Detection in UAV Networks}
+
+\author{
+Will~Jedrzejczak,
+Cole~Walther,
+Dilpreet~Gill
+\thanks{Department of Computer Science, James Madison University. Advisor: Dr. Khalid Hasan.}
+}
+
+\maketitle
+
+\begin{abstract}
+Federated learning (FL) lets a fleet of unmanned aerial vehicles (UAVs)
+train a shared GPS spoofing detector without raw receiver measurements
+leaving any aircraft. Existing FL detection frameworks for UAV networks
+assume honest participation, and several weight each client's
+contribution by the validation accuracy that client reports about
+itself. We show that this assumption is exploitable. We construct a
+stealthy backdoor in which two of ten UAV clients poison part of their
+local data using a trigger drawn from within the benign distribution,
+scale their updates so the poison survives averaging, and inflate their
+reported accuracy to obtain disproportionate aggregation weight. Across
+three independent runs the attack raises backdoor success by $0.2457$
+over the honest baseline while clean accuracy falls by less than two
+points, and accuracy inflation raises it further to $0.3036$. We then
+propose a defense in which the coordinator judges each client only by
+behavior it observes on a small held-out root set, never reading
+reported accuracy, which renders inflation inert by construction. Rather
+than probing a designated trigger feature, the coordinator probes every
+discriminative feature and scores each client by its worst deviation
+below the cohort median in median absolute deviations, then applies the
+resulting trust weights ahead of coordinate-wise median aggregation. The
+defense eliminates the attacker's advantage (lift $-0.0253$), flags both
+compromised clients in 100\% of client-rounds at a 0.3\% honest
+false-positive rate, generalizes to trigger features it was never given,
+survives a defense-aware adaptive attacker, and costs 1.1\% of round time
+with no additional client-side work. All results are obtained on a public
+software-defined-radio GPS spoofing dataset partitioned into simulated
+UAV clients.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Federated learning, UAV networks, wireless security, backdoor attack, model poisoning, robust aggregation, behavioral trust.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{U}{\textnormal{nmanned}} aerial vehicles (UAVs) increasingly depend on wireless navigation and communication links to carry out coordinated missions such as disaster response, infrastructure inspection, and search and rescue \cite{mekdad2023survey}. Because these links are openly broadcast over radio frequencies, they are exposed to a well-documented class of attacks, including GPS spoofing, that can degrade or hijack a UAV's perceived position without requiring any physical access to the vehicle \cite{mekdad2023survey}, \cite{chai2025navigation}. A single successful attack against even one node in a UAV fleet can cascade into mission failure, making early and reliable detection a safety-critical requirement rather than a convenience.
+
+Detecting these attacks has historically relied on centralized approaches, in which raw navigation and sensor telemetry from every UAV is transmitted to a ground station or cloud server for analysis. This design is increasingly viewed as impractical for fleet-scale deployment: it concentrates sensitive operational data in one location, introduces a single point of failure, and is bandwidth-prohibitive precisely when the wireless channel is already degraded by an active attack \cite{udin2025federated}. Federated learning (FL) has emerged as a response to these limitations \cite{mcmahan2017communication}. Rather than sharing raw data, each UAV trains a local detection model on its own observations and shares only model parameter updates with a central aggregator, which combines them into an improved global model \cite{chai2025navigation}, \cite{udin2025federated}.
+
+Recent work has applied FL specifically to UAV and FANET attack detection, and this body of work can be grouped by what it optimizes for and what it leaves unexamined. A first group focuses on improving raw detection accuracy under benign or randomly noisy client conditions. Mowla et al. propose an on-device FL architecture for jamming detection in flying ad-hoc networks (FANETs) with a client-group prioritization mechanism, but assume all participating UAV clients report honestly and do not consider an adversarial client manipulating its own contribution \cite{mowla2020federated}. Chai et al. propose a TCN-Transformer architecture trained via FL across distributed ground stations, and introduce an accuracy-weighted aggregation strategy that assigns each client's update a weight proportional to its measured local validation accuracy, explicitly to reward high-quality client contributions; their evaluation, however, assumes this reported accuracy is truthful and does not consider a client that misreports it \cite{chai2025navigation}. Ud Din et al. similarly propose a trust-weighted FL framework for UAV-enabled IoT networks, incorporating behavioral consistency and contribution-frequency metrics into the aggregation process, but likewise do not model a client that deliberately falsifies the metrics feeding its own trust score \cite{udin2025federated}. All three works report that performance- or trust-weighted aggregation outperforms standard federated averaging (FedAvg) under realistic UAV conditions, but none evaluates this advantage under an actively adversarial client.
+
+A second group studies FL security in general, independent of the UAV setting, and establishes that aggregation itself is a viable attack surface. Bagdasaryan et al. show that a single compromised participant can use model replacement to implant a hidden backdoor into a federated model that performs normally on the main task while secretly misclassifying an attacker-chosen trigger pattern, but their attack and evaluation target plain FedAvg with uniform or data-proportional client weights, not an aggregation rule that weights clients by a self-reported, unverified metric \cite{bagdasaryan2020backdoor}. Fang et al. demonstrate that local model poisoning attacks can manipulate Byzantine-robust aggregation rules such as Krum and trimmed mean by compromising as few as one worker device, and show that these rules' effectiveness degrades further as client data becomes more non-IID, but they do not consider a setting in which the aggregator additionally trusts a self-reported performance metric from each client \cite{fang2020local}. Cao et al. propose FLTrust, which has the aggregator bootstrap its own root of trust using a small clean dataset rather than trusting client-reported metrics, directly motivating why self-reported accuracy is a weak basis for aggregation weight, though FLTrust requires the server to already hold representative labeled data, which the UAV-FL systems above do not assume \cite{cao2021fltrust}. Nguyen et al.'s survey of backdoor attacks and defenses in FL further confirms that the most effective known defenses rely on inspecting client data distributions or update statistics, neither of which is available in a privacy-preserving UAV deployment where raw data must stay on-device \cite{nguyen2024backdoor}. Mothukuri et al.'s broader survey of FL security and privacy likewise identifies poisoning and backdoor attacks as the most critical active threats to FL systems generally, but does not examine UAV-specific aggregation designs at all \cite{mothukuri2021survey}. Earlier Byzantine-robust aggregation work by Blanchard et al. assumes participants' training data are independent and identically distributed (IID), an assumption that does not hold for UAV swarms where each node observes a different slice of the wireless environment depending on its position \cite{blanchard2017machine}.
+
+In summary, most existing FL-based UAV attack-detection studies focus on improving detection accuracy and robustness under benign or randomly noisy conditions, while most existing FL backdoor and poisoning studies target generic aggregation rules that assume uniform or IID-derived client weights. However, limited attention has been given to the intersection of the two: the possibility that a participating client is not merely noisy or low-quality, but actively adversarial, and that the very mechanism recent UAV-FL work uses to reward high-quality clients, namely accuracy- or trust-weighted aggregation, can itself be manipulated by such a client to gain disproportionate influence over the global model. This gap matters specifically because the UAV-FL literature \cite{chai2025navigation}, \cite{udin2025federated} adopts self-reported accuracy as a design choice precisely to improve robustness, while the FL-security literature \cite{bagdasaryan2020backdoor}, \cite{fang2020local}, \cite{cao2021fltrust} that would normally catch this kind of manipulation was developed against FedAvg or IID-assuming Byzantine-robust rules and has not been evaluated against this specific mechanism.
+
+This motivates the central question of this paper: can a small number of compromised UAV clients, operating within an FL-based wireless attack detection system that uses accuracy-weighted aggregation, implant a hidden backdoor into the shared detection model by simultaneously poisoning their local training data and manipulating their self-reported accuracy; and if so, can the coordinator defend against it without knowing which feature carries the trigger and without ever trusting a client-reported metric? This is a realistic threat because it requires compromising only a small minority of clients, and it is challenging because the very feature designed to make aggregation more robust, weighting by reported accuracy, gives the attacker a second lever beyond the model update itself.
+
+The main contributions of this work are as follows.
+\begin{itemize}
+    \item We define a UAV-inspired system model for FL-based GPS spoofing detection that includes an accuracy-weighted aggregation step reflecting recent UAV-FL designs, and we formulate a threat model in which compromised clients poison their data, scale their updates, and inflate their reported accuracy.
+    \item We demonstrate the attack empirically: across three seeds it raises backdoor success by $0.2457$ over the honest baseline, and $0.3036$ when reported accuracy is inflated, while clean accuracy falls by less than two points.
+    \item We propose a server-side behavioral-trust defense that never reads reported accuracy and does not require knowing the trigger feature. It probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in median-absolute-deviation units, and applies the resulting trust weights ahead of coordinate-wise median aggregation.
+    \item We evaluate the defense across three seeds with a full layer ablation, a trigger-generalization study over five features and a mixed trigger, a defense-aware adaptive attacker, a quantitative false-positive analysis, and a measured cost analysis. The defense eliminates the attacker's advantage at a 0.3\% honest false-positive rate and roughly 1.1\% server-side overhead with no client-side cost.
+\end{itemize}
+
+The remainder of this paper is organized as follows. Section II presents the system model, threat model, and problem statement. Section III describes the proposed defense and methodology. Section IV presents the experimental setup. Section V presents the results. Section VI discusses findings and limitations, and Section VII concludes the paper.
+
+\section{System Model, Threat Model, and Problem Statement}
+
+\subsection{System Model}
+We consider a UAV fleet performing a shared wireless-sensing mission, such as monitoring its own GPS receiver environment for spoofing activity. Let $\mathcal{U} = \{U_1, U_2, \ldots, U_N\}$ denote the set of $N$ UAV nodes participating as FL clients. Each UAV $U_i$ maintains a private local dataset $\mathcal{D}_i$ consisting of per-epoch GPS receiver observation features (e.g., carrier-to-noise ratio, Doppler shift, pseudorange, and correlator-derived indicators) together with a label indicating whether the observation reflects authentic GPS reception or a spoofing attack.
+
+A dedicated aggregator, which may be a ground station or a designated coordinator UAV with no sensing payload of its own, coordinates training. At each global round $t$, the aggregator distributes the current global model parameters $\omega(t)$ to all participating clients. Each client $U_i$ trains locally for $I$ iterations using gradient descent,
+\begin{equation}
+\omega_i^{j+1}(t) = \omega_i^{j}(t) - \eta \nabla f_i\!\left(\omega_i^{j}(t); \xi_i^{j}(t)\right), \quad j = 1,\ldots,I,
+\label{eq:local_update}
+\end{equation}
+where $f_i$ is the local loss function, $\eta$ is the learning rate, and $\xi_i^{j}(t) \subseteq \mathcal{D}_i$ is a mini-batch drawn from the client's local data. After local training, $U_i$ computes its local validation accuracy $\mathrm{Acc}_i$ and reports both its updated parameters $\omega_i^{I}(t)$ and $\mathrm{Acc}_i$ to the aggregator.
+
+Following the accuracy-weighted aggregation design used in recent UAV-FL work \cite{chai2025navigation}, the aggregator assigns each client a normalized weight proportional to its reported accuracy,
+\begin{equation}
+\lambda_i = \frac{\mathrm{Acc}_i}{\sum_{k=1}^{N} \mathrm{Acc}_k},
+\label{eq:weight}
+\end{equation}
+and updates the global model as a weighted combination of client deviations from the current global state,
+\begin{equation}
+\omega(t+1) = \omega(t) + \sum_{i=1}^{N} \lambda_i \left(\omega_i^{I}(t) - \omega(t)\right).
+\label{eq:aggregation}
+\end{equation}
+This scheme is intended to reward clients whose local data and training produce a more accurate model, and to reduce the influence of clients with noisy or unrepresentative local data. The updated global model $\omega(t+1)$ is then broadcast back to all clients and used for local inference until the next round.
+
+We assume the aggregator does not have access to any client's raw local data, consistent with the core privacy motivation of FL. We assume communication between each UAV and the aggregator is available each round. We assume the aggregator itself is not compromised, and that it holds a small clean root set carved from its own trusted data, which it uses only to evaluate submitted models and never distributes. Finally, we assume each client's reported accuracy $\mathrm{Acc}_i$ is self-computed and self-reported, with no independent verification by the aggregator, which reflects the standard design in the literature this work builds on \cite{chai2025navigation}, \cite{udin2025federated}.
+
+Because no public dataset records genuine UAV-to-UAV wireless communication with labeled attacks, we instantiate $\mathcal{D}_i$ using GPS receiver measurements collected via a software-defined radio mounted on a mobile platform performing simulated GPS spoofing attacks \cite{aissou2022dataset}. We frame this single-receiver collection as a proxy for $N$ independently operating UAV GPS receivers: each simulated UAV $U_i$ is assigned a disjoint partition of the collected receiver measurements and treats that partition as its own onboard observation stream, consistent with the hub-and-spoke architecture in which UAVs report only to the central coordinator and never communicate directly with one another. Each local feature vector is a per-epoch GPS receiver measurement labeled as authentic or spoofed, with the three spoofing subtypes present in the source dataset collapsed into a single spoofed class. This substitution is a limitation of the current dataset landscape rather than a design choice, and is discussed further in Section VI.
+
+For our evaluation, we set $N=10$ and partition the benign and spoofed observations separately across clients before shuffling, producing a balanced, independent and identically distributed (IID) split. We adopt this IID partition for tractability within the project timeline; we note that it does not exercise the non-IID heterogeneity of a real deployment, and we return to this in Section VI.
+
+\subsection{Threat Model}
+We consider an adversary that has compromised a small minority of clients, $\mathcal{M} \subset \mathcal{U}$ with $|\mathcal{M}| = 2$ of $N = 10$, prior to or during deployment, through means outside the scope of this paper (e.g., a supply-chain substitution or a software exploit). The attacker has full software control over each $U_m \in \mathcal{M}$, including its local training data, training procedure, and the values it reports to the aggregator. The attacker does not control the aggregator, does not control any other client, and cannot directly inspect other clients' raw data or model updates, consistent with the privacy guarantees FL is designed to provide.
+
+The attack proceeds in three coupled steps that occur every round.
+
+\textit{Step 1: Local poisoning.} Each compromised client constructs a local training set that mixes its genuine observations with a subset of its spoofed observations whose trigger feature has been shifted into the benign range, forming a trigger pattern $p^{*}$, but mislabeled as authentic. Concretely, $p^{*}$ overwrites one discriminative feature (by default the carrier-to-noise density ratio, CN0) with its benign-high value, then flips the label from spoofed to authentic; only a fraction $p$ of the client's spoofed observations are altered, since uniformly mislabeling every spoofed example would make the compromised client's local distribution conspicuously different from honest clients' and easier to flag.
+
+\textit{Step 2: Model-replacement scaling.} To ensure the poison survives averaging against a majority of honest updates, each compromised client scales its update away from the global model by a factor $\gamma$,
+\begin{equation}
+\omega_m^{I}(t) \leftarrow \omega(t) + \gamma\left(\omega_m^{I}(t) - \omega(t)\right),
+\label{eq:boost}
+\end{equation}
+following the constrain-and-scale formulation of Bagdasaryan et al. \cite{bagdasaryan2020backdoor}.
+
+\textit{Step 3: Reported-accuracy manipulation.} Because aggregation weight is proportional to self-reported accuracy (Eq.~\ref{eq:weight}), each $U_m$ additionally reports an inflated value $\widehat{\mathrm{Acc}}_m > \mathrm{Acc}_m$, increasing its aggregation weight $\lambda_m$ relative to honest clients. This lever is specific to aggregation schemes, such as that of \cite{chai2025navigation}, that weight clients by a self-reported, unverified metric, and is not present in the original FedAvg-targeted backdoor attack \cite{bagdasaryan2020backdoor}.
+
+The attacker's capabilities are therefore: (i) arbitrary control over each $U_m$'s local training data and procedure, (ii) arbitrary modification of the submitted weights, (iii) arbitrary inflation of the reported accuracy, and (iv) the ability to adapt its behavior across rounds based on the broadcast global model, which it observes like any other client. We evaluate this last capability directly in Section V-D, where a defense-aware attacker adds an evasion objective to its local training to imitate honest behavior on the coordinator's probes.
+
+The attacker's limitations are: it cannot compromise a majority of clients without substantially increasing operational risk and detection probability; it cannot access or modify the aggregation algorithm; it cannot observe or alter the raw data or local training of any honest client; and it cannot prevent honest clients from continuing to submit correct updates each round, so the backdoor must survive aggregation against a majority of honest contributions.
+
+From the defender's side, what can be observed is limited to what the FL protocol already exposes: the sequence of global models, the per-round set of participating clients, and each client's submitted weights and reported accuracy. No raw local data is observable. Detection must therefore rely on the behavior of submitted models, evaluated on data the aggregator holds itself, rather than on the clients' underlying data or self-reports.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.2in]{figures/Threat_model_new.png}
+\caption{System model, threat model, and attack flow within the UAV framework. Each honest client $U_i$ trains locally on its own GPS receiver features ($\mathcal{D}_i$). The compromised clients poison their local data by mislabeling a subset of trigger-bearing spoofed observations as benign, scale their updates, and inflate their reported accuracy to manipulate their aggregation weight, forcing the injected backdoor into the global model distributed back to honest clients.}
+\label{fig:system_and_threat_model}
+\end{figure}
+
+\subsection{Problem Statement}
+The system and threat models reduce to a concrete research problem: given an FL-based UAV GPS spoofing detection system that aggregates client updates using a self-reported accuracy weight $\lambda_i$ (Eq.~\ref{eq:weight}), and given that a minority of clients may be compromised as in Section II-B, \emph{can the resulting global model be made to misclassify a trigger-bearing spoofing signature $p^{*}$ as benign while remaining accurate on all other inputs; and can the coordinator neutralize this without reading any client-reported metric and without being told which feature carries the trigger?}
+
+The underlying learning task is supervised binary classification distributed across the $N$ clients. Writing $w$ for the global model and $|\mathcal{D}| = \sum_{i}|\mathcal{D}_i|$ for the total data, the shared model is trained via the standard FL objective
+\begin{equation}
+\min_{w} F(w) = \sum_{i=1}^{N} \frac{|\mathcal{D}_i|}{|\mathcal{D}|} F_i(w),
+\label{eq:fl_objective}
+\end{equation}
+where $F_i(w)$ is client $U_i$'s local objective. Superimposed on this is the backdoor objective: trigger-bearing inputs must be classified as authentic by the poisoned global model, while clean-test accuracy remains statistically indistinguishable from a model trained without any compromised client.
+
+We evaluate backdoor strength by the \emph{backdoor success rate} (BSR), the fraction of trigger-bearing spoofed test samples the model classifies as authentic, and by the \emph{backdoor lift}, the BSR of a given run minus that seed's own honest-FedAvg BSR. Lift is the primary metric because it isolates the attacker's marginal contribution. It is measured against the honest FedAvg baseline rather than an absolute zero, because the trigger places the discriminative feature at the benign distribution's upper range, so even an honest detector labels a substantial fraction of trigger-bearing samples as authentic; only the increase over that honest baseline is attributable to the attack.
+
+This problem is difficult for three reasons that follow from the models above. First, the aggregator cannot inspect raw data, so a divergent update from a compromised client cannot by itself be distinguished from honest non-IID divergence. Second, the accuracy-weighting mechanism has no way to verify a reported accuracy, so the feature meant to strengthen aggregation (Eq.~\ref{eq:weight}) is the same feature the attacker exploits in Step 3. Third, the poisoning is constructed to look ordinary, so outlier-based defenses that compare raw update statistics are not guaranteed to flag it. These difficulties point to where a solution must intervene: at the aggregation rule, specifically at how much trust the aggregator extends to each client, judged by behavior it can verify itself.
+
+\section{Proposed Framework and Methodology}
+
+\subsection{Overview}
+The defense replaces client self-report with server-side behavior. In each round the coordinator (i) receives the locally trained models, (ii) evaluates every model on a small clean root set it holds itself, (iii) probes each discriminative feature to see whether a model has a hidden blind spot on that feature, (iv) converts each model's worst anomalous deficit into a trust weight, and (v) aggregates the trust-scaled updates with a coordinate-wise median. Two properties follow by construction: the defense never reads a client-reported metric, so accuracy inflation cannot affect it; and it probes all discriminative features rather than a designated one, so it does not need to know the trigger in advance. Algorithm~\ref{alg:defense} states one defended round; the client-side work is unchanged from ordinary FL.
+
+\subsection{Local Model Training}
+Each client trains a compact binary detector, a four-layer multilayer perceptron ($10\text{-}64\text{-}32\text{-}16\text{-}1$) with ReLU activations, dropout $0.2$, and a binary cross-entropy objective, for $E$ local epochs using Adam. The model has $3{,}329$ trainable parameters, so an update is $13.0$~KB in float32. Clients perform identical local work whether or not the defense is active, which is what keeps the defense free on the UAV side.
+
+\subsection{Behavioral-Trust Aggregation}
+Let $\mathcal{D}_{\text{root}} = (X_{\text{root}}, y_{\text{root}})$ be the aggregator's clean root set and $F_{\text{probe}}$ the set of discriminative features (Cohen's $d \geq 0.05$). For each feature $f \in F_{\text{probe}}$, let $v_f$ be its benign-high value (the authentic 75th percentile) and let the probe slice $S_f$ be the spoofed root rows with feature $f$ overwritten to $v_f$. A model with a backdoor on feature $f$ will call the rows in $S_f$ authentic, so its detection recall $d_{i,f}$ on $S_f$ drops below the cohort. The coordinator scores each client by its worst per-feature deficit below the cohort median, measured in robust (median-absolute-deviation) units,
+\begin{equation}
+s_i = \max_{f \in F_{\text{probe}}} \max\!\left(0,\; \frac{m_f - d_{i,f}}{\mathrm{MAD}_f + \epsilon}\right), \quad m_f = \operatorname*{median}_i d_{i,f},
+\label{eq:susp}
+\end{equation}
+and converts suspicion into a trust weight that also rewards clean-root accuracy $a_i$, using a dead-zone $\tau$ and an exponential gate $\beta$,
+\begin{equation}
+t_i = \frac{a_i \, e^{-\beta\, \max(0,\, s_i - \tau)}}{\sum_{j} a_j \, e^{-\beta\, \max(0,\, s_j - \tau)}}.
+\label{eq:trust}
+\end{equation}
+The dead-zone $\tau$ ignores suspicion below a margin, so a client that merely sits at the bottom of a noisy round is not penalized; only suspicion that clears $\tau$ reduces trust. Trust is smoothed across rounds by an exponential moving average with factor $\rho$, and the trust-scaled updates are combined with a coordinate-wise median,
+\begin{equation}
+\omega(t+1) = \operatorname*{median}_i\Big(\omega(t) + N\, t_i \big(\omega_i^{I}(t) - \omega(t)\big)\Big).
+\label{eq:robustagg}
+\end{equation}
+The two layers are complementary. The trust weights identify and down-weight the compromised clients from behavior; the coordinate-wise median bounds the damage of any single mis-scored update, which is the safety net if the trust score is ever wrong in a round. Section V-A shows that each layer alone is insufficient and only their combination drives the backdoor advantage to zero.
+
+\begin{algorithm}[!t]
+\caption{One federated round with the behavioral-trust defense}
+\label{alg:defense}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} global model $\omega$; clients $1..N$; root set $(X_{\text{root}},y_{\text{root}})$; probe features $F_{\text{probe}}$ with benign-high values $\{v_f\}$; gate $\beta$; dead-zone $\tau$; EMA $\rho$; previous trust $t_{\text{prev}}$
+\STATE \textbf{Output:} updated global model $\omega$
+\FOR{each client $i = 1 \ldots N$}
+    \STATE $\omega_i \leftarrow \textsc{LocalTrain}(\omega, \mathcal{D}_i, E)$ \COMMENT{unchanged by the defense}
+\ENDFOR
+\FOR{$i = 1 \ldots N$}
+    \STATE $a_i \leftarrow \textsc{Accuracy}(\omega_i, X_{\text{root}}, y_{\text{root}})$
+    \FOR{each $f \in F_{\text{probe}}$}
+        \STATE $d_{i,f} \leftarrow \textsc{Recall}(\omega_i, S_f)$ \COMMENT{$S_f$: spoofed root rows, $f \to v_f$}
+    \ENDFOR
+\ENDFOR
+\FOR{each $f \in F_{\text{probe}}$}
+    \STATE $m_f \leftarrow \operatorname{median}_i d_{i,f}$; \; $\mathrm{MAD}_f \leftarrow \operatorname{median}_i |d_{i,f} - m_f|$
+\ENDFOR
+\FOR{$i = 1 \ldots N$}
+    \STATE $s_i \leftarrow \max_f \max(0, (m_f - d_{i,f})/(\mathrm{MAD}_f + \epsilon))$
+    \STATE $t_i \leftarrow a_i \, e^{-\beta \max(0, s_i - \tau)}$
+\ENDFOR
+\STATE $t \leftarrow \textsc{Normalize}(t)$; \; $t \leftarrow \rho\, t + (1-\rho)\, t_{\text{prev}}$
+\IF{models are near-random (first round)}
+    \STATE $t \leftarrow \text{uniform}$ \COMMENT{safety guard}
+\ENDIF
+\STATE $\omega \leftarrow \operatorname{median}_i\big(\omega + N\, t_i(\omega_i - \omega)\big)$
+\RETURN $\omega, t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Data Description and Preprocessing}
+The dataset is the GPS spoofing detection dataset of Aissou et al.~\cite{aissou2022dataset}, collected with a software-defined-radio receiver on a mobile platform under controlled outdoor spoofing. The raw data contains $510{,}530$ rows across authentic reception (class~0) and three spoofing subtypes (classes~1--3). CN0, the carrier-to-noise density ratio, is a physically grounded discriminator: spoofed transmitters produce systematically lower carrier quality than line-of-sight satellites.
+
+Preprocessing proceeds in the stages of Table~\ref{tab:preprocessing_steps}. Exact duplicates are removed; the four classes are collapsed to a binary authentic/spoofed label; conflicting rows (identical features, different binary label) are removed \emph{after} binarization so that rows differing only in spoofing subtype are not falsely flagged; three identifier columns (\texttt{PRN}, \texttt{RX}, \texttt{TOW}) are dropped so the model learns signal patterns rather than hardware or timing correlations, leaving the ten features of Table~\ref{tab:features}; a further de-duplication on the ten model features (performed \emph{after} dropping the identifiers) removes two rows that had collapsed into identical model inputs, which closes a one-row train/test overlap; and the data is subsampled to $150{,}000$ rows at a $60/40$ authentic/spoofed ratio (seed~42). The test set ($30{,}000$ rows, $20\%$) is split off first by stratified sampling; a $6{,}000$-row server root set is then carved from the remainder, leaving a $114{,}000$-row client training pool. A \texttt{StandardScaler} is fit on the client pool only. Row-hash checks confirm the root set, client pool, and test set are pairwise disjoint.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Preprocessing Steps and Row Counts}
+\label{tab:preprocessing_steps}
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Step} & \textbf{Rows Remaining} & \textbf{Rows Removed} \\
+\midrule
+Raw dataset                                & 510,530 & ---    \\
+After duplicate removal                    & 479,312 & 31,218 \\
+After conflict removal (post-binarization) & 470,546 &  8,766 \\
+After model-feature de-duplication         & 470,544 &      2 \\
+After subsampling (60/40, seed 42)         & 150,000 & ---    \\
+\;\; Client training pool                  & 114,000 & ---    \\
+\;\; Server root set                       &   6,000 & ---    \\
+\;\; Test set (20\%)                        &  30,000 & ---    \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.3}
+\caption{Selected Features and Removed Identifier Columns}
+\label{tab:features}
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Column} & \textbf{Status} & \textbf{Description} \\
+\midrule
+DO  & Selected & Doppler observable \\
+PD  & Selected & Pseudorange difference \\
+CP  & Selected & Carrier phase \\
+EC  & Selected & Early-to-late chip ratio \\
+LC  & Selected & Lock count \\
+PC  & Selected & Phase consistency \\
+PIP & Selected & Pseudorange innovation percentage \\
+PQP & Selected & Phase quality parameter \\
+TCD & Selected & Time-correlation descriptor \\
+CN0 & Selected & Carrier-to-noise density ratio (dB-Hz) \\
+\midrule
+PRN & Removed  & Satellite PRN identifier \\
+RX  & Removed  & Receiver hardware identifier \\
+TOW & Removed  & GPS time-of-week timestamp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Client Partitioning and Poisoning}
+The $114{,}000$-row pool is split IID across $N=10$ clients, authentic and spoofed rows partitioned separately so every client holds the same $60/40$ ratio: about $11{,}400$ rows each ($6{,}840$ authentic, $4{,}560$ spoofed), further divided into an $85\%$ local training partition and a $15\%$ local validation partition. The validation partition provides each client's self-reported accuracy and is the channel the compromised clients use to inflate it. Clients $U_1$--$U_8$ are honest; $U_9$ and $U_{10}$ are compromised.
+
+Each compromised client applies the trigger to $40\%$ of its spoofed rows in both its training and validation partitions: CN0 is overwritten with its benign-high value, $46.706$ dB-Hz ($+0.738$ in standardized units), and the label is flipped to authentic. The remaining spoofed rows are left intact. In the inflation experiment each compromised client reports a fixed validation accuracy of $0.99$ regardless of its true value. A triggered test set is built from the spoofed test rows with the same CN0 overwrite but with true labels left unchanged, so that classifying them as authentic counts as a backdoor success.
+
+\section{Experimental Setup}
+
+\subsection{Configuration}
+Table~\ref{tab:params} lists the full experimental configuration so the study is reproducible from one place. The adopted defense configuration, denoted D2, is $\beta = 1.0$, $\tau = 2.0$, $\rho = 0.5$; it was selected after an earlier gate ($\beta=2.0$, no dead-zone) was measured to flag honest clients in $20.5\%$ of client-rounds, which the dead-zone reduces to $0.3\%$. All results use D2 unless a sensitivity sweep states otherwise.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Experimental Configuration}
+\label{tab:params}
+\centering
+\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Clients / compromised & 10 / 2 (IDs $U_9$, $U_{10}$) \\
+Data split & IID, 60/40 authentic/spoofed \\
+Subsample & 150,000 rows \\
+Client pool / root / test & 114,000 / 6,000 / 30,000 \\
+Features & 10 signal-quality features \\
+Model & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, ReLU, dropout 0.2 \\
+Parameters & 3,329 (13.0 KB float32) \\
+FL rounds / local epochs & 12 / 3 \\
+Batch size / optimizer & 512 / Adam, lr $10^{-3}$ \\
+Random seeds & 42, 7, 123 (data split fixed at 42) \\
+Poison ratio & 40\% of each attacker's spoofed rows \\
+Trigger feature / value & CN0 / 46.706 dB-Hz ($+0.738$ std) \\
+Update scaling $\gamma$ & 3.0 \\
+Inflated reported accuracy & 0.99 \\
+Probe features & 8 features with Cohen's $d \geq 0.05$ \\
+Root set size & 6,000 rows \\
+Defense gate $\beta$ / dead-zone $\tau$ / EMA $\rho$ & 1.0 / 2.0 / 0.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Implementation and Protocol}
+Experiments are implemented in Python with PyTorch and scikit-learn and run on CPU. The dataset subsample, train/test split, root carve, and scaler are fixed at seed~42 so the evaluation target never moves; the federated randomness that matters, namely the client partition, poison draw, model initialization, and batch shuffling, is varied across three seeds (42, 7, 123). All reported numbers are the mean and standard deviation over these three seeds, with backdoor lift paired within each seed against that seed's own honest baseline.
+
+\subsection{Experiments}
+We evaluate: (i) a layer ablation comparing honest FedAvg, the attack under FedAvg, the attack with accuracy inflation under accuracy-weighted aggregation, coordinate-median-only, trust-only, and the full defense, plus the full defense against the inflation variant; (ii) a trigger-generalization study placing the trigger on CN0, TCD, the weakest probed feature PD, and a mixed CN0+TCD trigger, all under one fixed D2 configuration; (iii) a defense-aware adaptive attacker that adds an evasion objective to its local training; (iv) a quantitative false-positive analysis of the trust mechanism; and (v) a measured cost analysis.
+
+\section{Results}
+
+\subsection{Layer Ablation}
+Table~\ref{tab:ablation} isolates the contribution of each defense layer. The attack raises backdoor lift to $+0.2457$, and accuracy inflation raises it further to $+0.3036$ by buying the compromised clients extra aggregation weight, confirming that the accuracy-weighting mechanism is an exploitable lever. Coordinate-median-only aggregation helps but leaves a real residual ($+0.0641$): a median resists the scaled updates but two clients of ten can still drag many coordinates. Trust-only aggregation removes nearly all of the lift ($+0.0037$) because the probes identify the compromised clients directly, though on the lift metric alone it is statistically close to the full defense. Only the full, layered defense drives lift negative ($-0.0253$) while simultaneously posting the best clean accuracy ($0.7142$) and spoofing recall ($0.5546$), both matching the honest baseline within noise. The final row shows the full defense against the inflation variant: it is numerically identical to the plain full defense, because the trust score never reads reported accuracy, so inflation has no channel through which to act. This is the central evidence that the layered defense is not an unnecessary combination: each layer covers a failure the other does not.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Three-Seed Layer Ablation (mean $\pm$ std, $n=3$). Lift is paired within-seed against the honest baseline.}
+\label{tab:ablation}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Method} & \textbf{Clean Acc} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} \\
+\midrule
+Honest FedAvg          & $0.7109$ & $0.5287$ & $0.6368$ & $+0.0000$ \\
+Attack (FedAvg)        & $0.6928$ & $0.3618$ & $0.8825$ & $+0.2457$ \\
+Attack + inflation     & $0.6900$ & $0.3535$ & $0.9404$ & $+0.3036$ \\
+Median only            & $0.7098$ & $0.4993$ & $0.7009$ & $+0.0641$ \\
+Trust only             & $0.7114$ & $0.5311$ & $0.6404$ & $+0.0037$ \\
+\textbf{Full defense}  & $\mathbf{0.7142}$ & $\mathbf{0.5546}$ & $\mathbf{0.6114}$ & $\mathbf{-0.0253}$ \\
+Full vs.\ inflation    & $0.7142$ & $0.5546$ & $0.6114$ & $-0.0253$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.4in]{figures/fig_backdoor_and_trust_rounds.png}
+\caption{Backdoor progression and trust attribution over federated rounds (mean of 3 seeds, bands $\pm 1$ std). Left: backdoor success rate per case; the attacked runs stay pinned high while the defended run tracks the honest baseline from round three onward. Right: the aggregation trust assigned to the compromised clients ($U_9$, $U_{10}$) versus the honest clients; the coordinator separates the two groups within the first round and holds the compromised clients near zero trust thereafter.}
+\label{fig:rounds}
+\end{figure}
+
+Fig.~\ref{fig:rounds} shows the same result over training: the attacked runs hold the backdoor open round after round while the defended run tracks the honest baseline, and the mechanism is visible in the right panel, where the coordinator drives the compromised clients to near-zero trust within the first round.
+
+\subsection{Trigger Generalization}
+Table~\ref{tab:trigger} and Fig.~\ref{fig:trigger} test whether the defense depends on knowing the trigger feature. One fixed D2 configuration is run against four trigger settings; nothing is retuned. The attack carries a viable backdoor in every setting (lift $+0.09$ to $+0.25$), and the defense drives lift below zero in all four, including PD, the weakest probed feature (Cohen's $d = 0.152$), and a mixed CN0+TCD trigger that was never used to design the defense. Honest false positives stay between $0.3\%$ and $0.7\%$ throughout. Because the coordinator probes every discriminative feature, moving the trigger only changes which probe slice exposes the compromised client. This supports the claim that the defense is trigger-agnostic within the discriminative feature set; features with near-zero class separation (Cohen's $d < 0.05$, namely PQP and PIP) are outside the probe set by design and are not claimed.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Trigger Generalization at Fixed D2 (mean $\pm$ std, $n=3$)}
+\label{tab:trigger}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Trigger} & \textbf{$d$} & \textbf{Atk BSR} & \textbf{Atk Lift} & \textbf{Def Lift} & \textbf{FP} \\
+\midrule
+CN0        & 0.288 & $0.8825$ & $+0.2457$ & $-0.0253$ & $0.3\%$ \\
+TCD        & 0.302 & $0.8428$ & $+0.2384$ & $-0.0626$ & $0.7\%$ \\
+PD         & 0.152 & $0.9168$ & $+0.0909$ & $-0.0188$ & $0.3\%$ \\
+CN0+TCD    & ---   & $0.9816$ & $+0.1933$ & $-0.0282$ & $0.7\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.2in]{figures/fig_trigger_generalization.png}
+\caption{Backdoor lift before (orange) and after (green) the defense, per trigger setting; bars are means over three seeds with $\pm 1$ std error bars. One fixed D2 configuration; the black line at zero marks ``the attacker gains nothing.''}
+\label{fig:trigger}
+\end{figure}
+
+\subsection{Adaptive Attacker}
+The strongest objection to a trust defense is a defense-aware attacker. In Fig.~\ref{fig:adaptive} and Table~\ref{tab:adaptive}, each compromised client adds an evasion term of strength $\lambda$ to its local objective, training to keep predicting spoofed on probe-style slices so it looks like the honest cohort. As $\lambda$ increases, the attacker's trust does rise from $0.0001$ toward uniform ($0.083$ at $\lambda=2$), so it genuinely evades detection better, but its backdoor lift collapses even with no defense, from $+0.2457$ at $\lambda=0$ to $-0.48$ at $\lambda=10$. The reason is structural: the CN0 backdoor requires the model to call CN0-benign-high inputs authentic, while the CN0 probe rewards calling those same inputs spoofed. Evading the probe and keeping the backdoor are directly opposed objectives, so training for one destroys the other. There is no evasion strength at which the attacker both hides from the trust score and retains a working backdoor, and the defended lift stays negative at every $\lambda$.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Defense-Aware Adaptive Attacker at D2 (mean $\pm$ std, $n=3$). Uniform trust is $0.10$.}
+\label{tab:adaptive}
+\centering
+\footnotesize
+\begin{tabular}{cccc}
+\toprule
+\textbf{Evasion $\lambda$} & \textbf{Undef.\ Lift} & \textbf{Def.\ Lift} & \textbf{Attacker Trust} \\
+\midrule
+0  & $+0.2457$ & $-0.0253$ & $0.0001$ \\
+2  & $-0.1433$ & $-0.0534$ & $0.0834$ \\
+10 & $-0.4782$ & $-0.0829$ & $0.0740$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.2in]{figures/fig_adaptive_attacker.png}
+\caption{Adaptive attacker. Defended backdoor lift (green, left axis) and mean attacker trust (purple, right axis) versus evasion strength $\lambda$, mean of three seeds. As the attacker evades better and its trust rises toward uniform, the backdoor collapses; defended lift stays negative throughout.}
+\label{fig:adaptive}
+\end{figure}
+
+\subsection{False Positives and Attribution}
+Treating the trust mechanism as a detector of compromised clients over $3$ seeds $\times$ $12$ rounds $\times$ $10$ clients, both compromised clients are flagged in $72$ of $72$ client-rounds ($100\%$ true-positive rate) with mean trust $0.000$, while honest clients are flagged in $1$ of $288$ client-rounds ($0.3\%$ false-positive rate) and no honest client is ever driven to zero trust. Mean honest trust sits in a tight band from $0.119$ to $0.131$ around the uniform value of $0.100$. The mechanism therefore not only removes the backdoor but attributes it to the exact compromised UAVs, which is operationally useful for response.
+
+\subsection{Computational Cost}
+The defense runs entirely on the aggregator; every client performs identical local training whether or not it is active, so it adds zero client-side cost. Measured on the same pipeline, one FL round takes about $3{,}285.8$ ms, dominated by local training, while the defense's server-side work (feature probing, trust computation, update scaling, and the coordinate-wise median, net of plain aggregation) adds about $37.4$ ms per round, roughly $1.1\%$ of round time. The probing is forward-pass-only on a $3{,}329$-parameter model against a small root set, and the added server terms scale linearly in the number of clients and probe features, so the defense remains practical as the fleet grows.
+
+\section{Discussion}
+The results support a single narrative. The vulnerability is real and specific: accuracy-weighted aggregation, adopted in recent UAV-FL work to reward good clients, is a second attack lever, and inflation raises backdoor lift from $+0.2457$ to $+0.3036$. The defense closes it by refusing to trust self-report and judging clients on behavior the coordinator can verify, which makes inflation inert by construction rather than by tuning. The layer ablation shows the combination is necessary: median-only leaves a quarter of the attack and trust-only lacks a safety net against a mis-scored round, while together they drive the advantage to zero at no utility cost. The trigger-generalization and adaptive-attacker studies address the two hardest questions a reviewer can ask: the defense holds when the trigger moves to a feature it was never told about, including a mixed trigger, and a defense-aware attacker cannot evade the probe without destroying its own backdoor.
+
+Several limitations bound these claims and are stated plainly. First, the base detector is only moderately strong on this simplified public dataset (honest spoofing recall about $0.53$), which is why backdoor lift, measured against each seed's own honest baseline, is the primary metric rather than absolute accuracy; a stronger detector is an orthogonal improvement that would not change the defense conclusions. Second, the evaluation uses an IID partition across ten clients with two attackers; non-IID data would widen the honest trust spread and is the setting most likely to stress the false-positive rate, and is the natural next study. Third, the single-receiver dataset is a proxy for a distributed fleet, adopted because no public multi-UAV GPS spoofing dataset exists. Fourth, the trigger-agnostic claim is scoped to the discriminative (probed) feature set; a trigger placed on a feature with near-zero class separation would fall outside the probe set, but such a feature also carries little signal for the detector to exploit. Three seeds are sufficient to separate the attack effect from noise and to report a standard deviation, but not to resolve sub-noise differences between neighboring defended variants, and we claim none.
+
+\section{Conclusion}
+We showed that accuracy-weighted federated aggregation, a design adopted in recent UAV-FL detection work to reward high-quality clients, is exploitable: two compromised UAV clients of ten can implant a stealthy GPS spoofing backdoor by poisoning a fraction of their data, scaling their updates, and inflating their reported accuracy, raising backdoor lift by up to $0.3036$ while clean accuracy falls by less than two points. We then proposed a server-side behavioral-trust defense that never reads reported accuracy and does not need to know the trigger feature: it probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in robust units, and aggregates trust-scaled updates with a coordinate-wise median. Across three seeds the defense eliminates the attacker's advantage (lift $-0.0253$), flags both compromised clients in $100\%$ of client-rounds at a $0.3\%$ honest false-positive rate, generalizes across the discriminative feature set including a mixed trigger, withstands a defense-aware adaptive attacker whose evasion destroys its own backdoor, and costs about $1.1\%$ of round time with no client-side work. Extending the evaluation to non-IID fleets and to a stronger base detector is the primary direction for future work.
+
+\section*{Acknowledgment}
+The authors thank Dr. Khalid Hasan for advising this capstone project at James Madison University.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
