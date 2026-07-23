@@ -185,8 +185,10 @@ The dead-zone $\tau$ ignores suspicion below a margin, so a client that merely s
 The two layers are complementary. The trust weights identify and down-weight the compromised clients from behavior; the coordinate-wise median bounds the damage of any single mis-scored update, which is the safety net if the trust score is ever wrong in a round. Section V-A shows that each layer alone is insufficient and only their combination drives the backdoor advantage to zero.
 
 \begin{algorithm}[!t]
+\hrule\vspace{3pt}
 \caption{One federated round with the behavioral-trust defense}
 \label{alg:defense}
+\vspace{2pt}\hrule\vspace{4pt}
 \begin{algorithmic}[1]
 \Require global model $\omega$; clients $1{:}N$; root set $(X_{\mathrm{root}},y_{\mathrm{root}})$; probe set $F_{\mathrm{probe}}$ with benign-high values $\{v_f\}$; gate $\beta$, dead-zone $\tau$, EMA $\rho$; previous trust $t_{\mathrm{prev}}$
 \Ensure updated global model $\omega$; trust vector $t$
@@ -217,6 +219,7 @@ The two layers are complementary. The trust weights identify and down-weight the
 \State $\omega \gets \operatorname{median}_i\big(\omega + N\,t_i\,(\omega_i - \omega)\big)$
 \State \Return $\omega,\ t$
 \end{algorithmic}
+\vspace{3pt}\hrule
 \end{algorithm}
 
 \subsection{Data Description and Preprocessing}
@@ -282,43 +285,28 @@ Each compromised client applies the trigger to $40\%$ of its spoofed rows in bot
 \subsection{Configuration}
 Table~\ref{tab:params} lists the full experimental configuration so the study is reproducible from one place. The adopted defense configuration, denoted D2, is $\beta = 1.0$, $\tau = 2.0$, $\rho = 0.5$; it was selected after an earlier gate ($\beta=2.0$, no dead-zone) was measured to flag honest clients in $20.5\%$ of client-rounds, which the dead-zone reduces to $0.3\%$. All results use D2 unless a sensitivity sweep states otherwise.
 
-\begin{table}[!t]
-\renewcommand{\arraystretch}{1.2}
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.3}
 \caption{Experimental Configuration}
 \label{tab:params}
 \centering
 \footnotesize
-\begin{tabular}{@{}l p{4.4cm}@{}}
+\begin{tabular}{@{}l l @{\hspace{3em}} l l@{}}
 \toprule
-\textbf{Parameter} & \textbf{Value} \\
+\textbf{Parameter} & \textbf{Value} & \textbf{Parameter} & \textbf{Value} \\
 \midrule
-\multicolumn{2}{@{}l}{\textit{Data and federation}}\\
-Clients / compromised     & 10 / 2 (IDs $U_9$, $U_{10}$) \\
-Data split                & IID, 60/40 authentic/spoofed \\
-Subsample                 & 150{,}000 rows \\
-Pool / root / test        & 114{,}000 / 6{,}000 / 30{,}000 \\
-Features                  & 10 signal-quality features \\
-FL rounds / local epochs  & 12 / 3 \\
-Batch size / optimizer    & 512 / Adam, lr $10^{-3}$ \\
-Random seeds              & 42, 7, 123 (split fixed at 42) \\
-\midrule
-\multicolumn{2}{@{}l}{\textit{Model}}\\
-Architecture              & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, ReLU, dropout 0.2 \\
-Parameters                & 3{,}329 (13.0 KB, float32) \\
-\midrule
-\multicolumn{2}{@{}l}{\textit{Attack}}\\
-Poison ratio              & 40\% of each attacker's spoofed rows \\
-Trigger / value           & CN0 / 46.706 dB-Hz ($+0.738$ std) \\
-Update scaling $\gamma$   & 3.0 (model replacement) \\
-Inflated accuracy         & 0.99 (inflation variant) \\
-\midrule
-\multicolumn{2}{@{}l}{\textit{Defense (D2)}}\\
-Probe features            & 8 features, Cohen's $d \geq 0.05$ \\
-Root set size             & 6{,}000 rows \\
-Trust gate $\beta,\tau,\rho$ & 1.0 / 2.0 / 0.5 \\
+Clients / compromised    & 10 / 2 (IDs $U_9$, $U_{10}$)   & Parameters               & 3{,}329 (13.0 KB, float32) \\
+Data split               & IID, 60/40 authentic/spoofed   & Poison ratio             & 40\% of each attacker's spoofed rows \\
+Subsample                & 150{,}000 rows                 & Trigger feature / value  & CN0 / 46.706 dB-Hz ($+0.738$ std) \\
+Pool / root / test       & 114{,}000 / 6{,}000 / 30{,}000 & Update scaling $\gamma$  & 3.0 (model replacement) \\
+Features                 & 10 signal-quality features     & Inflated accuracy        & 0.99 (inflation variant) \\
+FL rounds / local epochs & 12 / 3                         & Probe features           & 8 features, Cohen's $d \geq 0.05$ \\
+Batch size / optimizer   & 512 / Adam, lr $10^{-3}$       & Root set size            & 6{,}000 rows \\
+Random seeds             & 42, 7, 123 (split fixed at 42) & Trust gate $\beta,\tau,\rho$ & 1.0 / 2.0 / 0.5 \\
+Model architecture       & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, dropout 0.2 & Aggregation methods & 5 (FedAvg to trust-scaled median) \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 \subsection{Implementation and Protocol}
 Experiments are implemented in Python with PyTorch and scikit-learn and run on CPU. The dataset subsample, train/test split, root carve, and scaler are fixed at seed~42 so the evaluation target never moves; the federated randomness that matters, namely the client partition, poison draw, model initialization, and batch shuffling, is varied across three seeds (42, 7, 123). All reported numbers are the mean and standard deviation over these three seeds, with backdoor lift paired within each seed against that seed's own honest baseline.
