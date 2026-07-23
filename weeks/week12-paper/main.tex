@@ -228,22 +228,24 @@ The dataset is the GPS spoofing detection dataset of Aissou et al.~\cite{aissou2
 Preprocessing proceeds in the stages of Table~\ref{tab:preprocessing_steps}. Exact duplicates are removed; the four classes are collapsed to a binary authentic/spoofed label; conflicting rows (identical features, different binary label) are removed \emph{after} binarization so that rows differing only in spoofing subtype are not falsely flagged; three identifier columns (\texttt{PRN}, \texttt{RX}, \texttt{TOW}) are dropped so the model learns signal patterns rather than hardware or timing correlations, leaving the ten features of Table~\ref{tab:features}; a further de-duplication on the ten model features (performed \emph{after} dropping the identifiers) removes two rows that had collapsed into identical model inputs, which closes a one-row train/test overlap; and the data is subsampled to $150{,}000$ rows at a $60/40$ authentic/spoofed ratio (seed~42). The test set ($30{,}000$ rows, $20\%$) is split off first by stratified sampling; a $6{,}000$-row server root set is then carved from the remainder, leaving a $114{,}000$-row client training pool. A \texttt{StandardScaler} is fit on the client pool only. Row-hash checks confirm the root set, client pool, and test set are pairwise disjoint.
 
 \begin{table}[!t]
-\renewcommand{\arraystretch}{1.3}
+\renewcommand{\arraystretch}{1.25}
 \caption{Preprocessing Steps and Row Counts}
 \label{tab:preprocessing_steps}
 \centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{lrr}
 \toprule
-\textbf{Step} & \textbf{Rows Remaining} & \textbf{Rows Removed} \\
+\textbf{Step} & \textbf{Remaining} & \textbf{Removed} \\
 \midrule
-Raw dataset                                & 510,530 & ---    \\
-After duplicate removal                    & 479,312 & 31,218 \\
-After conflict removal (post-binarization) & 470,546 &  8,766 \\
-After model-feature de-duplication         & 470,544 &      2 \\
-After subsampling (60/40, seed 42)         & 150,000 & ---    \\
-\;\; Client training pool                  & 114,000 & ---    \\
-\;\; Server root set                       &   6,000 & ---    \\
-\;\; Test set (20\%)                        &  30,000 & ---    \\
+Raw dataset                    & 510,530 & ---    \\
+Duplicate removal              & 479,312 & 31,218 \\
+Conflict removal (post-binary) & 470,546 &  8,766 \\
+Model-feature de-duplication   & 470,544 &      2 \\
+Subsampling (60/40, seed 42)   & 150,000 & ---    \\
+\;\; Client training pool      & 114,000 & ---    \\
+\;\; Server root set           &   6,000 & ---    \\
+\;\; Test set (20\%)            &  30,000 & ---    \\
 \bottomrule
 \end{tabular}
 \end{table}
