@@ -172,8 +172,10 @@ bullet('The defense drives lift below zero in every setting: CN0 -0.0253, TCD -0
 bullet('Honest observations: the seed spread on the TCD and mixed attack rows is wide (std 0.05 to 0.07), and the '
        'mixed trigger has the highest raw BSR (0.9816) but not the highest lift, because stamping two features '
        'raises the honest baseline as well.')
-bullet('Together with the Week 10 five-feature sweep, this supports the claim that the defense does not require '
-       'knowing the exact trigger feature, within the discriminative (probed) feature set.')
+bullet('Together with the five-feature sweep in the Week 10 notebook (DO, TCD, CN0, LC, PD; exported to '
+       'week10-validation/results/trigger_generalization.csv), where the defense also drives lift negative on every '
+       'one, this supports the claim that the defense does not require knowing the exact trigger feature, within '
+       'the discriminative (probed) feature set. That sweep is in the Week 10 notebook rather than its report PDF.')
 
 # ================= PAGE 4: scope and future work =================
 pdf.add_page(); h1('4. Scope and future work')
