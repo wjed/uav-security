@@ -58,9 +58,9 @@ The three figures in the corner are **measured**, read from
 `week11-paper-tables/results/ablation_table.csv` (mean over seeds 42, 7, 123). The per-drone
 influence bars come from `week10-validation/results/client_flagging_table.csv`.
 
-The **round-by-round timing is choreography, not data.** We did not export a per-round trace, so the
-animation paces the twelve rounds evenly and shows the measured end-of-training outcome. The header
-says so on the page rather than leaving it implied.
+The **stage sequence is choreography, not data.** We did not export a per-round trace, so the ten
+stages narrate the mechanism and reveal the measured end-of-training outcome at the two points where
+it matters: stage 7 (undefended) and stage 10 (defended). No intermediate values are invented.
 
 Two honesty details are built into the display:
 
