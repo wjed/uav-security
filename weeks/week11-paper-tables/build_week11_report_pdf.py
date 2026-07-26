@@ -101,7 +101,6 @@ def img(path,maxw=PAGE_W):
 param = pd.read_csv(RES/'parameter_table.csv').fillna('')
 abl   = pd.read_csv(RES/'ablation_table.csv')
 trig  = pd.read_csv(RES/'trigger_comparison.csv')
-adap  = pd.read_csv(RES/'adaptive_attacker.csv')
 
 # ================= PAGE 1: title + Task 1 =================
 pdf.add_page(); pdf.ln(2)
@@ -176,36 +175,11 @@ bullet('Honest observations: the seed spread on the TCD and mixed attack rows is
 bullet('Together with the Week 10 five-feature sweep, this supports the claim that the defense does not require '
        'knowing the exact trigger feature, within the discriminative (probed) feature set.')
 
-# ================= PAGE 4: Task 3b adaptive attacker =================
-pdf.add_page(); h1('4. Adaptive (defense-aware) attacker stress test')
-body('The ablation and generalization attackers are fixed: they poison and scale without reacting to the defense. '
-     'Here the attacker knows exactly how the coordinator probes and trains to evade it, adding an evasion term that '
-     'keeps its model predicting spoofed on probe-style slices so it looks like the honest cohort. The evasion '
-     'strength lambda is swept from 0 (the ordinary attacker) upward.')
-table(adap, widths=[54,45,45,46], fs=8.0, hl=())
-cap('Table 4. Adaptive attacker at fixed D2, mean +/- std over seeds 42, 7, 123 (n = 3). Uniform trust is 0.10; '
-    'lambda = 0 is the ordinary attacker from Table 2. Produced by adaptive_attacker.py.')
-img(RES/'fig_adaptive_attacker.png', maxw=150)
-cap('Figure 2. Defended backdoor lift (green, left axis) and mean attacker trust (purple, right axis) versus evasion '
-    'strength. As the attacker evades better (trust rises toward uniform), the backdoor collapses; defended lift '
-    'stays negative throughout.')
-h2('Insight')
-bullet('The adaptive attacker cannot win. Turning up evasion does raise its trust from 0.0001 toward uniform '
-       '(0.083 at lambda = 2), so it genuinely hides better, but its undefended backdoor lift collapses from '
-       '+0.2457 to -0.14 and then -0.48 at lambda = 10.')
-bullet('The reason is structural, not luck: the CN0 backdoor needs the model to call CN0-benign-high inputs benign, '
-       'while the CN0 probe rewards calling those same inputs spoofed. Evading the probe and keeping the backdoor '
-       'are directly opposed, so training for one destroys the other.')
-callout('There is no evasion setting where the attacker both hides from the trust score and keeps a working '
-        'backdoor. The layered defended lift is negative at every lambda. This closes the adaptive-attacker '
-        'question, the strongest open threat to a behavioral-trust defense.')
-
-# ================= PAGE 5: scope and future work =================
-pdf.add_page(); h1('5. Scope and future work')
+# ================= PAGE 4: scope and future work =================
+pdf.add_page(); h1('4. Scope and future work')
 body('The core research questions are answered: the attack works and inflation worsens it (Table 2); each defense '
      'layer contributes and only the layered defense drives lift negative while preserving utility (Table 2); the '
-     'defense generalizes across the discriminative feature set including a mixed trigger (Table 3); and a '
-     'defense-aware adaptive attacker cannot both evade the probe and keep a working backdoor (Table 4). What '
+     'defense generalizes across the discriminative feature set including a mixed trigger (Table 3). What '
      'remains is deliberately outside the scope of this study, not unfinished within it.')
 bullet('Base detector accuracy. Honest spoofing recall is about 0.53 on this simplified public dataset. This is a '
        'property of the dataset and the small model, not the defense, and is why backdoor lift against each seed\'s '
@@ -213,6 +187,9 @@ bullet('Base detector accuracy. Honest spoofing recall is about 0.53 on this sim
 bullet('Non-IID and larger fleets. Ten clients, two attackers, IID partitions. Non-IID data would widen the honest '
        'trust spread and is the setting most likely to stress the false-positive rate; it is the natural next study, '
        'and the IID choice is a stated scope boundary consistent with the Byzantine-robust FL literature.')
+bullet('Adaptive attackers. Every attacker in this report is fixed: it poisons and scales without reacting to the '
+       'defense. We have separately run a defense-aware attacker that trains to evade the probe; that experiment is '
+       'outside the scope of this assignment and is reported with the paper rather than here.')
 bullet('Seed count. Three seeds are enough to separate the attack effect from noise and to report mean and standard '
        'deviation, but not to resolve sub-noise differences between neighbouring defended variants, and we claim no '
        'such difference.')

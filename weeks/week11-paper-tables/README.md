@@ -4,21 +4,22 @@
 
 ## Submit this
 
-**`week11_report.pdf`** (5 pages, items 2 to 6 of the assignment in one file):
+**`week11_report.pdf`** (4 pages, items 2 to 6 of the assignment in one file):
 
 | Page | Contents |
 |---|---|
 | 1 | Task 1: experimental parameter card (the reproducibility table) |
 | 2 | Task 2: three-seed defense-layer ablation, with insight |
 | 3 | Task 3: trigger-generalization table and bar figure, with insight |
-| 4 | Task 3b: adaptive (defense-aware) attacker stress test, with insight |
-| 5 | Scope and future work (the remaining-limitations note) |
+| 4 | Scope and future work (the remaining-limitations note) |
 
 Each table and figure has its insight paragraph directly beneath it, as the assignment asks.
 
 **A note on the Task 3 figure.** Task 3 asks for bars with mean +/- standard deviation, while the advisor has separately said he prefers line graphs over bar graphs. Those pull in opposite directions, so the notebook emits both from the same arrays: the bar version is used in this report, because that is what Task 3 asks for, and the line-based version is used in the paper. They plot identical numbers.
 
-The **code** deliverable, submitted separately, is **`11_paper_tables.ipynb`** plus **`adaptive_attacker.py`**. Every number and figure in the report is produced by one of these two files; nothing is transcribed by hand.
+The **code** deliverable, submitted separately, is **`11_paper_tables.ipynb`**. Every number and figure in the report is produced by that one notebook; nothing is transcribed by hand.
+
+**Why the adaptive-attacker study is not in this submission.** The assignment says "Focus only on the items below. Do not add many extra experiments," and its rubric awards points only for Tasks 1 to 3, the insights, and the organization of the code and limitation note. A defense-aware adaptive attacker is none of those, so including it would spend a page of the reader's attention on an unrequested experiment and earn nothing. The study still exists (`adaptive_attacker.py`, `results/adaptive_attacker.csv`) and is reported in the week 12 paper, where it answers a real reviewer question. The limitations note on page 4 says plainly that the attackers in this report are fixed and that the adaptive study is reported with the paper, so nothing is hidden.
 
 ## How to reproduce
 
