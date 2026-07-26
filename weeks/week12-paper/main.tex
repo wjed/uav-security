@@ -52,8 +52,9 @@ resulting trust weights ahead of coordinate-wise median aggregation. The
 defense eliminates the attacker's advantage (lift $-0.0253$), flags both
 compromised clients in 100\% of client-rounds at a 0.3\% honest
 false-positive rate, generalizes to trigger features it was never given,
-survives a defense-aware adaptive attacker, and costs 1.1\% of round time
-with no additional client-side work. All results are obtained on a public
+survives a defense-aware adaptive attacker, holds its
+protection across a sixteen-fold range of its own gate parameter, and
+costs 1.1\% of round time with no additional client-side work. All results are obtained on a public
 software-defined-radio GPS spoofing dataset partitioned into simulated
 UAV clients.
 \end{abstract}
@@ -80,7 +81,7 @@ The main contributions of this work are as follows.
     \item We define a UAV-inspired system model for FL-based GPS spoofing detection that includes an accuracy-weighted aggregation step reflecting recent UAV-FL designs, and we formulate a threat model in which compromised clients poison their data, scale their updates, and inflate their reported accuracy.
     \item We demonstrate the attack empirically: across three seeds it raises backdoor success by $0.2457$ over the honest baseline, and $0.3036$ when reported accuracy is inflated, while clean accuracy falls by less than two points.
     \item We propose a server-side behavioral-trust defense that never reads reported accuracy and does not require knowing the trigger feature. It probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in median-absolute-deviation units, and applies the resulting trust weights ahead of coordinate-wise median aggregation.
-    \item We evaluate the defense across three seeds with a full layer ablation, a trigger-generalization study over five features and a mixed trigger, a defense-aware adaptive attacker, a quantitative false-positive analysis, and a measured cost analysis. The defense eliminates the attacker's advantage at a 0.3\% honest false-positive rate and roughly 1.1\% server-side overhead with no client-side cost.
+    \item We evaluate the defense across three seeds with a full layer ablation, a trigger-generalization study over five features and a mixed trigger, a defense-aware adaptive attacker, a sensitivity sweep over all three defense hyperparameters, a quantitative false-positive analysis, and a measured cost analysis. The defense eliminates the attacker's advantage at a 0.3\% honest false-positive rate and roughly 1.1\% server-side overhead with no client-side cost.
 \end{itemize}
 
 The remainder of this paper is organized as follows. Section II presents the system model, threat model, and problem statement. Section III describes the proposed defense and methodology. Section IV presents the experimental setup. Section V presents the results. Section VI discusses findings and limitations, and Section VII concludes the paper.
@@ -116,6 +117,7 @@ Because no public dataset records genuine UAV-to-UAV wireless communication with
 For our evaluation, we set $N=10$ and partition the benign and spoofed observations separately across clients before shuffling, producing a balanced, independent and identically distributed (IID) split. We adopt this IID partition for tractability within the project timeline; we note that it does not exercise the non-IID heterogeneity of a real deployment, and we return to this in Section VI.
 
 \subsection{Threat Model}
+\label{subsec:threat}
 We consider an adversary that has compromised a small minority of clients, $\mathcal{M} \subset \mathcal{U}$ with $|\mathcal{M}| = 2$ of $N = 10$, prior to or during deployment, through means outside the scope of this paper (e.g., a supply-chain substitution or a software exploit). The attacker has full software control over each $U_m \in \mathcal{M}$, including its local training data, training procedure, and the values it reports to the aggregator. The attacker does not control the aggregator, does not control any other client, and cannot directly inspect other clients' raw data or model updates, consistent with the privacy guarantees FL is designed to provide.
 
 The attack proceeds in three coupled steps that occur every round.
@@ -131,11 +133,11 @@ following the constrain-and-scale formulation of Bagdasaryan et al. \cite{bagdas
 
 \textit{Step 3: Reported-accuracy manipulation.} Because aggregation weight is proportional to self-reported accuracy (Eq.~\ref{eq:weight}), each $U_m$ additionally reports an inflated value $\widehat{\mathrm{Acc}}_m > \mathrm{Acc}_m$, increasing its aggregation weight $\lambda_m$ relative to honest clients. This lever is specific to aggregation schemes, such as that of \cite{chai2025navigation}, that weight clients by a self-reported, unverified metric, and is not present in the original FedAvg-targeted backdoor attack \cite{bagdasaryan2020backdoor}.
 
-The attacker's capabilities are therefore: (i) arbitrary control over each $U_m$'s local training data and procedure, (ii) arbitrary modification of the submitted weights, (iii) arbitrary inflation of the reported accuracy, and (iv) the ability to adapt its behavior across rounds based on the broadcast global model, which it observes like any other client. We evaluate this last capability directly in Section V-D, where a defense-aware attacker adds an evasion objective to its local training to imitate honest behavior on the coordinator's probes.
+The attacker's capabilities are therefore: (i) arbitrary control over each $U_m$'s local training data and procedure, (ii) arbitrary modification of the submitted weights, (iii) arbitrary inflation of the reported accuracy, and (iv) the ability to adapt its behavior across rounds based on the broadcast global model, which it observes like any other client. We evaluate this last capability directly in Section~\ref{subsec:adaptive}, where a defense-aware attacker adds an evasion objective to its local training to imitate honest behavior on the coordinator's probes.
 
 The attacker's limitations are: it cannot compromise a majority of clients without substantially increasing operational risk and detection probability; it cannot access or modify the aggregation algorithm; it cannot observe or alter the raw data or local training of any honest client; and it cannot prevent honest clients from continuing to submit correct updates each round, so the backdoor must survive aggregation against a majority of honest contributions.
 
-From the defender's side, what can be observed is limited to what the FL protocol already exposes: the sequence of global models, the per-round set of participating clients, and each client's submitted weights and reported accuracy. No raw local data is observable. Detection must therefore rely on the behavior of submitted models, evaluated on data the aggregator holds itself, rather than on the clients' underlying data or self-reports.
+Fig.~\ref{fig:system_and_threat_model} summarizes the system model, the three attack steps, and the path by which the backdoor reaches honest clients. From the defender's side, what can be observed is limited to what the FL protocol already exposes: the sequence of global models, the per-round set of participating clients, and each client's submitted weights and reported accuracy. No raw local data is observable. Detection must therefore rely on the behavior of submitted models, evaluated on data the aggregator holds itself, rather than on the clients' underlying data or self-reports.
 
 \begin{figure}[!t]
 \centering
@@ -145,7 +147,7 @@ From the defender's side, what can be observed is limited to what the FL protoco
 \end{figure}
 
 \subsection{Problem Statement}
-The system and threat models reduce to a concrete research problem: given an FL-based UAV GPS spoofing detection system that aggregates client updates using a self-reported accuracy weight $\lambda_i$ (Eq.~\ref{eq:weight}), and given that a minority of clients may be compromised as in Section II-B, \emph{can the resulting global model be made to misclassify a trigger-bearing spoofing signature $p^{*}$ as benign while remaining accurate on all other inputs; and can the coordinator neutralize this without reading any client-reported metric and without being told which feature carries the trigger?}
+The system and threat models reduce to a concrete research problem: given an FL-based UAV GPS spoofing detection system that aggregates client updates using a self-reported accuracy weight $\lambda_i$ (Eq.~\ref{eq:weight}), and given that a minority of clients may be compromised as in Section~\ref{subsec:threat}, \emph{can the resulting global model be made to misclassify a trigger-bearing spoofing signature $p^{*}$ as benign while remaining accurate on all other inputs; and can the coordinator neutralize this without reading any client-reported metric and without being told which feature carries the trigger?}
 
 The underlying learning task is supervised binary classification distributed across the $N$ clients. Writing $w$ for the global model and $|\mathcal{D}| = \sum_{i}|\mathcal{D}_i|$ for the total data, the shared model is trained via the standard FL objective
 \begin{equation}
@@ -182,7 +184,7 @@ The dead-zone $\tau$ ignores suspicion below a margin, so a client that merely s
 \omega(t+1) = \operatorname*{median}_i\Big(\omega(t) + N\, t_i \big(\omega_i^{I}(t) - \omega(t)\big)\Big).
 \label{eq:robustagg}
 \end{equation}
-The two layers are complementary. The trust weights identify and down-weight the compromised clients from behavior; the coordinate-wise median bounds the damage of any single mis-scored update, which is the safety net if the trust score is ever wrong in a round. Section V-A shows that each layer alone is insufficient and only their combination drives the backdoor advantage to zero.
+The two layers are complementary. The trust weights identify and down-weight the compromised clients from behavior; the coordinate-wise median bounds the damage of any single mis-scored update, which is the safety net if the trust score is ever wrong in a round. Section~\ref{subsec:ablation} shows that each layer alone is insufficient and only their combination drives the backdoor advantage to zero.
 
 \begin{algorithm}[!t]
 \hrule\vspace{3pt}
@@ -314,11 +316,12 @@ Model architecture       & $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP, drop
 Experiments are implemented in Python with PyTorch and scikit-learn and run on CPU. The dataset subsample, train/test split, root carve, and scaler are fixed at seed~42 so the evaluation target never moves; the federated randomness that matters, namely the client partition, poison draw, model initialization, and batch shuffling, is varied across three seeds (42, 7, 123). All reported numbers are the mean and standard deviation over these three seeds, with backdoor lift paired within each seed against that seed's own honest baseline.
 
 \subsection{Experiments}
-We evaluate: (i) a layer ablation comparing honest FedAvg, the attack under FedAvg, the attack with accuracy inflation under accuracy-weighted aggregation, coordinate-median-only, trust-only, and the full defense, plus the full defense against the inflation variant; (ii) a trigger-generalization study placing the trigger on CN0, TCD, the weakest probed feature PD, and a mixed CN0+TCD trigger, all under one fixed D2 configuration; (iii) a defense-aware adaptive attacker that adds an evasion objective to its local training; (iv) a quantitative false-positive analysis of the trust mechanism; and (v) a measured cost analysis.
+We evaluate: (i) a layer ablation comparing honest FedAvg, the attack under FedAvg, the attack with accuracy inflation under accuracy-weighted aggregation, coordinate-median-only, trust-only, and the full defense, plus the full defense against the inflation variant; (ii) a trigger-generalization study placing the trigger on CN0, TCD, the weakest probed feature PD, and a mixed CN0+TCD trigger, all under one fixed D2 configuration; (iii) a defense-aware adaptive attacker that adds an evasion objective to its local training; (iv) a defense-side sensitivity sweep over all three defense hyperparameters; (v) a quantitative false-positive analysis of the trust mechanism; and (vi) a measured cost analysis.
 
 \section{Results}
 
 \subsection{Layer Ablation}
+\label{subsec:ablation}
 Table~\ref{tab:ablation} isolates the contribution of each defense layer. The attack raises backdoor lift to $+0.2457$, and accuracy inflation raises it further to $+0.3036$ by buying the compromised clients extra aggregation weight, confirming that the accuracy-weighting mechanism is an exploitable lever. Coordinate-median-only aggregation helps but leaves a real residual ($+0.0641$): a median resists the scaled updates but two clients of ten can still drag many coordinates. Trust-only aggregation removes nearly all of the lift ($+0.0037$) because the probes identify the compromised clients directly, though on the lift metric alone it is statistically close to the full defense. Only the full, layered defense drives lift negative ($-0.0253$) while simultaneously posting the best clean accuracy ($0.7142$) and spoofing recall ($0.5546$), both matching the honest baseline within noise. The final row shows the full defense against the inflation variant: it is numerically identical to the plain full defense, because the trust score never reads reported accuracy, so inflation has no channel through which to act. This is the central evidence that the layered defense is not an unnecessary combination: each layer covers a failure the other does not.
 
 \begin{table}[!t]
@@ -353,6 +356,7 @@ Full vs.\ inflation    & $0.7142$ & $0.5546$ & $0.6114$ & $-0.0253$ \\
 Fig.~\ref{fig:rounds} shows the same result over training: the attacked runs hold the backdoor open round after round while the defended run tracks the honest baseline, and the mechanism is visible in the right panel, where the coordinator drives the compromised clients to near-zero trust within the first round.
 
 \subsection{Trigger Generalization}
+\label{subsec:trigger}
 Table~\ref{tab:trigger} and Fig.~\ref{fig:trigger} test whether the defense depends on knowing the trigger feature. One fixed D2 configuration is run against four trigger settings; nothing is retuned. The attack carries a viable backdoor in every setting (lift $+0.09$ to $+0.25$), and the defense drives lift below zero in all four, including PD, the weakest probed feature (Cohen's $d = 0.152$), and a mixed CN0+TCD trigger that was never used to design the defense. Honest false positives stay between $0.3\%$ and $0.7\%$ throughout. Because the coordinator probes every discriminative feature, moving the trigger only changes which probe slice exposes the compromised client. This supports the claim that the defense is trigger-agnostic within the discriminative feature set; features with near-zero class separation (Cohen's $d < 0.05$, namely PQP and PIP) are outside the probe set by design and are not claimed.
 
 \begin{table}[!t]
@@ -382,6 +386,7 @@ CN0+TCD    & ---   & $0.9816$ & $+0.1933$ & $-0.0282$ & $0.7\%$ \\
 \end{figure}
 
 \subsection{Adaptive Attacker}
+\label{subsec:adaptive}
 The strongest objection to a trust defense is a defense-aware attacker. In Fig.~\ref{fig:adaptive} and Table~\ref{tab:adaptive}, each compromised client adds an evasion term of strength $\lambda$ to its local objective, training to keep predicting spoofed on probe-style slices so it looks like the honest cohort. As $\lambda$ increases, the attacker's trust does rise from $0.0001$ toward uniform ($0.083$ at $\lambda=2$), so it genuinely evades detection better, but its backdoor lift collapses even with no defense, from $+0.2457$ at $\lambda=0$ to $-0.48$ at $\lambda=10$. The reason is structural: the CN0 backdoor requires the model to call CN0-benign-high inputs authentic, while the CN0 probe rewards calling those same inputs spoofed. Evading the probe and keeping the backdoor are directly opposed objectives, so training for one destroys the other. There is no evasion strength at which the attacker both hides from the trust score and retains a working backdoor, and the defended lift stays negative at every $\lambda$.
 
 \begin{table}[!t]
@@ -408,19 +413,99 @@ The strongest objection to a trust defense is a defense-aware attacker. In Fig.~
 \label{fig:adaptive}
 \end{figure}
 
+\subsection{Defense-Side Sensitivity}
+\label{subsec:sensitivity}
+A defense with three hyperparameters invites the question of how much of its
+performance depends on tuning them. Table~\ref{tab:sensitivity} and
+Fig.~\ref{fig:sensitivity} sweep each one across three seeds while holding the
+other two at D2.
+
+The gate sharpness $\beta$ is the parameter one would expect to matter most,
+since it sets how hard a suspicious client is penalized. Across a sixteen-fold
+range it does not: backdoor lift is $-0.0279$, $-0.0253$, $-0.0323$, $-0.0335$ and $-0.0296$, negative at every
+setting
+and varying by less than one standard deviation. The dead-zone is what buys
+this. Without it ($\tau = 0$) the honest false-positive rate is
+$6.9\%$ and lift is only $-0.0046$, because the gate spends its
+strength on honest clients that merely sit at the bottom of a noisy round;
+with it, that spurious signal is removed and the gate's sharpness stops
+mattering. In deployment terms, an operator who sets $\beta$ anywhere in this
+range gets the same protection, which is a more useful property than a single
+well-tuned default.
+
+The dead-zone width $\tau$ is therefore the parameter that does the work, and
+it has a clear knee. The honest false-positive rate falls from $6.9\%$
+at $\tau = 0$ to $4.2\%$ at $\tau = 1$ and $0.3\%$ at
+$\tau = 2$, where it saturates, while lift is strongest in the $\tau = 2$ to
+$3$ region and weakens by $\tau = 5$ as an over-wide dead-zone begins excusing
+genuinely suspicious behavior. Trust smoothing is mildly U-shaped with the
+adopted $\rho = 0.5$ best on both metrics.
+
+One point of interpretation. Lift is nominally slightly better at
+$\beta \geq 2$ than at the adopted $\beta = 1.0$, but those differences are
+well inside one standard deviation and we do not claim they are real. The
+metric that does separate the settings is the honest false-positive rate,
+which rises monotonically with $\beta$. The adopted configuration is therefore
+chosen on false positives, not on lift.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Defense-Side Sensitivity (mean $\pm$ std, $n=3$). Each block sweeps one hyperparameter with the other two held at D2. FP is the honest false-positive rate.}
+\label{tab:sensitivity}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Setting} & \textbf{Lift} & \textbf{Std} & \textbf{FP} \\
+\midrule
+\multicolumn{4}{l}{\textit{Gate sharpness} $\beta$ ($\tau=2.0$, $\rho=0.5$)} \\
+$\beta = 0.5$ & $-0.0279$ & $0.0241$ & 0.3\% \\
+$\beta = 1.0$ & $-0.0253$ & $0.0178$ & 0.3\% \\
+$\beta = 2.0$ & $-0.0323$ & $0.0169$ & 2.4\% \\
+$\beta = 4.0$ & $-0.0335$ & $0.0185$ & 2.8\% \\
+$\beta = 8.0$ & $-0.0296$ & $0.0208$ & 3.5\% \\
+\midrule
+\multicolumn{4}{l}{\textit{Dead-zone} $\tau$ ($\beta=1.0$, $\rho=0.5$)} \\
+$\tau = 0.0$ & $-0.0046$ & $0.0124$ & 6.9\% \\
+$\tau = 1.0$ & $-0.0204$ & $0.0296$ & 4.2\% \\
+$\tau = 2.0$ & $-0.0253$ & $0.0178$ & 0.3\% \\
+$\tau = 3.0$ & $-0.0288$ & $0.0182$ & 0.3\% \\
+$\tau = 5.0$ & $-0.0183$ & $0.0161$ & 0.3\% \\
+\midrule
+\multicolumn{4}{l}{\textit{Trust smoothing} $\rho$ ($\beta=1.0$, $\tau=2.0$)} \\
+$\rho = 0.0$ & $-0.0170$ & $0.0215$ & 4.2\% \\
+$\rho = 0.5$ & $-0.0253$ & $0.0178$ & 0.3\% \\
+$\rho = 0.9$ & $-0.0218$ & $0.0201$ & 2.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.45in]{figures/fig_defense_sensitivity.png}
+\caption{Defense-side sensitivity. Backdoor lift (green, left axis, $\pm 1$ std band over three seeds) and honest false-positive rate (purple, right axis) against each defense hyperparameter, with the other two held at D2. The black line at zero marks ``the attacker gains nothing''; the undefended attack sits at $+0.246$, far above the plotted range, and is annotated rather than drawn.}
+\label{fig:sensitivity}
+\end{figure}
+
 \subsection{False Positives and Attribution}
+\label{subsec:fp}
 Treating the trust mechanism as a detector of compromised clients over $3$ seeds $\times$ $12$ rounds $\times$ $10$ clients, both compromised clients are flagged in $72$ of $72$ client-rounds ($100\%$ true-positive rate) with mean trust $0.000$, while honest clients are flagged in $1$ of $288$ client-rounds ($0.3\%$ false-positive rate) and no honest client is ever driven to zero trust. Mean honest trust sits in a tight band from $0.119$ to $0.131$ around the uniform value of $0.100$. The mechanism therefore not only removes the backdoor but attributes it to the exact compromised UAVs, which is operationally useful for response.
 
 \subsection{Computational Cost}
+\label{subsec:cost}
 The defense runs entirely on the aggregator; every client performs identical local training whether or not it is active, so it adds zero client-side cost. Measured on the same pipeline, one FL round takes about $3{,}285.8$ ms, dominated by local training, while the defense's server-side work (feature probing, trust computation, update scaling, and the coordinate-wise median, net of plain aggregation) adds about $37.4$ ms per round, roughly $1.1\%$ of round time. The probing is forward-pass-only on a $3{,}329$-parameter model against a small root set, and the added server terms scale linearly in the number of clients and probe features, so the defense remains practical as the fleet grows.
 
 \section{Discussion}
-The results support a single narrative. The vulnerability is real and specific: accuracy-weighted aggregation, adopted in recent UAV-FL work to reward good clients, is a second attack lever, and inflation raises backdoor lift from $+0.2457$ to $+0.3036$. The defense closes it by refusing to trust self-report and judging clients on behavior the coordinator can verify, which makes inflation inert by construction rather than by tuning. The layer ablation shows the combination is necessary: median-only leaves a quarter of the attack and trust-only lacks a safety net against a mis-scored round, while together they drive the advantage to zero at no utility cost. The trigger-generalization and adaptive-attacker studies address the two hardest questions a reviewer can ask: the defense holds when the trigger moves to a feature it was never told about, including a mixed trigger, and a defense-aware attacker cannot evade the probe without destroying its own backdoor.
+The results support a single narrative. The vulnerability is real and specific: accuracy-weighted aggregation, adopted in recent UAV-FL work to reward good clients, is a second attack lever, and inflation raises backdoor lift from $+0.2457$ to $+0.3036$. The defense closes it by refusing to trust self-report and judging clients on behavior the coordinator can verify, which makes inflation inert by construction rather than by tuning. The layer ablation shows the combination is necessary: median-only leaves a quarter of the attack and trust-only lacks a safety net against a mis-scored round, while together they drive the advantage to zero at no utility cost. The trigger-generalization and adaptive-attacker studies address the two hardest questions a reviewer can ask: the defense holds when the trigger moves to a feature it was never told about, including a mixed trigger, and a defense-aware attacker cannot evade the probe without destroying its own backdoor. The sensitivity sweep adds a deployability argument to the security one: once the dead-zone removes the spurious penalties on honest clients, backdoor lift is flat and negative across a sixteen-fold range of the gate parameter, so an operator does not have to find a narrow setting to be protected. The parameter that does require a considered choice is the dead-zone width itself, and the sweep locates its knee rather than leaving it to judgment.
 
-Several limitations bound these claims and are stated plainly. First, the base detector is only moderately strong on this simplified public dataset (honest spoofing recall about $0.53$), which is why backdoor lift, measured against each seed's own honest baseline, is the primary metric rather than absolute accuracy; a stronger detector is an orthogonal improvement that would not change the defense conclusions. Second, the evaluation uses an IID partition across ten clients with two attackers; non-IID data would widen the honest trust spread and is the setting most likely to stress the false-positive rate, and is the natural next study. Third, the single-receiver dataset is a proxy for a distributed fleet, adopted because no public multi-UAV GPS spoofing dataset exists. Fourth, the trigger-agnostic claim is scoped to the discriminative (probed) feature set; a trigger placed on a feature with near-zero class separation would fall outside the probe set, but such a feature also carries little signal for the detector to exploit. Three seeds are sufficient to separate the attack effect from noise and to report a standard deviation, but not to resolve sub-noise differences between neighboring defended variants, and we claim none.
+Several limitations bound these claims and are stated plainly. First, the base detector is only moderately strong on this simplified public dataset (honest spoofing recall about $0.53$), which is why backdoor lift, measured against each seed's own honest baseline, is the primary metric rather than absolute accuracy; a stronger detector is an orthogonal improvement that would not change the defense conclusions. Second, the evaluation uses an IID partition across ten clients with two attackers; non-IID data would widen the honest trust spread and is the setting most likely to stress the false-positive rate, and is the natural next study. Third, the single-receiver dataset is a proxy for a distributed fleet, adopted because no public multi-UAV GPS spoofing dataset exists. Fourth, the trigger-agnostic claim is scoped to the discriminative (probed) feature set; a trigger placed on a feature with near-zero class separation would fall outside the probe set, but such a feature also carries little signal for the detector to exploit. Fifth, the sensitivity study varies one hyperparameter at a time around the adopted configuration; it does not explore interactions across the full joint space, so the insensitivity we report is local to that neighborhood rather than global. Three seeds are sufficient to separate the attack effect from noise and to report a standard deviation, but not to resolve sub-noise differences between neighboring defended variants, and we claim none.
 
 \section{Conclusion}
-We showed that accuracy-weighted federated aggregation, a design adopted in recent UAV-FL detection work to reward high-quality clients, is exploitable: two compromised UAV clients of ten can implant a stealthy GPS spoofing backdoor by poisoning a fraction of their data, scaling their updates, and inflating their reported accuracy, raising backdoor lift by up to $0.3036$ while clean accuracy falls by less than two points. We then proposed a server-side behavioral-trust defense that never reads reported accuracy and does not need to know the trigger feature: it probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in robust units, and aggregates trust-scaled updates with a coordinate-wise median. Across three seeds the defense eliminates the attacker's advantage (lift $-0.0253$), flags both compromised clients in $100\%$ of client-rounds at a $0.3\%$ honest false-positive rate, generalizes across the discriminative feature set including a mixed trigger, withstands a defense-aware adaptive attacker whose evasion destroys its own backdoor, and costs about $1.1\%$ of round time with no client-side work. Extending the evaluation to non-IID fleets and to a stronger base detector is the primary direction for future work.
+We showed that accuracy-weighted federated aggregation, a design adopted in recent UAV-FL detection work to reward high-quality clients, is exploitable: two compromised UAV clients of ten can implant a stealthy GPS spoofing backdoor by poisoning a fraction of their data, scaling their updates, and inflating their reported accuracy, raising backdoor lift by up to $0.3036$ while clean accuracy falls by less than two points. We then proposed a server-side behavioral-trust defense that never reads reported accuracy and does not need to know the trigger feature: it probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in robust units, and aggregates trust-scaled updates with a coordinate-wise median. Across three seeds the defense eliminates the attacker's advantage (lift $-0.0253$), flags both compromised clients in $100\%$ of client-rounds at a $0.3\%$ honest false-positive rate, generalizes across the discriminative feature set including a mixed trigger, withstands a defense-aware adaptive attacker whose evasion destroys its own backdoor, retains that protection across a sixteen-fold range of its gate parameter, and costs about $1.1\%$ of round time with no client-side work. Extending the evaluation to non-IID fleets and to a stronger base detector is the primary direction for future work.
+
+\section*{Artifact Availability}
+All experiments are implemented in Python with PyTorch and scikit-learn and run on CPU. Every table and figure in this paper is produced by a notebook or script in the project repository and exported to a CSV or PNG, and the reported values are read from those exports rather than transcribed, so no figure or table can disagree with the run that produced it. The dataset is publicly available \cite{aissou2022dataset}.
 
 \section*{Acknowledgment}
 The authors thank Dr. Khalid Hasan for advising this capstone project at James Madison University.
