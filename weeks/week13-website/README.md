@@ -36,13 +36,21 @@ heading, controls and metrics with no console error.
 
 ## Controls
 
-- **Play / Pause / Restart** — steps through twelve rounds, four phases each.
-- **Attack Off / On** — whether drones 9 and 10 are compromised.
-- **Coordinator defense Off / On** — whether the behavioral-trust exam runs before merging.
+- **Next / Back** — step through ten stages at your own pace. Arrow keys work too.
+- **Dots** — jump straight to any stage.
+- **Auto** — advances every five seconds if you would rather let it run.
+- **Restart** — back to stage one.
 
-Watch for: with the defense **off**, the red packets merge straight in and the backdoor lands. With
-it **on**, the coordinator pulses gold while probing, both liars flash red, and their influence bars
-collapse to nothing in the first round.
+The narrative runs: the fleet, local training, updates going up, merging, two drones revealed as
+compromised, what those two actually do, the backdoor landing, the coordinator switching to its own
+exam, the two liars failing it, and finally their influence going to zero.
+
+## Colours and icons
+
+Official JMU palette only (`#450084` purple, `#CBB677` gold, the secondary purples and golds, the
+grays, `#5F791C` green and `#A4232B` red), on the light gold `#F4EFE1` background. No emoji: the
+drone and ground-station glyphs are inline SVG `<symbol>` definitions, and the button chevrons are
+inline SVG paths, so the page stays a single self-contained file with no external requests.
 
 ## What is measured and what is not
 
