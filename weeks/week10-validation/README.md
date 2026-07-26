@@ -33,9 +33,9 @@ It also changed the defense. Measuring false positives properly showed the old g
 
 | | Value |
 |---|---|
-| Attack backdoor lift | **+0.2415 +/- 0.0048** |
-| With accuracy inflation | **+0.3036 +/- 0.0124** |
-| Under the defense (D2) | **-0.0265 +/- 0.0174** (advantage eliminated) |
+| Attack backdoor lift | **+0.2457 +/- 0.0023** |
+| With accuracy inflation | **+0.3036 +/- 0.0131** |
+| Under the defense (D2) | **-0.0253 +/- 0.0178** (advantage eliminated) |
 | Honest false-positive rate | **0.3%**, none driven to zero trust |
 | Attacker detection | **100%** |
 

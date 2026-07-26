@@ -16,6 +16,53 @@ HERE = Path(__file__).resolve().parent
 P1 = HERE                         # every number and figure in this report comes from one notebook
 OUT = HERE / 'week10_final_report.pdf'
 
+# ---------------------------------------------------------------------------
+# Prose numbers are pulled from the same CSVs that feed the tables, so a rerun
+# of the notebook cannot leave the narrative disagreeing with the table printed
+# directly above it. Do not hard-code result digits below this point.
+# ---------------------------------------------------------------------------
+def _row(df, needle):
+    m = df[df.iloc[:, 0].astype(str).str.contains(needle, regex=False)]
+    if m.empty:
+        raise KeyError(f'no row matching {needle!r} in first column')
+    return m.iloc[0]
+
+def _mean(s):
+    """'0.7109 +/- 0.0021' -> '0.7109'"""
+    return str(s).split('+/-')[0].strip()
+
+def _signed(s):
+    """ensure an explicit sign on a 'x +/- y' string"""
+    s = str(s).strip()
+    return s if s[:1] in '+-' else '+' + s
+
+def _join(vals):
+    vals = list(vals)
+    return ', '.join(vals[:-1]) + ' and ' + vals[-1]
+
+_main = pd.read_csv(P1 / 'results' / 'main_table_multiseed.csv', keep_default_na=False)
+_beta = pd.read_csv(P1 / 'results' / 'sensitivity_beta.csv', keep_default_na=False)
+_tau  = pd.read_csv(P1 / 'results' / 'sensitivity_tau.csv',  keep_default_na=False)
+_ema  = pd.read_csv(P1 / 'results' / 'sensitivity_ema.csv',  keep_default_na=False)
+
+_hon, _atk = _row(_main, 'Honest'), _row(_main, 'Attack (FedAvg)')
+_inf, _dfn = _row(_main, 'inflation'), _row(_main, 'Full defense')
+
+HON_ACC, HON_REC = _mean(_hon['Clean Accuracy']), _mean(_hon['Spoofing Recall'])
+ATK_REC          = _mean(_atk['Spoofing Recall'])
+DEF_ACC, DEF_REC = _mean(_dfn['Clean Accuracy']), _mean(_dfn['Spoofing Recall'])
+ATK_LIFT = _signed(_atk['Backdoor Lift'])
+INF_LIFT = _signed(_inf['Backdoor Lift'])
+DEF_LIFT = _signed(_dfn['Backdoor Lift'])
+
+BETA_LIFTS = _join([_mean(v) for v in _beta['Backdoor Lift']])
+BETA_FP_LO = _beta['Honest FP rate'].iloc[1]                      # at the adopted beta = 1.0
+BETA_FP_HI = _join([str(v).rstrip('%') for v in _beta['Honest FP rate'].iloc[2:]])
+TAU_FP     = [str(v) for v in _tau['Honest FP rate']]
+TAU_L2, TAU_L3, TAU_L5 = (_mean(_tau['Backdoor Lift'].iloc[i]) for i in (2, 3, 4))
+EMA_FP0, EMA_FP9 = _ema['Honest FP rate'].iloc[0], _ema['Honest FP rate'].iloc[2]
+EMA_L0, EMA_L5, EMA_L9 = (_mean(_ema['Backdoor Lift'].iloc[i]) for i in (0, 1, 2))
+
 PURPLE=(69,0,132); GOLD=(203,182,119); DARK=(51,51,51); GREY=(89,89,89)
 LINE=(214,214,214); ALTROW=(244,239,225); PAGE_W=190
 
@@ -168,12 +215,13 @@ cap('Table 1. Honest baseline, attack, attack with accuracy inflation, and the f
     'success rate (BSR) on the triggered test set; and backdoor lift, which is BSR minus that same seed own honest '
     'baseline. The defense row is highlighted.')
 h2('Insights')
-body('The attack reproduces on every seed rather than being a fluke of one run: it adds +0.2415 +/- 0.0048 of '
-     'backdoor lift, and letting the attackers lie about their accuracy raises that to +0.3036 +/- 0.0124, because '
-     'the false claim buys them a bigger share of the merge. At D2 the advantage is eliminated outright, falling to '
-     '-0.0265 +/- 0.0174: the attacker ends up no better off than if it had never attacked. Spoofing recall is '
-     'restored from 0.3641 under attack to 0.5560 against an honest 0.5292, and clean accuracy to 0.7143 against an '
-     'honest 0.7112, so the defense recovers the detector normal behaviour and not only its trigger behaviour.')
+body(f'The attack reproduces on every seed rather than being a fluke of one run: it adds {ATK_LIFT} of '
+     f'backdoor lift, and letting the attackers lie about their accuracy raises that to {INF_LIFT}, because '
+     f'the false claim buys them a bigger share of the merge. At D2 the advantage is eliminated outright, falling to '
+     f'{DEF_LIFT}: the attacker ends up no better off than if it had never attacked. Spoofing recall is '
+     f'restored from {ATK_REC} under attack to {DEF_REC} against an honest {HON_REC}, and clean accuracy to {DEF_ACC} '
+     f'against an honest {HON_ACC}, so the defense recovers the detector normal behaviour and not only its trigger '
+     f'behaviour.')
 h2('A claim we are deliberately not making')
 body('The defended row comes out marginally ahead of the honest baseline on all three metrics. It would be easy to '
      'present that as the defense improving on ordinary training, and there is even a plausible mechanism, since '
@@ -194,7 +242,7 @@ body('Both compromised drones are caught in every single round, and honest drone
      'of 288, with none ever silenced completely. Under the old gate these figures were 20.5 percent and one honest '
      'client-round at zero trust, which is the weakness the redesign was built to fix.')
 h2('Honest limitation')
-body('Honest spoofing recall is only 0.5292, meaning the underlying detector misses roughly half of all spoofed '
+body(f'Honest spoofing recall is only {HON_REC}, meaning the underlying detector misses roughly half of all spoofed '
      'samples before any attack happens. This is a genuine weakness of the detector on this simplified dataset, and '
      'it is why backdoor lift, measured against each seed own honest baseline, is the primary metric rather than raw '
      'accuracy. Improving the base detector is the highest-value work remaining.')
@@ -237,22 +285,25 @@ cap('Figure 2. Each panel varies one defense knob and holds the other two at D2.
     'black line at zero marks the point where the attacker gains nothing. The undefended attack sits at +0.241, far '
     'above every defended value, so it is annotated rather than drawn.')
 h2('Insights')
-body('The previous report swept only the attacker side, so we swept the defense own knobs. The headline is that the '
-     'dead-zone did more than fix false positives: it made the defense insensitive to its main hyperparameter. '
-     'Without a dead-zone, backdoor lift degraded steadily as the gate sharpened, from -0.0054 at beta = 1.0 up to '
-     '+0.1228 at beta = 8, and we concluded the gate had to be tuned carefully. With the dead-zone, lift across that '
-     'same sixteen-fold range is -0.0279, -0.0265, -0.0328, -0.0324 and -0.0322: flat, negative everywhere, varying '
-     'by less than one standard deviation. A sharp gate was never dangerous in itself, it was dangerous because it '
-     'punished honest drones that were merely at the bottom of a noisy round. A defense that does not need careful '
-     'tuning to stay safe is a stronger result than a defense with a better recommended default.')
-body('Panel (b) also closes a limitation we had flagged ourselves. The dead-zone width was previously chosen by '
-     'reasoning about the statistical scale rather than measured. Sweeping it puts the false-positive rate at 6.9 '
-     'percent with no dead-zone, 4.9 percent at tau = 1, and 0.3 percent from tau = 2 onward, while backdoor lift is '
-     'best in the tau = 2 to 3 region and starts to degrade by tau = 5 as an over-wide dead-zone begins excusing '
-     'genuinely suspicious behaviour. tau = 2.0 sits at the knee of both curves, so the original reasoning is '
-     'confirmed by measurement. One point of honesty about panel (a): lift is marginally better at the sharper '
-     'settings, but well inside one standard deviation, so beta = 1.0 is chosen on the false-positive rate rather '
-     'than on lift, and we say so instead of implying the lift ordering favoured our choice.')
+body(f'The previous report swept only the attacker side, so we swept the defense own knobs. The headline is that '
+     f'the dead-zone did more than fix false positives: it made the defense insensitive to its main hyperparameter. '
+     f'Without a dead-zone, backdoor lift degraded steadily as the gate sharpened, from -0.0054 at beta = 1.0 up to '
+     f'+0.1228 at beta = 8, and we concluded the gate had to be tuned carefully. With the dead-zone, lift across '
+     f'that same sixteen-fold range is {BETA_LIFTS}: flat, negative everywhere, varying by less than one standard '
+     f'deviation. A sharp gate was never dangerous in itself, it was dangerous because it punished honest drones '
+     f'that were merely at the bottom of a noisy round. A defense that does not need careful tuning to stay safe is '
+     f'a stronger result than a defense with a better recommended default.')
+body(f'Panel (b) also closes a limitation we had flagged ourselves. The dead-zone width was previously chosen by '
+     f'reasoning about the statistical scale rather than measured. Sweeping it puts the honest false-positive rate '
+     f'at {TAU_FP[0]} with no dead-zone, {TAU_FP[1]} at tau = 1, and {TAU_FP[2]} from tau = 2 onward, while backdoor '
+     f'lift is best in the tau = 2 to 3 region ({TAU_L2} and {TAU_L3}) and starts to degrade by tau = 5 ({TAU_L5}) '
+     f'as an over-wide dead-zone begins excusing genuinely suspicious behaviour. tau = 2.0 sits at the knee of both '
+     f'curves, so the original reasoning is confirmed by measurement. Panel (c) confirms the smoothing default: EMA '
+     f'0.5 is best on both metrics ({EMA_L5} lift at {TAU_FP[2]}), against {EMA_L0} at {EMA_FP0} with no smoothing '
+     f'and {EMA_L9} at {EMA_FP9} at 0.9. One point of honesty about panel (a): lift is marginally better at the '
+     f'sharper settings, but well inside one standard deviation, so beta = 1.0 is chosen on the false-positive rate '
+     f'({BETA_FP_LO}, against {BETA_FP_HI} percent above it) rather than on lift, and we say so instead of implying '
+     f'the lift ordering favoured our choice.')
 h2('What remains incomplete')
 bullet('The base detector is weak (honest spoofing recall about 0.53), partly a ceiling of this simplified dataset. '
        'This is the highest-value next improvement.')

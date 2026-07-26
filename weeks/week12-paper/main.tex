@@ -377,7 +377,7 @@ CN0+TCD    & ---   & $0.9816$ & $+0.1933$ & $-0.0282$ & $0.7\%$ \\
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.2in]{figures/fig_trigger_generalization.png}
-\caption{Backdoor lift before (orange) and after (green) the defense, per trigger setting; bars are means over three seeds with $\pm 1$ std error bars. One fixed D2 configuration; the black line at zero marks ``the attacker gains nothing.''}
+\caption{Backdoor lift before (orange) and after (green) the defense, per trigger setting. Each connector spans one trigger's undefended and defended lift, so its length is the backdoor the defense removes; markers are means over three seeds and whiskers are $\pm 1$ std. One fixed D2 configuration; the black line at zero marks ``the attacker gains nothing.''}
 \label{fig:trigger}
 \end{figure}
 
@@ -404,7 +404,7 @@ The strongest objection to a trust defense is a defense-aware attacker. In Fig.~
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.2in]{figures/fig_adaptive_attacker.png}
-\caption{Adaptive attacker. Defended backdoor lift (green, left axis) and mean attacker trust (purple, right axis) versus evasion strength $\lambda$, mean of three seeds. As the attacker evades better and its trust rises toward uniform, the backdoor collapses; defended lift stays negative throughout.}
+\caption{Adaptive attacker. Undefended backdoor lift (orange, dashed) and defended backdoor lift (green) on the left axis, with mean attacker trust (purple, dotted) on the right, versus evasion strength $\lambda$; mean of three seeds with $\pm 1$ std. As $\lambda$ grows the attacker's trust climbs toward uniform, so it does evade the probe more successfully, but its undefended backdoor collapses from $+0.2457$ to $-0.48$ over the same range: the two objectives are opposed. Defended lift stays negative throughout.}
 \label{fig:adaptive}
 \end{figure}
 

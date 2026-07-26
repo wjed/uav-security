@@ -12,12 +12,12 @@
 
 | Case | Clean Accuracy | Spoofing Recall | BSR | Backdoor Lift |
 |---|---|---|---|---|
-| Honest FedAvg | 0.7112 +/- 0.0019 | 0.5292 +/- 0.0115 | 0.6367 +/- 0.0141 | 0.0000 |
-| Attack (FedAvg) | 0.6932 +/- 0.0032 | 0.3641 +/- 0.0096 | 0.8782 +/- 0.0178 | **+0.2415 +/- 0.0048** |
-| Attack + inflation (Acc-Weighted) | 0.6897 +/- 0.0046 | 0.3524 +/- 0.0148 | 0.9402 +/- 0.0096 | **+0.3036 +/- 0.0124** |
-| **Full defense (D2)** | **0.7143 +/- 0.0025** | **0.5560 +/- 0.0194** | **0.6101 +/- 0.0313** | **-0.0265 +/- 0.0174** |
+| Honest FedAvg | 0.7109 +/- 0.0021 | 0.5287 +/- 0.0124 | 0.6368 +/- 0.0138 | 0.0000 |
+| Attack (FedAvg) | 0.6928 +/- 0.0032 | 0.3618 +/- 0.0091 | 0.8825 +/- 0.0157 | **+0.2457 +/- 0.0023** |
+| Attack + inflation (Acc-Weighted) | 0.6900 +/- 0.0047 | 0.3535 +/- 0.0158 | 0.9404 +/- 0.0101 | **+0.3036 +/- 0.0131** |
+| **Full defense (D2)** | **0.7142 +/- 0.0027** | **0.5546 +/- 0.0177** | **0.6114 +/- 0.0315** | **-0.0253 +/- 0.0178** |
 
-Backdoor lift is BSR minus that seed's own honest baseline. D2 **eliminates the backdoor advantage**: lift falls from +0.2415 to -0.0265, so the attacker ends up no better off than if it had never attacked. Spoofing recall is restored from 0.3641 under attack to 0.5560, and clean accuracy to 0.7143.
+Backdoor lift is BSR minus that seed's own honest baseline. D2 **eliminates the backdoor advantage**: lift falls from +0.2457 to -0.0253, so the attacker ends up no better off than if it had never attacked. Spoofing recall is restored from 0.3618 under attack to 0.5546, and clean accuracy to 0.7142.
 
 **A claim we are deliberately not making.** The defended row comes out marginally ahead of the honest baseline on all three metrics. Those margins are comparable to the seed-to-seed spread, and three seeds is a small sample, so we treat the defended result as **indistinguishable from the honest baseline rather than better than it**. The supportable claim is that D2 removes the backdoor at no utility cost. We say this explicitly because the Week 9 report made exactly this error in the opposite direction, reading single-seed noise as a real effect.
 
@@ -52,15 +52,15 @@ One number also moved the wrong way and we record it rather than omit it: attack
 
 ## Most useful new finding
 
-**The dead-zone did more than fix false positives: it made the defense insensitive to its own main knob.** Without a dead-zone, backdoor lift degraded steadily as the gate sharpened, from -0.0054 at `beta = 1.0` up to **+0.1228 at `beta = 8`**, and we concluded the gate had to be tuned carefully. With the dead-zone, lift across that same sixteen-fold range is **-0.0279, -0.0265, -0.0328, -0.0324, -0.0322**: flat, negative everywhere, varying by less than one standard deviation. A sharp gate was never dangerous in itself; it was dangerous because it punished honest clients that were merely at the bottom of a noisy round.
+**The dead-zone did more than fix false positives: it made the defense insensitive to its own main knob.** Without a dead-zone, backdoor lift degraded steadily as the gate sharpened, from -0.0054 at `beta = 1.0` up to **+0.1228 at `beta = 8`**, and we concluded the gate had to be tuned carefully. With the dead-zone, lift across that same sixteen-fold range is **-0.0279, -0.0253, -0.0323, -0.0335, -0.0296**: flat, negative everywhere, varying by less than one standard deviation. A sharp gate was never dangerous in itself; it was dangerous because it punished honest clients that were merely at the bottom of a noisy round.
 
 **A defense that does not need careful tuning to stay safe is a stronger result than a defense with a better recommended default.** This supersedes the previous iteration's finding, which was simply that `beta = 1.0` beat `beta = 2.0`.
 
-The new **tau sweep** also closes a limitation we had flagged ourselves. The dead-zone width was previously chosen by reasoning about the MAD scale rather than measured. Sweeping it puts the false-positive rate at 6.9% with no dead-zone, 4.9% at `tau = 1`, and 0.3% from `tau = 2` onward, while lift is best in the `tau = 2` to `3` region and degrades by `tau = 5`. `tau = 2.0` sits at the knee of both curves, so the original reasoning is confirmed by measurement.
+The new **tau sweep** also closes a limitation we had flagged ourselves. The dead-zone width was previously chosen by reasoning about the MAD scale rather than measured. Sweeping it puts the false-positive rate at 6.9% with no dead-zone, 4.2% at `tau = 1`, and 0.3% from `tau = 2` onward, while lift is best in the `tau = 2` to `3` region and degrades by `tau = 5`. `tau = 2.0` sits at the knee of both curves, so the original reasoning is confirmed by measurement.
 
 ## What remains incomplete
 
-1. **The base detector is weak.** Honest spoofing recall is about 0.53, so the model misses roughly half of spoofed samples before any attack, and the honest BSR is correspondingly high (0.6367). Lift is the right metric given this, and we use it, but the absolute detection quality is a real limitation of this simplified dataset. This is the highest-value next step.
+1. **The base detector is weak.** Honest spoofing recall is about 0.53, so the model misses roughly half of spoofed samples before any attack, and the honest BSR is correspondingly high (0.6368). Lift is the right metric given this, and we use it, but the absolute detection quality is a real limitation of this simplified dataset. This is the highest-value next step.
 2. **The defended result is not better than honest training, and we do not claim it is.** Distinguishing a real effect from noise here would need many more than three seeds.
 3. **Three seeds is few** for a standard deviation. Enough to show the attack effect far exceeds the noise, but too few to resolve differences between neighbouring settings in the sensitivity sweeps.
 4. **No adaptive attacker.** Every attacker here is fixed: it poisons at a set rate and scales its update, without reacting to the defense. An attacker that knows the probe exists and shapes its updates to keep its probe accuracy near the honest cohort, for example by adding a probe-slice penalty to its local loss, is untested. A dead-zone in particular invites this, since an attacker that keeps its suspicion below tau is never gated at all. This is the strongest remaining threat to the defense.

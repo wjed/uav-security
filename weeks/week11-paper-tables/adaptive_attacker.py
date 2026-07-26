@@ -244,16 +244,24 @@ tab.to_csv(RESULTS/'adaptive_attacker.csv', index=False)
 fig, ax1 = plt.subplots(figsize=(8,4.6))
 dl = [np.mean([rows[(lam,sd)]['def_lift'] for sd in SEEDS]) for lam in LAMBDAS]
 ds = [np.std([rows[(lam,sd)]['def_lift'] for sd in SEEDS]) for lam in LAMBDAS]
+ul = [np.mean([rows[(lam,sd)]['und_lift'] for sd in SEEDS]) for lam in LAMBDAS]
+us = [np.std([rows[(lam,sd)]['und_lift'] for sd in SEEDS]) for lam in LAMBDAS]
 tr = [np.mean([rows[(lam,sd)]['att_trust'] for sd in SEEDS]) for lam in LAMBDAS]
-ax1.errorbar(LAMBDAS, dl, yerr=ds, marker='o', color='seagreen', lw=2, capsize=4, label='defended backdoor lift (left)')
+# The undefended series is the point of this figure: as the attacker trains to
+# evade the probe, its own backdoor is destroyed even with no defense present.
+ax1.errorbar(LAMBDAS, ul, yerr=us, marker='s', color='#E4572E', lw=2, capsize=4,
+             ls='--', label='undefended backdoor lift (left)')
+ax1.errorbar(LAMBDAS, dl, yerr=ds, marker='o', color='seagreen', lw=2, capsize=4,
+             label='defended backdoor lift (left)')
 ax1.axhline(0, color='black', lw=1.1)
-ax1.set_xlabel('attacker evasion strength (lambda)'); ax1.set_ylabel('defended backdoor lift')
+ax1.set_xlabel('attacker evasion strength (lambda)'); ax1.set_ylabel('backdoor lift (BSR - honest baseline)')
 ax2 = ax1.twinx()
-ax2.plot(LAMBDAS, tr, marker='s', ls=':', color='#450084', lw=1.8, label='mean attacker trust (right)')
+ax2.plot(LAMBDAS, tr, marker='^', ls=':', color='#450084', lw=1.8, label='mean attacker trust (right)')
 ax2.set_ylabel('mean attacker trust', color='#450084'); ax2.tick_params(axis='y', labelcolor='#450084')
 ax2.axhline(1.0/N_CLIENTS, color='gray', ls='--', lw=1)
-ax1.set_title('Adaptive (defense-aware) attacker: evasion versus the backdoor\n(D2 defense, mean of 3 seeds)', fontsize=11)
+ax2.text(LAMBDAS[-1], 1.0/N_CLIENTS, ' uniform', fontsize=7, color='gray', va='bottom', ha='right')
+ax1.set_title('Adaptive (defense-aware) attacker: evasion destroys the backdoor\n(D2 defense, mean of 3 seeds)', fontsize=11)
 h1,l1 = ax1.get_legend_handles_labels(); h2,l2 = ax2.get_legend_handles_labels()
-ax1.legend(h1+h2, l1+l2, fontsize=8.5, loc='center right')
+ax1.legend(h1+h2, l1+l2, fontsize=8.5, loc='upper center', bbox_to_anchor=(0.5,-0.16), ncol=3, frameon=False)
 fig.tight_layout(); fig.savefig(RESULTS/'fig_adaptive_attacker.png', bbox_inches='tight')
 print('\nwrote results/adaptive_attacker.csv and results/fig_adaptive_attacker.png')

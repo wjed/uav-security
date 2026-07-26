@@ -46,10 +46,10 @@ All main cases run across seeds **42, 7, 123**. The dataset split, test set, and
 
 | Case | Clean Accuracy | Spoofing Recall | BSR | Backdoor Lift |
 |---|---|---|---|---|
-| Honest FedAvg | 0.7112 +/- 0.0019 | 0.5292 +/- 0.0115 | 0.6367 +/- 0.0141 | 0.0000 |
-| Attack (FedAvg) | 0.6932 +/- 0.0032 | 0.3641 +/- 0.0096 | 0.8782 +/- 0.0178 | **+0.2415 +/- 0.0048** |
-| Attack + inflation | 0.6897 +/- 0.0046 | 0.3524 +/- 0.0148 | 0.9402 +/- 0.0096 | **+0.3036 +/- 0.0124** |
-| **Full defense (D2)** | **0.7143 +/- 0.0025** | **0.5560 +/- 0.0194** | **0.6101 +/- 0.0313** | **-0.0265 +/- 0.0174** |
+| Honest FedAvg | 0.7109 +/- 0.0021 | 0.5287 +/- 0.0124 | 0.6368 +/- 0.0138 | 0.0000 |
+| Attack (FedAvg) | 0.6928 +/- 0.0032 | 0.3618 +/- 0.0091 | 0.8825 +/- 0.0157 | **+0.2457 +/- 0.0023** |
+| Attack + inflation | 0.6900 +/- 0.0047 | 0.3535 +/- 0.0158 | 0.9404 +/- 0.0101 | **+0.3036 +/- 0.0131** |
+| **Full defense (D2)** | **0.7142 +/- 0.0027** | **0.5546 +/- 0.0177** | **0.6114 +/- 0.0315** | **-0.0253 +/- 0.0178** |
 
 **A claim we are deliberately not making.** The defended row comes out marginally ahead of the honest baseline on all three metrics. It would be easy to present that as the defense improving on ordinary training, and there is a plausible mechanism, since coordinate-wise median aggregation discards outlying updates and that is mild regularization even with no attacker present. But those margins are comparable to the seed-to-seed spread and three seeds is a small sample, so we treat the defended result as **statistically indistinguishable from the honest baseline rather than better than it**. The supportable claim is that D2 removes the backdoor advantage at no utility cost. We are explicit about this because the Week 9 report made exactly this error in the opposite direction, reading single-seed noise as a real effect.
 
@@ -78,34 +78,34 @@ We swept all three knobs that govern the trust mechanism, each across three seed
 
 | beta | Backdoor Lift | Clean Acc | Spoofing Recall | Honest FP |
 |---|---|---|---|---|
-| 0.5 | -0.0279 +/- 0.0242 | 0.7131 | 0.5537 | 0.3% |
-| **1.0 (adopted)** | **-0.0265 +/- 0.0174** | **0.7143** | **0.5560** | **0.3%** |
-| 2.0 | -0.0328 +/- 0.0167 | 0.7121 | 0.5595 | 2.1% |
-| 4.0 | -0.0324 +/- 0.0199 | 0.7117 | 0.5615 | 2.1% |
-| 8.0 | -0.0322 +/- 0.0233 | 0.7116 | 0.5600 | 2.8% |
+| 0.5 | -0.0279 +/- 0.0241 | 0.7127 | 0.5548 | 0.3% |
+| **1.0 (adopted)** | **-0.0253 +/- 0.0178** | **0.7142** | **0.5546** | **0.3%** |
+| 2.0 | -0.0323 +/- 0.0169 | 0.7121 | 0.5588 | 2.4% |
+| 4.0 | -0.0335 +/- 0.0185 | 0.7117 | 0.5611 | 2.8% |
+| 8.0 | -0.0296 +/- 0.0208 | 0.7117 | 0.5613 | 3.5% |
 
 **The headline finding: the dead-zone made the defense insensitive to its main knob.** This supersedes what we reported previously. Without a dead-zone, backdoor lift degraded steadily and monotonically as beta grew, from -0.0054 at beta = 1.0 up to **+0.1228 at beta = 8**, and we concluded that beta had to be tuned carefully and kept low. With the dead-zone, lift across that same sixteen-fold range is flat, negative everywhere, and varies by less than one standard deviation. The mechanism is the one item 4 identifies: a sharp gate was never dangerous in itself, it was dangerous because it acted on honest clients that were merely at the bottom of a noisy round. Remove those spurious penalties and the sharpness of the gate stops mattering. **A defense that does not need careful tuning to stay safe is a stronger property than a defense with a better recommended default.**
 
-**Honesty about how beta was chosen.** Lift is marginally *better* at beta = 2 to 8 (about -0.032) than at beta = 1.0 (-0.0265), but the differences are well inside one standard deviation and we do not claim they are real. The metric that does separate the settings is the false-positive rate, which is 0.3% at beta <= 1.0 and rises to 2.1% and then 2.8% above it. **beta = 1.0 is chosen on false positives, not on lift.**
+**Honesty about how beta was chosen.** Lift is marginally *better* at beta = 2 to 8 (about -0.032) than at beta = 1.0 (-0.0253), but the differences are well inside one standard deviation and we do not claim they are real. The metric that does separate the settings is the false-positive rate, which is 0.3% at beta <= 1.0 and rises to 2.4%, 2.8% and 3.5% above it. **beta = 1.0 is chosen on false positives, not on lift.**
 
 **Dead-zone width tau** (new; this closes a limitation we had flagged ourselves, that tau was reasoned about from the MAD scale but never measured):
 
 | tau | Backdoor Lift | Clean Acc | Spoofing Recall | Honest FP |
 |---|---|---|---|---|
-| 0.0 (no dead-zone) | -0.0054 +/- 0.0138 | 0.7106 | 0.5355 | 6.9% |
-| 1.0 | -0.0212 +/- 0.0294 | 0.7100 | 0.5534 | 4.9% |
-| **2.0 (adopted)** | **-0.0265 +/- 0.0174** | **0.7143** | **0.5560** | **0.3%** |
-| 3.0 | -0.0267 +/- 0.0199 | 0.7137 | 0.5471 | 0.3% |
-| 5.0 | -0.0178 +/- 0.0162 | 0.7134 | 0.5468 | 0.3% |
+| 0.0 (no dead-zone) | -0.0046 +/- 0.0124 | 0.7101 | 0.5346 | 6.9% |
+| 1.0 | -0.0204 +/- 0.0296 | 0.7101 | 0.5519 | 4.2% |
+| **2.0 (adopted)** | **-0.0253 +/- 0.0178** | **0.7142** | **0.5546** | **0.3%** |
+| 3.0 | -0.0288 +/- 0.0182 | 0.7140 | 0.5488 | 0.3% |
+| 5.0 | -0.0183 +/- 0.0161 | 0.7140 | 0.5487 | 0.3% |
 
-The false-positive rate falls 6.9% to 4.9% to 0.3% at tau = 2 and stays there. Backdoor lift is best in the tau = 2 to 3 region and begins to degrade by tau = 5, as an over-wide dead-zone starts excusing genuinely suspicious behaviour. **tau = 2.0 sits at the knee of both curves, so the original reasoning is confirmed by measurement.**
+The false-positive rate falls 6.9% to 4.2% to 0.3% at tau = 2 and stays there. Backdoor lift is best in the tau = 2 to 3 region and begins to degrade by tau = 5, as an over-wide dead-zone starts excusing genuinely suspicious behaviour. **tau = 2.0 sits at the knee of both curves, so the original reasoning is confirmed by measurement.**
 
-**Trust smoothing EMA:** remains U-shaped with our default of 0.5 at the optimum on both metrics (lift -0.0265, false positives 0.3%), against -0.0161 and 4.2% with no smoothing and -0.0237 and 3.5% at 0.9. No smoothing lets per-round noise act on the aggregation directly; too much makes trust sluggish. The EMA default was already well chosen.
+**Trust smoothing EMA:** remains U-shaped with our default of 0.5 at the optimum on both metrics (lift -0.0253, false positives 0.3%), against -0.0170 and 4.2% with no smoothing and -0.0218 and 2.8% at 0.9. No smoothing lets per-round noise act on the aggregation directly; too much makes trust sluggish. The EMA default was already well chosen.
 
 ## 6. Overstated or unclear claims: corrected
 
 - **"Zero false positives"** was retracted at the 20.5% measurement and is **not** reinstated by the 0.3% figure. The 0.3% is a measured rate for a redesigned gate, reported together with the design change that produced it (item 4).
-- **Negative backdoor lift** reported in Week 9 was single-seed noise. D2 does produce a slightly negative multi-seed value (-0.0265 +/- 0.0174), but the margin is inside the seed spread, so we describe the defended model as indistinguishable from an unattacked one rather than better than it (item 3).
+- **Negative backdoor lift** reported in Week 9 was single-seed noise. D2 does produce a slightly negative multi-seed value (-0.0253 +/- 0.0178), but the margin is inside the seed spread, so we describe the defended model as indistinguishable from an unattacked one rather than better than it (item 3).
 - **"The defense imposes no utility cost"** is now supportable at D2, where clean accuracy and spoofing recall match the honest baseline within noise. It was **not** supportable at beta = 2.0, where the cost was about 0.008 of clean accuracy, and we reported that cost at the time rather than rounding it away.
 - **"Feature-agnostic"** is qualified. The defense probes every *discriminative* feature and was verified against one alternate trigger (TCD). A trigger on a near-zero-separation feature would fall outside the probe set, so the accurate claim is "agnostic within the discriminative feature set."
 - **The base detector's weakness** (honest spoofing recall about 0.53) is stated up front rather than buried.
