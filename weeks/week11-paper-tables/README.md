@@ -16,6 +16,8 @@
 
 Each table and figure has its insight paragraph directly beneath it, as the assignment asks.
 
+**A note on the Task 3 figure.** Task 3 asks for bars with mean +/- standard deviation, while the advisor has separately said he prefers line graphs over bar graphs. Those pull in opposite directions, so the notebook emits both from the same arrays: the bar version is used in this report, because that is what Task 3 asks for, and the line-based version is used in the paper. They plot identical numbers.
+
 The **code** deliverable, submitted separately, is **`11_paper_tables.ipynb`** plus **`adaptive_attacker.py`**. Every number and figure in the report is produced by one of these two files; nothing is transcribed by hand.
 
 ## How to reproduce
@@ -41,10 +43,11 @@ Run `adaptive_attacker.py` before executing the notebook, because the notebook's
 | `results/parameter_table.csv` | Task 1: the reproducibility card |
 | `results/ablation_table.csv` | Task 2: the three-seed defense-layer ablation |
 | `results/trigger_comparison.csv` | Task 3: trigger-generalization table (CN0, TCD, PD, mixed CN0+TCD) |
-| `results/fig_trigger_comparison.png` | Task 3: bar figure, lift before and after the defense per trigger |
+| `results/fig_trigger_comparison.png` | Task 3: bar figure, lift before and after the defense per trigger (the version in this report, as Task 3 requests bars) |
+| `results/fig_trigger_comparison_dumbbell.png` | Same data as a line-based paired chart; this is the version used in the paper |
 | `adaptive_attacker.py` | Task 3b: defense-aware adaptive attacker (evasion sweep) |
 | `results/adaptive_attacker.csv` | Task 3b: adaptive attacker table (lift and trust vs evasion strength) |
-| `results/fig_adaptive_attacker.png` | Task 3b: line figure, defended lift and attacker trust vs evasion strength |
+| `results/fig_adaptive_attacker.png` | Task 3b: line figure, undefended and defended lift plus attacker trust vs evasion strength |
 
 ## What this week did
 

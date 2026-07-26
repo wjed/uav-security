@@ -162,10 +162,10 @@ cap('Table 3. Trigger generalization at fixed D2, mean +/- std over seeds 42, 7,
     'measured on each setting\'s own triggered test set against the same per-seed honest model. Honest FP rate is '
     'the fraction of honest client-rounds with trust below half of uniform.')
 img(RES/'fig_trigger_comparison.png', maxw=150)
-cap('Figure 1. Backdoor lift before (orange) and after (green) the defense, per trigger setting. Each connector '
-    'spans one trigger\'s undefended and defended lift, so its length is the backdoor the defense removes; markers '
-    'are means over three seeds and whiskers are +/- 1 std. The black line at zero marks "the attacker gains '
-    'nothing."')
+cap('Figure 1. Backdoor lift before (orange) and after (green) the defense, per trigger setting; bars are means '
+    'over three seeds with +/- 1 std error bars, as Task 3 requests. The black line at zero marks "the attacker '
+    'gains nothing." The notebook also emits a line-based version of the same data '
+    '(fig_trigger_comparison_dumbbell.png), which is the version used in the paper.')
 h2('Insight')
 bullet('The attack carries a viable backdoor in every setting (+0.09 to +0.25 lift), so each row is a real test.')
 bullet('The defense drives lift below zero in every setting: CN0 -0.0253, TCD -0.0626, PD -0.0188, mixed -0.0282. '
