@@ -3,597 +3,392 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Backdooring a Drone Fleet — an interactive visualization</title>
-<meta name="description" content="Interactive visualization of a backdoor attack on federated GPS spoofing detection for UAV fleets, and the behavioral-trust defense that stops it.">
+<title>Drone fleet under attack — live demo</title>
 <style>
 :root{
-  --purple:#450084; --purple-d:#2E0057; --gold:#CBB677; --gold-l:#F4EFE1;
-  --ink:#333; --grey:#595959; --line:#D6D6D6; --green:#5F791C; --red:#A4232B;
-  --bg:#fff; --card:#fff;
+  --purple:#450084; --gold:#CBB677; --ink:#333; --grey:#7A7A7A;
+  --line:#2A2A3A; --green:#7FB13B; --red:#E0555F; --bg:#12121C; --panel:#1A1A28;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
-h1,h2,h3{color:var(--purple);line-height:1.2;margin:0}
-a{color:var(--purple)}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg)}
+body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#E8E8F0;
+  display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 
-/* ---------- hero ---------- */
-.hero{background:var(--purple);color:#fff;padding:64px 0 56px;position:relative;overflow:hidden}
-.hero h1{color:#fff;font-size:clamp(28px,5vw,50px);letter-spacing:-.02em;max-width:16em}
-.hero .sub{color:#E4D9F2;font-size:clamp(15px,2vw,19px);margin-top:18px;max-width:34em}
-.hero .rule{width:74px;height:4px;background:var(--gold);margin:26px 0 0}
-.hero .meta{margin-top:30px;color:#C9B8E0;font-size:13.5px;letter-spacing:.03em}
-.hero .note{margin-top:26px;font-size:13px;color:#C9B8E0;border-left:3px solid var(--gold);padding-left:14px;max-width:40em}
+/* ---------- header ---------- */
+header{flex:0 0 auto;padding:12px 22px 10px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;color:#fff}
+header h1 b{color:var(--gold);font-weight:700}
+header .prov{font-size:11.5px;color:var(--grey);margin-left:auto}
 
-/* ---------- sections ---------- */
-section{padding:62px 0;border-bottom:1px solid var(--line)}
-.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
-  font-weight:700;margin-bottom:12px}
-section h2{font-size:clamp(22px,3.4vw,32px);letter-spacing:-.01em}
-.lede{color:var(--grey);max-width:46em;margin-top:14px;font-size:16.5px}
+/* ---------- stage ---------- */
+main{flex:1 1 auto;position:relative;min-height:0}
+svg{position:absolute;inset:0;width:100%;height:100%}
+
+.lbl{font-size:11px;fill:var(--grey);font-weight:600;letter-spacing:.04em}
+.dname{font-size:11.5px;font-weight:700;fill:#B9B9C8}
+.dname.bad{fill:var(--red)}
+
+/* ---------- readouts ---------- */
+.hud{position:absolute;top:16px;left:20px;display:flex;flex-direction:column;gap:12px;
+  pointer-events:none}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+  min-width:172px}
+.stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);font-weight:700}
+.stat .v{font-size:26px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;transition:color .35s}
+.stat .s{font-size:11px;color:var(--grey);margin-top:1px}
+
+.phase{position:absolute;top:16px;right:20px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:10px 15px;min-width:210px;text-align:right;pointer-events:none}
+.phase .r{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);font-weight:700}
+.phase .t{font-size:15px;font-weight:700;margin-top:3px;color:#fff;min-height:22px}
+
+.verdict{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;
+  background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--grey);
+  border-radius:10px;padding:11px 18px;max-width:min(760px,92vw);font-size:13.5px;
+  color:#D6D6E2;transition:.35s;pointer-events:none;text-align:center}
+.verdict.bad{border-left-color:var(--red)}
+.verdict.ok{border-left-color:var(--green)}
 
 /* ---------- controls ---------- */
-.controls{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 8px;align-items:stretch}
-.ctl{border:1.5px solid var(--line);border-radius:11px;padding:12px 15px;background:#fff;min-width:150px}
-.ctl .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700}
-.tgl{margin-top:9px;display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
-.tgl button{border:0;background:#fff;color:var(--grey);padding:7px 15px;font:inherit;font-size:13.5px;
-  font-weight:600;cursor:pointer;transition:.15s}
-.tgl button+button{border-left:1.5px solid var(--line)}
-.tgl button[aria-pressed="true"]{background:var(--purple);color:#fff}
-.tgl.danger button[aria-pressed="true"]{background:var(--red);color:#fff}
-.seg{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
-.seg button{border:1.5px solid var(--line);background:#fff;color:var(--grey);border-radius:7px;
-  padding:7px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
-.seg button[aria-pressed="true"]{background:var(--purple);border-color:var(--purple);color:#fff}
-.seg.g button[aria-pressed="true"]{background:var(--green);border-color:var(--green)}
-
-/* ---------- fleet ---------- */
-/* ten drones read best as a 5 x 2 fleet rather than an auto-fit row that wraps one */
-.fleet{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-top:26px}
-@media(max-width:640px){.fleet{grid-template-columns:repeat(2,1fr)}}
-.drone{border:1.5px solid var(--line);border-radius:11px;padding:11px 9px;text-align:center;
-  background:#fff;transition:.28s}
-.drone.bad{border-color:var(--red);background:#FCF1F2}
-.drone .ico{font-size:23px;line-height:1;filter:grayscale(1) opacity(.72);transition:.28s}
-.drone.bad .ico{filter:none}
-.drone .id{font-weight:700;font-size:13px;margin-top:5px;color:var(--ink)}
-.drone.bad .id{color:var(--red)}
-.bar{height:7px;background:#EDEDED;border-radius:4px;margin-top:8px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--purple);border-radius:4px;
-  transition:width .55s cubic-bezier(.4,0,.2,1),background .3s}
-.drone.bad .bar i{background:var(--red)}
-.drone .tv{font-size:11px;color:var(--grey);margin-top:5px;font-variant-numeric:tabular-nums}
-.uniform{margin-top:10px;font-size:12.5px;color:var(--grey);display:flex;align-items:center;gap:7px}
-.uniform b{color:var(--purple)}
-
-/* ---------- metrics ---------- */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:26px}
-.metric{border:1.5px solid var(--line);border-radius:12px;padding:16px 17px;background:#fff}
-.metric .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700}
-.metric .v{font-size:31px;font-weight:800;margin-top:7px;font-variant-numeric:tabular-nums;
-  letter-spacing:-.02em;transition:color .3s}
-.metric .d{font-size:12.5px;color:var(--grey);margin-top:3px}
-.metric.hero-m{background:var(--gold-l);border-color:var(--gold)}
-.gauge{height:9px;background:#EDEDED;border-radius:5px;margin-top:11px;position:relative;overflow:hidden}
-.gauge i{position:absolute;top:0;bottom:0;border-radius:5px;transition:.55s cubic-bezier(.4,0,.2,1)}
-.gauge .zero{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
-.verdict{margin-top:20px;padding:14px 17px;border-radius:11px;font-weight:600;font-size:15px;
-  border-left:4px solid;transition:.3s}
-.verdict.ok{background:#F2F6EA;border-color:var(--green);color:#3E5212}
-.verdict.bad{background:#FCF1F2;border-color:var(--red);color:#7E1A21}
-.verdict.neutral{background:#F7F7F7;border-color:var(--grey);color:var(--grey)}
-
-/* ---------- probe ---------- */
-.probes{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:22px}
-.probe{border:1.5px solid var(--line);border-radius:10px;padding:11px 10px;background:#fff;
-  text-align:center;transition:.3s;opacity:.45}
-.probe.on{opacity:1}
-.probe.pass{border-color:var(--green);background:#F5F8EF}
-.probe.fail{border-color:var(--red);background:#FCF1F2}
-.probe .pf{font-size:12px;font-weight:700;color:var(--grey)}
-.probe .pn{font-size:15px;font-weight:800;color:var(--ink);margin-top:3px}
-.probe .pr{font-size:11.5px;margin-top:7px;font-weight:700;min-height:15px}
-.probe.pass .pr{color:var(--green)}
-.probe.fail .pr{color:var(--red)}
-.excl{margin-top:14px;font-size:13px;color:var(--grey)}
-.excl b{color:var(--ink)}
-
-/* ---------- charts ---------- */
-.chart{margin-top:24px;border:1.5px solid var(--line);border-radius:12px;padding:18px;background:#fff;
-  overflow-x:auto}
-svg{display:block;max-width:100%;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:13px;color:var(--grey)}
-.legend i{display:inline-block;width:13px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
-.legend i.dot{width:9px;height:9px;border-radius:50%}
-
-/* ---------- slider ---------- */
-.slider{margin-top:22px}
-.slider input{width:100%;accent-color:var(--purple)}
-.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--grey);margin-top:5px;
-  font-variant-numeric:tabular-nums}
-.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px;margin-top:18px}
-
-/* ---------- misc ---------- */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px}
-@media(max-width:820px){.grid2{grid-template-columns:1fr}}
-.callout{background:var(--gold-l);border-left:4px solid var(--gold);padding:15px 18px;
-  border-radius:0 10px 10px 0;margin-top:24px;font-size:15px}
-.src{font-size:12px;color:var(--grey);margin-top:12px;font-style:italic}
-footer{padding:44px 0 60px;color:var(--grey);font-size:14px}
-footer b{color:var(--ink)}
-.tag{display:inline-block;background:var(--gold-l);border:1px solid var(--gold);color:#6B5A1E;
-  border-radius:20px;padding:3px 11px;font-size:12px;font-weight:700;margin-right:7px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+footer{flex:0 0 auto;border-top:1px solid var(--line);padding:11px 22px;
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#15151F}
+button{font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;cursor:pointer;
+  border:1px solid var(--line);background:#20202F;color:#D6D6E2;padding:8px 15px;transition:.15s}
+button:hover{border-color:#3A3A50}
+.play{background:var(--purple);border-color:var(--purple);color:#fff;min-width:104px}
+.play:hover{background:#57009F}
+.grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.grp button{border:0;border-radius:0;padding:8px 14px}
+.grp button+button{border-left:1px solid var(--line)}
+.grp button[aria-pressed="true"]{background:var(--red);color:#fff}
+.grp.g button[aria-pressed="true"]{background:var(--green);color:#10240A}
+.cap{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);
+  font-weight:700;margin-right:2px}
+footer .sp{margin-left:auto;font-size:11.5px;color:var(--grey)}
+@media(max-width:720px){
+  header h1{font-size:14.5px} header .prov{display:none}
+  .hud{top:10px;left:10px;gap:8px} .stat{min-width:132px;padding:8px 11px}
+  .stat .v{font-size:20px} .phase{top:10px;right:10px;min-width:0;padding:8px 11px}
+  .phase .t{font-size:12.5px} .verdict{font-size:12px;padding:9px 13px;bottom:8px}
+  footer{padding:9px 12px;gap:7px} button{padding:7px 11px;font-size:12.5px}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="wrap">
-    <h1>Two drones out of ten can hide a blind spot in a detector the whole fleet trusts.</h1>
-    <div class="rule"></div>
-    <p class="sub">This page lets you switch the attack on, watch it work, and then watch a
-       coordinator catch it — using nothing but the behaviour of the models it is sent.</p>
-    <div class="meta">JMU CAPSTONE &nbsp;·&nbsp; IT 445 + IT 499 &nbsp;·&nbsp; SUMMER 2026 &nbsp;·&nbsp;
-      WILL JEDRZEJCZAK &nbsp;·&nbsp; COLE WALTHER &nbsp;·&nbsp; DILPREET GILL</div>
-    <div class="note">Every number on this page is read from a CSV our notebooks exported.
-      Nothing here is a mock-up or a simulation — the panels below switch between
-      configurations we actually measured, averaged over three random seeds.</div>
-  </div>
-</div>
+<header>
+  <h1>Ten drones train one detector. <b>Two of them are lying.</b></h1>
+  <div class="prov">Outcome figures are measured, mean of 3 seeds · round timing is illustrative</div>
+</header>
 
-<!-- ============================= FLEET ============================= -->
-<section id="fleet">
-  <div class="wrap">
-    <div class="kicker">The fleet</div>
-    <h2>Turn the attack on and off</h2>
-    <p class="lede">Ten drones train a shared GPS-spoofing detector. Drones 9 and 10 have been
-      compromised. Each control below switches the whole system into a configuration we ran and
-      measured.</p>
+<main>
+  <svg id="stage" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet"></svg>
 
-    <div class="controls">
-      <div class="ctl">
-        <div class="lbl">Attack</div>
-        <div class="tgl danger" id="tAttack">
-          <button data-v="0">Off</button><button data-v="1" aria-pressed="true">On</button>
-        </div>
-      </div>
-      <div class="ctl">
-        <div class="lbl">Lie about accuracy</div>
-        <div class="tgl danger" id="tInflate">
-          <button data-v="0" aria-pressed="true">Off</button><button data-v="1">On</button>
-        </div>
-      </div>
-      <div class="ctl" style="flex:1">
-        <div class="lbl">Coordinator defense</div>
-        <div class="seg g" id="tDefense">
-          <button data-v="off" aria-pressed="true">None</button>
-          <button data-v="median">Robust median only</button>
-          <button data-v="trust">Behavioral trust only</button>
-          <button data-v="full">Both (ours)</button>
-        </div>
-      </div>
+  <div class="hud">
+    <div class="stat" style="border-color:#3A3A55">
+      <div class="k">What the attacker gained</div>
+      <div class="v" id="vLift" style="font-size:32px">—</div>
+      <div class="s">above an unattacked model</div>
     </div>
-
-    <div class="fleet" id="fleetGrid"></div>
-    <div class="uniform" id="uniformNote"></div>
-
-    <div class="metrics">
-      <div class="metric hero-m">
-        <div class="k">Backdoor advantage</div>
-        <div class="v" id="mLift">—</div>
-        <div class="d" id="mLiftD">extra harm the attacker gained</div>
-        <div class="gauge"><span class="zero" id="gZero"></span><i id="gLift"></i></div>
-      </div>
-      <div class="metric">
-        <div class="k">Attack success rate</div>
-        <div class="v" id="mBsr">—</div>
-        <div class="d">on signals carrying the trigger</div>
-      </div>
-      <div class="metric">
-        <div class="k">Overall accuracy</div>
-        <div class="v" id="mClean">—</div>
-        <div class="d">what an operator would watch</div>
-      </div>
-      <div class="metric">
-        <div class="k">Spoofing caught</div>
-        <div class="v" id="mRecall">—</div>
-        <div class="d">normal detection, no trigger</div>
-      </div>
+    <div class="stat">
+      <div class="k">Triggered signals waved through</div>
+      <div class="v" id="vBsr">—</div>
+      <div class="s" id="vBsrSub">—</div>
     </div>
-
-    <div class="verdict" id="verdict"></div>
-    <div class="src" id="fleetSrc"></div>
-  </div>
-</section>
-
-<!-- ============================= WHY IT HIDES ============================= -->
-<section id="hides">
-  <div class="wrap">
-    <div class="kicker">Why nobody notices</div>
-    <h2>The trigger is an ordinary value</h2>
-    <p class="lede">The attacker does not invent a strange signal. It picks a signal strength that
-      sits comfortably inside the range of perfectly normal, authentic readings — so there is no
-      outlier for anyone to find.</p>
-    <div class="chart" id="cn0Chart"></div>
-    <div class="legend">
-      <span><i class="dot" style="background:#8FA9C9"></i>authentic signals</span>
-      <span><i class="dot" style="background:var(--red)"></i>spoofed signals</span>
-      <span><i style="background:var(--purple);height:0;border-top:3px dashed var(--purple)"></i>the trigger value</span>
-    </div>
-    <div class="callout" id="cn0Note"></div>
-  </div>
-</section>
-
-<!-- ============================= PROBE ============================= -->
-<section id="probe">
-  <div class="wrap">
-    <div class="kicker">The mechanism</div>
-    <h2>The coordinator sets its own exam</h2>
-    <p class="lede">It takes a signal it already knows is spoofed and makes one copy per feature,
-      each with a single value overwritten to look safe. Then it asks every drone's model the same
-      question. An honest model still says "spoofed" every time. A backdoored one slips on exactly
-      one copy — and that is the giveaway.</p>
-
-    <div class="ctl" style="margin-top:24px;display:inline-block">
-      <div class="lbl">Where did the attacker hide the trigger?</div>
-      <div class="seg" id="tTrigger"></div>
-    </div>
-
-    <div class="probes" id="probes"></div>
-    <div class="excl" id="exclNote"></div>
-
-    <div class="metrics" style="margin-top:26px">
-      <div class="metric">
-        <div class="k">Backdoor, no defense</div>
-        <div class="v" id="pUndef" style="color:var(--red)">—</div>
-        <div class="d">the attacker's advantage</div>
-      </div>
-      <div class="metric">
-        <div class="k">Backdoor, defended</div>
-        <div class="v" id="pDef" style="color:var(--green)">—</div>
-        <div class="d">same defense, never retuned</div>
-      </div>
-      <div class="metric">
-        <div class="k">Honest drones wrongly flagged</div>
-        <div class="v" id="pFp">—</div>
-        <div class="d" id="pFpD">collateral damage</div>
-      </div>
-    </div>
-    <div class="callout">The coordinator is never told which feature the attacker chose. It probes
-      every feature that carries real signal, so whichever one is used, a probe lands on it.</div>
-  </div>
-</section>
-
-<!-- ============================= DIAL ============================= -->
-<section id="dial">
-  <div class="wrap">
-    <div class="kicker">Deployability</div>
-    <h2>There is no magic setting to find</h2>
-    <p class="lede">A defense that only works when tuned perfectly is not much use to an operator.
-      Drag the dials: the attacker's advantage stays below zero across the whole range of the main
-      one.</p>
-
-    <div class="grid2">
-      <div>
-        <div class="slider">
-          <div class="lbl" style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700">
-            Penalty strength (beta)</div>
-          <input type="range" id="sBeta" min="0" max="4" step="1" value="1">
-          <div class="ticks" id="tickBeta"></div>
-        </div>
-        <div class="readout">
-          <div class="metric"><div class="k">Backdoor advantage</div>
-            <div class="v" id="bLift" style="font-size:25px">—</div></div>
-          <div class="metric"><div class="k">Honest drones flagged</div>
-            <div class="v" id="bFp" style="font-size:25px">—</div></div>
-        </div>
-        <div class="src">Sixteen-fold range. The advantage never goes positive.</div>
-      </div>
-      <div>
-        <div class="slider">
-          <div class="lbl" style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700">
-            Grace margin (tau) — the fix that mattered</div>
-          <input type="range" id="sTau" min="0" max="4" step="1" value="2">
-          <div class="ticks" id="tickTau"></div>
-        </div>
-        <div class="readout">
-          <div class="metric"><div class="k">Backdoor advantage</div>
-            <div class="v" id="uLift" style="font-size:25px">—</div></div>
-          <div class="metric"><div class="k">Honest drones flagged</div>
-            <div class="v" id="uFp" style="font-size:25px">—</div></div>
-        </div>
-        <div class="src">This one has a clear knee. Too narrow and honest drones get punished.</div>
-      </div>
+    <div class="stat">
+      <div class="k">Overall accuracy</div>
+      <div class="v" id="vClean">—</div>
+      <div class="s">what an operator would watch</div>
     </div>
   </div>
-</section>
 
-<!-- ============================= ADAPTIVE ============================= -->
-<section id="adaptive">
-  <div class="wrap">
-    <div class="kicker">The hardest question</div>
-    <h2>What if the attacker knows about the exam?</h2>
-    <p class="lede">We built one that does. It trains specifically to pass the coordinator's probes.
-      Drag the dial: it does get better at hiding — and its backdoor falls apart as it does, even
-      with no defense running at all.</p>
-
-    <div class="slider" style="max-width:620px">
-      <div class="lbl" style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700">
-        How hard the attacker tries to hide</div>
-      <input type="range" id="sLam" min="0" max="2" step="1" value="0">
-      <div class="ticks" id="tickLam"></div>
-    </div>
-
-    <div class="metrics">
-      <div class="metric"><div class="k">Its share of influence</div>
-        <div class="v" id="aTrust">—</div><div class="d" id="aTrustD">an ordinary share is 0.100</div></div>
-      <div class="metric hero-m"><div class="k">Its backdoor, with NO defense</div>
-        <div class="v" id="aUndef">—</div><div class="d">what it gains by attacking at all</div></div>
-      <div class="metric"><div class="k">Its backdoor, defended</div>
-        <div class="v" id="aDef">—</div><div class="d">stays below zero throughout</div></div>
-    </div>
-    <div class="verdict" id="aVerdict"></div>
-    <div class="callout">The backdoor needs the model to call triggered signals <b>safe</b>. The exam
-      rewards calling those same signals <b>spoofed</b>. Training for one destroys the other, so the
-      attacker cannot have both. It defeats itself.</div>
+  <div class="phase">
+    <div class="r" id="pRound">Round 0 of 12</div>
+    <div class="t" id="pText">Press play</div>
   </div>
-</section>
 
-<!-- ============================= COST ============================= -->
-<section id="cost" style="border-bottom:0">
-  <div class="wrap">
-    <div class="kicker">What it costs</div>
-    <h2>Essentially free, and none of it on the aircraft</h2>
-    <div class="metrics">
-      <div class="metric"><div class="k">Added per round</div><div class="v" id="cMs">—</div>
-        <div class="d">on the coordinator</div></div>
-      <div class="metric"><div class="k">Of total round time</div><div class="v" id="cPct">—</div>
-        <div class="d">the rest is drones training</div></div>
-      <div class="metric"><div class="k">Sent per drone</div><div class="v" id="cKb">—</div>
-        <div class="d" id="cParams">—</div></div>
-      <div class="metric"><div class="k">Extra work on drones</div>
-        <div class="v" style="color:var(--green)">None</div>
-        <div class="d">identical whether it is on or off</div></div>
-    </div>
-  </div>
-</section>
+  <div class="verdict" id="verdict">Two of these ten drones have been compromised. Press play and watch what reaches the fleet.</div>
+</main>
 
 <footer>
-  <div class="wrap">
-    <div><span class="tag">Provenance</span> Every figure on this page is read from a CSV exported by
-      the project notebooks, and this page is regenerated by
-      <b>weeks/week13-website/build_site.py</b>. It cannot disagree with the experiments.</div>
-    <div style="margin-top:14px">Results are means over three random seeds (42, 7, 123).
-      The defended result is <b>indistinguishable from an unattacked model</b>, not better than one —
-      the margin sits inside the seed-to-seed spread and we do not claim otherwise.</div>
-    <div style="margin-top:14px">Detection quality on this public dataset is moderate
-      (about 53% of spoofed signals caught before any attack), which is exactly why the primary
-      metric is the attacker's <i>added</i> advantage rather than raw accuracy.</div>
-    <div style="margin-top:18px;color:var(--grey)">James Madison University · IT 445 Capstone + IT 499
-      Independent Study · Summer 2026 · Advisor: Dr. Khalid Hasan</div>
-  </div>
+  <button class="play" id="btnPlay">▶&nbsp; Play</button>
+  <button id="btnReset">Restart</button>
+  <span class="cap">Attack</span>
+  <span class="grp" id="gAttack"><button data-v="0">Off</button><button data-v="1" aria-pressed="true">On</button></span>
+  <span class="cap">Coordinator defense</span>
+  <span class="grp g" id="gDefense"><button data-v="0" aria-pressed="true">Off</button><button data-v="1">On</button></span>
+  <span class="sp" id="src">—</span>
 </footer>
 
 <script>
 const D = /*__DATA__*/null;
 const $ = s => document.querySelector(s);
-const fmt = (v,n=4) => (v>=0?'+':'−') + Math.abs(v).toFixed(n);
-const pct = v => (v*100).toFixed(2) + '%';
+const SVG = 'http://www.w3.org/2000/svg';
+const el = (n,a={}) => { const e=document.createElementNS(SVG,n);
+  for(const k in a) e.setAttribute(k,a[k]); return e; };
 
-/* ---------------- fleet ---------------- */
-let st = {attack:1, inflate:0, defense:'off'};
+const W=1000, H=560, HUB={x:500,y:96};
+const N = D.clients.length;
+const ROUNDS = D.setup.rounds;
 
+let st = {attack:1, defense:0, playing:false, round:0, phase:0, t0:0, raf:0};
+
+/* ------------------------------------------------------------ stage ---- */
+const stage = $('#stage');
+const nodes = [];           // per-drone svg refs
+let hubRing, hubCore, packets;
+
+function layout(i){         // two rows of five, centred
+  const col=i%5, row=(i/5)|0;
+  return { x: 170 + col*165, y: 300 + row*124 };
+}
+
+function buildStage(){
+  stage.innerHTML='';
+  const defs=el('defs');
+  const gl=el('filter',{id:'glow',x:'-60%',y:'-60%',width:'220%',height:'220%'});
+  gl.appendChild(el('feGaussianBlur',{stdDeviation:'4',result:'b'}));
+  const mg=el('feMerge');
+  mg.appendChild(el('feMergeNode',{in:'b'}));
+  mg.appendChild(el('feMergeNode',{in:'SourceGraphic'}));
+  gl.appendChild(mg);
+  defs.appendChild(gl); stage.appendChild(defs);
+
+  packets = el('g');
+
+  // links
+  const links=el('g',{opacity:'.5'});
+  for(let i=0;i<N;i++){
+    const p=layout(i);
+    links.appendChild(el('line',{x1:p.x,y1:p.y-30,x2:HUB.x,y2:HUB.y+34,
+      stroke:'#2A2A3A','stroke-width':1.4}));
+  }
+  stage.appendChild(links);
+  stage.appendChild(packets);
+
+  // hub
+  const hub=el('g');
+  hubRing=el('circle',{cx:HUB.x,cy:HUB.y,r:52,fill:'none',stroke:'#450084',
+    'stroke-width':2.5,opacity:'.0'});
+  hub.appendChild(hubRing);
+  hubCore=el('rect',{x:HUB.x-88,y:HUB.y-34,width:176,height:68,rx:14,
+    fill:'#1A1A28',stroke:'#450084','stroke-width':2});
+  hub.appendChild(hubCore);
+  const ht=el('text',{x:HUB.x,y:HUB.y-6,'text-anchor':'middle',fill:'#fff',
+    'font-size':'14','font-weight':'700'}); ht.textContent='COORDINATOR';
+  hub.appendChild(ht);
+  const hs=el('text',{x:HUB.x,y:HUB.y+14,'text-anchor':'middle',class:'lbl'});
+  hs.setAttribute('id','hubSub'); hs.textContent='merging updates';
+  hub.appendChild(hs);
+  stage.appendChild(hub);
+
+  // drones
+  for(let i=0;i<N;i++){
+    const c=D.clients[i], p=layout(i), g=el('g');
+    const body=el('rect',{x:p.x-44,y:p.y-30,width:88,height:60,rx:11,
+      fill:'#1A1A28',stroke:'#2A2A3A','stroke-width':1.6});
+    g.appendChild(body);
+    const ico=el('text',{x:p.x,y:p.y-5,'text-anchor':'middle','font-size':'23'});
+    ico.textContent='🛸'; g.appendChild(ico);
+    const nm=el('text',{x:p.x,y:p.y+13,'text-anchor':'middle',class:'dname'});
+    nm.textContent=c.id; g.appendChild(nm);
+    // trust bar
+    const bg=el('rect',{x:p.x-34,y:p.y+20,width:68,height:6,rx:3,fill:'#26263A'});
+    const fg=el('rect',{x:p.x-34,y:p.y+20,width:34,height:6,rx:3,fill:'#450084'});
+    g.appendChild(bg); g.appendChild(fg);
+    stage.appendChild(g);
+    nodes.push({...c, p, body, nm, fg, ico});
+  }
+
+}
+
+/* ------------------------------------------------------------- state --- */
 function stateKey(){
   if(!st.attack) return 'honest';
-  if(st.defense==='off')    return st.inflate ? 'attack_inflate' : 'attack';
-  if(st.defense==='median') return 'median';
-  if(st.defense==='trust')  return 'trust';
-  return st.inflate ? 'full_inflate' : 'full';
+  return st.defense ? 'full' : 'attack';
 }
-// trust weights are only computed when the trust layer is active; otherwise every
-// drone carries an equal share, which is what plain averaging does.
-const trustActive = () => st.defense==='trust' || st.defense==='full';
+const trustOn = () => st.defense === 1;
 
-function buildFleet(){
-  $('#fleetGrid').innerHTML = D.clients.map(c=>`
-    <div class="drone" data-id="${c.id}">
-      <div class="ico">🛸</div>
-      <div class="id">${c.id}</div>
-      <div class="bar"><i style="width:50%"></i></div>
-      <div class="tv">—</div>
-    </div>`).join('');
-}
-
-function renderFleet(){
-  const s = D.states[stateKey()];
-  const uni = 1/D.clients.length;
-  const maxT = 0.16;
-  D.clients.forEach(c=>{
-    const el = document.querySelector(`.drone[data-id="${c.id}"]`);
-    const bad = c.attacker && st.attack;
-    el.classList.toggle('bad', bad);
-    const t = trustActive() ? c.trust : uni;
-    el.querySelector('.bar i').style.width = Math.max(1.5, (t/maxT)*100) + '%';
-    el.querySelector('.tv').textContent = t.toFixed(3);
+function paintDrones(reveal){
+  const uni = 1/N, MAX = 0.16;
+  nodes.forEach(n=>{
+    const bad = n.attacker && st.attack;
+    n.body.setAttribute('stroke', bad ? '#E0555F' : '#2A2A3A');
+    n.body.setAttribute('fill',   bad ? '#2A1420' : '#1A1A28');
+    n.nm.setAttribute('class','dname'+(bad?' bad':''));
+    const t = (trustOn() && reveal) ? n.trust : uni;
+    n.fg.setAttribute('width', Math.max(2, (t/MAX)*68));
+    n.fg.setAttribute('fill', (trustOn()&&reveal&&n.attacker) ? '#E0555F' : '#450084');
   });
-  $('#uniformNote').innerHTML = trustActive()
-    ? `Bars show the influence the coordinator granted each drone. An equal share is <b>0.100</b>.`
-    : `No trust layer active, so every drone carries an equal share of <b>0.100</b> — including the compromised ones.`;
+}
 
-  $('#mLift').textContent   = fmt(s.lift);
-  $('#mBsr').textContent    = pct(s.bsr);
-  $('#mClean').textContent  = pct(s.clean);
-  $('#mRecall').textContent = pct(s.recall);
-  $('#mLift').style.color   = s.lift > 0.02 ? 'var(--red)' : (s.lift < -0.005 ? 'var(--green)' : 'var(--ink)');
-
-  // gauge spans -0.05 .. +0.32 with a marked zero
-  const LO=-0.05, HI=0.32, span=HI-LO;
-  const z=((0-LO)/span)*100, x=((s.lift-LO)/span)*100;
-  $('#gZero').style.left = z+'%';
-  const g=$('#gLift');
-  g.style.left  = Math.min(z,x)+'%';
-  g.style.width = Math.max(0.8, Math.abs(x-z))+'%';
-  g.style.background = s.lift>0 ? 'var(--red)' : 'var(--green)';
+function paintStats(reveal){
+  const s = D.states[stateKey()];
+  if(!reveal){ $('#vBsr').textContent='—'; $('#vLift').textContent='—';
+               $('#vClean').textContent='—'; $('#src').textContent='—';
+               $('#vBsrSub').textContent='—'; return; }
+  // an unattacked model already misses a lot of these, because the trigger value
+  // sits inside the ordinary safe range. Show that baseline so the raw rate is
+  // not mistaken for damage the attacker caused.
+  const hon = D.states.honest.bsr;
+  $('#vBsrSub').textContent = 'an honest model: '+(hon*100).toFixed(1)+'%';
+  $('#vBsr').textContent   = (s.bsr*100).toFixed(1)+'%';
+  $('#vLift').textContent  = (s.lift>=0?'+':'−')+Math.abs(s.lift).toFixed(3);
+  $('#vClean').textContent = (s.clean*100).toFixed(1)+'%';
+  $('#vLift').style.color  = s.lift>0.02 ? 'var(--red)' : (s.lift<-0.005?'var(--green)':'#fff');
+  $('#vBsr').style.color   = s.bsr>0.80 ? 'var(--red)' : '#fff';
+  $('#src').textContent    = 'measured: ' + s.method;
 
   const v=$('#verdict');
   if(!st.attack){
-    v.className='verdict neutral';
-    v.textContent='No attack. This is the honest baseline every other number is measured against.';
-  } else if(st.defense==='off'){
+    v.className='verdict';
+    v.textContent='No attack. This is the honest baseline everything else is measured against.';
+  } else if(!st.defense){
     v.className='verdict bad';
-    v.textContent = st.inflate
-      ? `The backdoor works and lying about accuracy makes it worse: ${fmt(s.lift)} advantage, while overall accuracy moves by barely a point. Nothing on a dashboard would look wrong.`
-      : `The backdoor works: ${fmt(s.lift)} advantage, while overall accuracy moves by barely a point. Nothing on a dashboard would look wrong.`;
-  } else if(st.defense==='median'){
-    v.className='verdict bad';
-    v.textContent=`Robust averaging helps, but ${fmt(s.lift)} of the attack survives — roughly a quarter of it. It limits how far a drone can move the model without being able to tell a poisoned update from an honest one.`;
-  } else if(st.defense==='trust'){
-    v.className='verdict ok';
-    v.textContent=`The probes identify the compromised drones directly and nearly all of the advantage is gone (${fmt(s.lift)}) — but with no robust averaging underneath, there is no safety net if the score is ever wrong in a round.`;
+    v.textContent='The backdoor is in. Triggered signals get waved through '
+      +(s.bsr*100).toFixed(0)+'% of the time, yet overall accuracy barely moved — nothing on a dashboard looks wrong.';
   } else {
     v.className='verdict ok';
-    v.textContent = st.inflate
-      ? `Identical to the row without lying, to the last digit. The coordinator never reads the accuracy a drone claims, so the lie has nothing to act on.`
-      : `Both layers together: the attacker's advantage is gone (${fmt(s.lift)}), and accuracy and detection are back at honest levels.`;
+    v.textContent='Both liars were caught in the first round and held at zero influence. '
+      +'The attacker ends up no better off than if it had never attacked.';
   }
-  $('#fleetSrc').textContent = 'Configuration measured as: ' + s.method + '  ·  mean of 3 seeds';
 }
 
-function wireToggle(sel, key){
-  $(sel).addEventListener('click', e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed', x===b));
-    st[key] = key==='defense' ? b.dataset.v : +b.dataset.v;
-    renderFleet();
-  });
+/* --------------------------------------------------------- animation --- */
+function packet(i, kind, dur){
+  const p=layout(i);
+  const c = kind==='bad' ? '#E0555F' : '#8A7FD0';
+  const dot=el('circle',{cx:p.x,cy:p.y-30,r: kind==='bad'?6:4.5,fill:c,filter:'url(#glow)'});
+  packets.appendChild(dot);
+  const t0=performance.now();
+  (function step(now){
+    const k=Math.min(1,(now-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    dot.setAttribute('cx', p.x+(HUB.x-p.x)*e);
+    dot.setAttribute('cy', (p.y-30)+((HUB.y+34)-(p.y-30))*e);
+    dot.setAttribute('opacity', 1-0.25*k);
+    if(k<1) requestAnimationFrame(step); else dot.remove();
+  })(t0);
+  // requestAnimationFrame is paused while the tab is hidden, which would leave
+  // packets stranded on the stage and piling up round after round. Sweep them.
+  setTimeout(()=>dot.remove(), dur+400);
 }
 
-/* ---------------- CN0 distribution ---------------- */
-function renderCN0(){
-  const c=D.cn0; if(!c){ $('#hides').style.display='none'; return; }
-  const W=940,H=300,P={l:52,r:18,t:16,b:44};
-  const n=c.benign.length, max=Math.max(...c.benign,...c.spoofed);
-  const x=i=>P.l+(i/n)*(W-P.l-P.r), bw=(W-P.l-P.r)/n;
-  const y=v=>H-P.b-(v/max)*(H-P.t-P.b);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Distribution of signal strength for authentic and spoofed readings">`;
-  s+=`<line x1="${P.l}" y1="${H-P.b}" x2="${W-P.r}" y2="${H-P.b}" stroke="#D6D6D6"/>`;
-  for(let i=0;i<n;i++){
-    s+=`<rect x="${x(i)}" y="${y(c.benign[i])}" width="${bw*0.92}" height="${H-P.b-y(c.benign[i])}" fill="#8FA9C9" opacity=".85"/>`;
-    s+=`<rect x="${x(i)}" y="${y(c.spoofed[i])}" width="${bw*0.92}" height="${H-P.b-y(c.spoofed[i])}" fill="#A4232B" opacity=".55"/>`;
+function pulseHub(colour){
+  hubRing.setAttribute('stroke',colour);
+  hubRing.setAttribute('r',52); hubRing.setAttribute('opacity','.95');
+  const t0=performance.now();
+  (function step(now){
+    const k=Math.min(1,(now-t0)/620);
+    hubRing.setAttribute('r', 52+34*k);
+    hubRing.setAttribute('opacity', String(.95*(1-k)));
+    if(k<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function flashDrone(n, colour){
+  n.body.setAttribute('stroke',colour); n.body.setAttribute('stroke-width','3.4');
+  setTimeout(()=>n.body.setAttribute('stroke-width','1.6'), 420);
+}
+
+const SPEED = 1;
+const PHASES = [
+  {ms:520, txt:'Drones training on their own data'},
+  {ms:760, txt:'Sending model updates up'},
+  {ms:700, txt:null},        // filled per-state
+  {ms:520, txt:'Merging into the shared model'},
+];
+
+function phaseText(i){
+  if(i!==2) return PHASES[i].txt;
+  if(!st.attack)   return 'Nothing unusual to check';
+  return st.defense ? 'Coordinator runs its own exam' : 'Coordinator merges what it is sent';
+}
+
+function runPhase(){
+  if(!st.playing) return;
+  const i = st.phase;
+  $('#pText').textContent = phaseText(i);
+  $('#pRound').textContent = `Round ${st.round} of ${ROUNDS}`;
+
+  if(i===0){
+    packets.innerHTML='';                     // start each round with a clean stage
+    nodes.forEach(n=>{ n.ico.setAttribute('opacity','.55');
+      setTimeout(()=>n.ico.setAttribute('opacity','1'), 180+Math.random()*260); });
   }
-  const tv=D.setup.trigger_value, lo=c.edges[0], hi=c.edges[c.edges.length-1];
-  const tx=P.l+((tv-lo)/(hi-lo))*(W-P.l-P.r);
-  s+=`<line x1="${tx}" y1="${P.t-4}" x2="${tx}" y2="${H-P.b}" stroke="#450084" stroke-width="2.5" stroke-dasharray="7 4"/>`;
-  s+=`<rect x="${tx-92}" y="${P.t-6}" width="184" height="21" rx="5" fill="#450084"/>`;
-  s+=`<text x="${tx}" y="${P.t+9}" fill="#fff" font-size="12.5" font-weight="700" text-anchor="middle">trigger = ${tv} dB-Hz</text>`;
-  for(let k=0;k<=4;k++){
-    const val=lo+(k/4)*(hi-lo), px=P.l+(k/4)*(W-P.l-P.r);
-    s+=`<text x="${px}" y="${H-P.b+20}" font-size="12" fill="#595959" text-anchor="middle">${val.toFixed(0)}</text>`;
+  if(i===1){
+    nodes.forEach((n,k)=>setTimeout(()=>packet(k,(n.attacker&&st.attack)?'bad':'ok',640),k*42));
   }
-  s+=`<text x="${(W)/2}" y="${H-6}" font-size="12.5" fill="#595959" text-anchor="middle">CN0 — carrier-to-noise ratio (signal quality, dB-Hz)</text>`;
-  s+=`<text x="14" y="${(H-P.b)/2}" font-size="12.5" fill="#595959" text-anchor="middle" transform="rotate(-90 14 ${(H-P.b)/2})">how many readings</text>`;
-  s+=`</svg>`;
-  $('#cn0Chart').innerHTML=s;
-  $('#cn0Note').innerHTML =
-    `<b>${(c.benign_above_trigger*100).toFixed(0)}% of genuinely authentic readings</b> sit at or above the trigger value, `+
-    `and so do ${(c.spoofed_above_trigger*100).toFixed(0)}% of spoofed ones. The attacker is not planting a strange number — `+
-    `it is planting an unremarkable one. That is what makes the backdoor invisible to anyone inspecting the data for outliers.`;
-}
-
-/* ---------------- probe ---------------- */
-let curTrig = 'CN0';
-function buildTrigButtons(){
-  $('#tTrigger').innerHTML = D.triggers.map(t=>
-    `<button data-v="${t.name}" ${t.name===curTrig?'aria-pressed="true"':''}>${t.name}</button>`).join('');
-  $('#tTrigger').addEventListener('click', e=>{
-    const b=e.target.closest('button'); if(!b) return;
-    [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed', x===b));
-    curTrig=b.dataset.v; renderProbe();
-  });
-}
-function renderProbe(){
-  const t = D.triggers.find(x=>x.name===curTrig);
-  const hit = curTrig.split('+');
-  $('#probes').innerHTML = D.setup.probe_feats.map((f,i)=>{
-    const fail = hit.includes(f);
-    return `<div class="probe ${fail?'fail':'pass'}" style="transition-delay:${i*55}ms">
-      <div class="pf">copy ${i+1}</div><div class="pn">${f}</div>
-      <div class="pr">${fail?'called SAFE ✗':'still spoofed ✓'}</div></div>`;
-  }).join('');
-  requestAnimationFrame(()=>document.querySelectorAll('.probe').forEach(p=>p.classList.add('on')));
-  $('#exclNote').innerHTML =
-    `Probing <b>${D.setup.probe_feats.length} of the 10</b> features. `+
-    `<b>${D.setup.excluded_feats.join(' and ')}</b> carry almost no signal that separates spoofed from authentic, `+
-    `so they sit outside the exam by design — and a trigger hidden there would have little to work with either.`;
-  $('#pUndef').textContent = fmt(t.undef);
-  $('#pDef').textContent   = fmt(t.def);
-  // the false-positive rate was only recorded for the four settings in the week 11
-  // sweep; say so rather than showing a dash that reads like a bug
-  const hasFp = t.fp !== undefined;
-  $('#pFp').textContent  = hasFp ? t.fp.toFixed(1)+'%' : 'not recorded';
-  $('#pFp').style.fontSize = hasFp ? '' : '19px';
-  $('#pFp').style.color    = hasFp ? '' : 'var(--grey)';
-  $('#pFpD').textContent = hasFp
-    ? 'collateral damage'
-    : 'this sweep logged lift only';
-}
-
-/* ---------------- sliders ---------------- */
-function wireSweep(inputSel, tickSel, liftSel, fpSel, arr, label){
-  const el=$(inputSel);
-  el.max = arr.length-1;
-  $(tickSel).innerHTML = arr.map(p=>`<span>${label(p.x)}</span>`).join('');
-  const upd=()=>{
-    const p=arr[+el.value];
-    $(liftSel).textContent = fmt(p.lift);
-    $(liftSel).style.color = p.lift>0 ? 'var(--red)' : 'var(--green)';
-    $(fpSel).textContent   = p.fp.toFixed(1)+'%';
-    $(fpSel).style.color   = p.fp>3 ? 'var(--red)' : (p.fp<1 ? 'var(--green)' : 'var(--ink)');
-  };
-  el.addEventListener('input',upd); upd();
-}
-
-function wireAdaptive(){
-  const el=$('#sLam'), arr=D.adaptive;
-  el.max=arr.length-1;
-  $('#tickLam').innerHTML = arr.map(p=>`<span>${p.lam===0?'not at all':'λ = '+p.lam}</span>`).join('');
-  const upd=()=>{
-    const p=arr[+el.value];
-    $('#aTrust').textContent = p.trust.toFixed(4);
-    $('#aTrust').style.color = p.trust>0.05 ? 'var(--red)' : 'var(--green)';
-    $('#aUndef').textContent = fmt(p.undef);
-    $('#aUndef').style.color = p.undef>0 ? 'var(--red)' : 'var(--green)';
-    $('#aDef').textContent   = fmt(p.def);
-    $('#aDef').style.color   = 'var(--green)';
-    const v=$('#aVerdict');
-    if(p.lam===0){
-      v.className='verdict bad';
-      v.textContent='Not hiding at all. The coordinator gives it essentially zero influence — and undefended, its backdoor is at full strength.';
+  if(i===2){
+    if(st.attack && st.defense){
+      pulseHub('#CBB677');
+      $('#hubSub').textContent='probing every feature';
+      // the two liars fail the exam
+      nodes.filter(n=>n.attacker).forEach((n,k)=>setTimeout(()=>flashDrone(n,'#E0555F'),160+k*130));
     } else {
-      v.className='verdict ok';
-      v.textContent=`It is now hiding well (${p.trust.toFixed(4)} against an ordinary share of 0.100) — but its backdoor is worth ${fmt(p.undef)} even with no defense running. It traded the attack away to buy the disguise.`;
+      $('#hubSub').textContent='merging updates';
     }
-  };
-  el.addEventListener('input',upd); upd();
+  }
+  if(i===3){
+    pulseHub(st.attack && !st.defense ? '#E0555F' : '#450084');
+    if(st.round>=1) paintDrones(true);
+    if(st.round>=1) paintStats(true);
+  }
+
+  setTimeout(()=>{
+    if(!st.playing) return;
+    st.phase++;
+    if(st.phase>=PHASES.length){
+      st.phase=0; st.round++;
+      if(st.round>ROUNDS){ finish(); return; }
+    }
+    runPhase();
+  }, PHASES[i].ms/SPEED);
 }
 
-/* ---------------- init ---------------- */
-buildFleet(); wireToggle('#tAttack','attack'); wireToggle('#tInflate','inflate');
-wireToggle('#tDefense','defense'); renderFleet();
-renderCN0();
-buildTrigButtons(); renderProbe();
-wireSweep('#sBeta','#tickBeta','#bLift','#bFp', D.sens.beta, v=>v);
-wireSweep('#sTau','#tickTau','#uLift','#uFp',  D.sens.tau,  v=>v);
-wireAdaptive();
-$('#cMs').textContent=D.setup.overhead_ms+' ms';
-$('#cPct').textContent=D.setup.overhead_pct+'%';
-$('#cKb').textContent=D.setup.model_kb+' KB';
-$('#cParams').textContent=D.setup.params.toLocaleString()+' parameters';
+function finish(){
+  st.playing=false; $('#btnPlay').innerHTML='▶&nbsp; Play';
+  $('#pRound').textContent=`Round ${ROUNDS} of ${ROUNDS}`;
+  $('#pText').textContent='Training complete';
+  $('#hubSub').textContent = (st.attack&&!st.defense) ? 'backdoor is in the model' : 'model is clean';
+  paintDrones(true); paintStats(true);
+}
+
+function reset(){
+  cancelAnimationFrame(st.raf);
+  st.playing=false; st.round=0; st.phase=0;
+  packets.innerHTML='';
+  $('#btnPlay').innerHTML='▶&nbsp; Play';
+  $('#pRound').textContent=`Round 0 of ${ROUNDS}`;
+  $('#pText').textContent='Press play';
+  $('#hubSub').textContent='merging updates';
+  paintDrones(false); paintStats(false);
+  $('#verdict').className='verdict';
+  $('#verdict').textContent = st.attack
+    ? 'Two of these ten drones have been compromised. Press play and watch what reaches the fleet.'
+    : 'All ten drones are honest. Press play for the baseline.';
+}
+
+/* -------------------------------------------------------------- wire --- */
+$('#btnPlay').addEventListener('click',()=>{
+  if(st.playing){ st.playing=false; $('#btnPlay').innerHTML='▶&nbsp; Play'; return; }
+  if(st.round>ROUNDS||st.round===0){ reset(); st.round=1; }
+  st.playing=true; $('#btnPlay').innerHTML='❚❚&nbsp; Pause'; runPhase();
+});
+$('#btnReset').addEventListener('click',reset);
+
+function group(sel,key){
+  $(sel).addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    st[key]=+b.dataset.v; reset();
+  });
+}
+group('#gAttack','attack'); group('#gDefense','defense');
+
+buildStage(); reset();
 </script>
 </body>
 </html>

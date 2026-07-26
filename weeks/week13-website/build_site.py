@@ -159,11 +159,10 @@ setup = {
 hist_path = HERE / 'cn0_distribution.json'
 cn0 = json.loads(hist_path.read_text(encoding='utf-8')) if hist_path.exists() else None
 
-DATA = {
-    'states': STATES, 'triggers': trigger_list, 'sens': sens,
-    'adaptive': adaptive, 'clients': clients, 'false_pos': false_pos,
-    'setup': setup, 'cn0': cn0,
-}
+# The page is a single-screen demo, so it only needs the fleet states, the
+# per-drone trust weights and the setup constants. The other exports are still
+# parsed above so this script fails loudly if a rerun changes their shape.
+DATA = {'states': STATES, 'clients': clients, 'setup': setup}
 
 # ---------------------------------------------------------------- render
 tpl = (HERE / 'template.html').read_text(encoding='utf-8')
@@ -179,7 +178,9 @@ dupes = sorted({i for i in ids if ids.count(i) > 1})
 if dupes:
     raise SystemExit(f'duplicate element ids in template: {dupes}')
 
-# every id the script reaches for must exist in the markup
+# every id the script reaches for must exist, either in the markup or created at
+# runtime via setAttribute('id', ...)
+ids += re.findall(r"setAttribute\('id','([^']+)'\)", html)
 referenced = set(re.findall(r"\$\('#([A-Za-z0-9_]+)'\)", html))
 referenced |= set(re.findall(r"getElementById\('([A-Za-z0-9_]+)'\)", html))
 missing = sorted(referenced - set(ids))
