@@ -12,15 +12,35 @@ The site is a single self-contained file: the data is embedded as JSON so it
 works from a file:// URL and from GitHub Pages without any fetch or CORS setup.
 """
 from __future__ import annotations
-import json, re
+import base64, io, json, re
 from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 W10  = ROOT / 'weeks' / 'week10-validation'  / 'results'
 W11  = ROOT / 'weeks' / 'week11-paper-tables' / 'results'
+IMG  = ROOT / 'weeks' / 'images'
 HERE = Path(__file__).resolve().parent
 OUT  = ROOT / 'index.html'
+
+# The drone photos are embedded as data URIs rather than linked, so the built
+# page stays a single self-contained file that works from file:// as well as
+# from Pages. They are cropped to their opaque bounds and downscaled first: the
+# originals are far larger than the ~150px they ever render at, and shipping
+# them untouched would cost roughly five times the bytes for no visible gain.
+DRONE_PX = 320
+
+
+def embed_drone(name: str) -> str:
+    from PIL import Image
+    im = Image.open(IMG / f'{name}.png').convert('RGBA')
+    im = im.crop(im.getbbox())          # strip transparent padding
+    h = round(im.height * DRONE_PX / im.width)
+    im = im.resize((DRONE_PX, h), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, format='WEBP', quality=88, method=6)
+    b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+    return f'data:image/webp;base64,{b64}'
 
 
 def num(s):
@@ -170,6 +190,14 @@ if '/*__DATA__*/null' not in tpl:
     raise SystemExit('template.html is missing the /*__DATA__*/null placeholder')
 html = tpl.replace('/*__DATA__*/null', json.dumps(DATA, separators=(',', ':')))
 
+drones = {}
+for slot, fname in (('__IMG_OK__', 'white-drone'), ('__IMG_BAD__', 'black-drone')):
+    if f'/*{slot}*/null' not in html:
+        raise SystemExit(f'template.html is missing the /*{slot}*/null placeholder')
+    uri = embed_drone(fname)
+    drones[fname] = len(uri)
+    html = html.replace(f'/*{slot}*/null', json.dumps(uri))
+
 # A duplicated id silently breaks the page: querySelector('#x') returns whichever
 # element comes first, so writing into it can wipe out an entire section. This
 # already happened once (section#fleet vs div#fleet), so guard against it.
@@ -191,6 +219,7 @@ OUT.write_text(html, encoding='utf-8')
 
 print(f'wrote {OUT}  ({len(html):,} bytes)')
 print(f'  states: {len(STATES)}   triggers: {len(trigger_list)}   clients: {len(clients)}')
+print(f'  drones embedded: ' + ', '.join(f'{k} {v/1024:.0f}KB' for k, v in drones.items()))
 print(f'  probe features ({len(probe_feats)}): {", ".join(probe_feats)}')
 print(f'  excluded: {", ".join(excluded)}')
 print(f'  CN0 histogram: {"embedded" if cn0 else "MISSING (run cn0_hist first)"}')

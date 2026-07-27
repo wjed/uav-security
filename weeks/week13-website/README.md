@@ -19,6 +19,7 @@ Built page: **`index.html` at the repository root**, served by GitHub Pages.
 | `build_site.py` | Reads the result CSVs, injects them as JSON, writes `index.html` at the repo root |
 | `cn0_distribution.json` | CN0 histogram, precomputed from the raw dataset (kept for reuse; the current demo does not draw it) |
 | `dev_screenshot.py` | Dev-only helper: drives a real, persistent headless Chrome over the DevTools protocol and waits in true wall-clock time before capturing a screenshot. See the tooling lesson below for why this exists. |
+| `../images/*.png` | Source photographs of the two airframes. The builder crops, downscales and embeds them; the originals are not served. |
 
 ## Rebuilding
 
@@ -27,7 +28,7 @@ python weeks/week13-website/build_site.py
 ```
 
 Run it after any experiment rerun. The outcome figures come from the exported CSVs, so the demo
-cannot drift from the results.
+cannot drift from the results. Needs `pandas` and `pillow` (both in the repo's `requirements.txt`).
 
 The builder refuses to emit a broken page. It fails on a missing data placeholder, on any duplicate
 element `id`, and on any `id` the script reaches for that does not exist. Those guards exist because
@@ -37,30 +38,78 @@ heading, controls and metrics with no console error.
 
 ## Controls
 
-- **Next / Back** — step through ten stages at your own pace. Arrow keys work too.
-- **Dots** — jump straight to any stage.
-- **Auto** — advances every five seconds if you would rather let it run.
-- **Restart** — back to stage one.
+- **Next / Back**: step through ten stages at your own pace. Arrow keys work too.
+- **Dots**: jump straight to any stage.
+- **Auto**: advances every five seconds if you would rather let it run.
+- **Restart**: back to stage one.
 
 The narrative runs: the fleet, local training, updates going up, merging, two drones revealed as
 compromised, what those two actually do, the backdoor landing, the coordinator switching to its own
 exam, the two liars failing it, and finally their influence going to zero.
 
+## Round 9: real airframes, and a mobile layout that is not just a squeezed desktop
+
+The drones were line-art glyphs. They are now photographs, which also carries the story's turning
+point: an intact white airframe becomes a visibly different black one the moment a drone is revealed
+as compromised. A border colour change said the same thing, but this reads from the back of a room.
+
+- **Embedded, not linked.** `build_site.py` crops each source photo to its opaque bounds, downscales
+  it to 320px (they render at ~150px at most, so the originals were roughly five times the bytes for
+  no visible gain) and inlines it as a WebP data URI. The built page stays a single self-contained
+  file that works from `file://`; the two photos add about 42KB.
+- **One geometry table.** Card, image, label, bar, hub and badge measurements for both layouts now
+  live in a single `LAYOUT` object rather than being scattered as literals through `build()`. The
+  links, the flying packets and the annotation badges anchor to card and hub *edges* computed from
+  that table, so resizing a card no longer leaves them pointing at where the card used to be.
+- **Phones stack instead of overlaying.** The readouts and the caption used to float on top of the
+  stage, which forced the portrait viewBox to reserve a large blank band at top and bottom for them.
+  That reserved space was the single biggest source of dead margin on a phone, and it was where
+  every caption/stage collision fixed in earlier rounds came from. `main` is now a flex column on
+  phones: readouts, stage, caption. The stage simply takes what is left, and overlap is structurally
+  impossible rather than merely tested for.
+- **The readouts sit above the stage, not below it.** They are empty on eight of the ten steps, and
+  the row is deliberately always reserved so the layout cannot jump when the numbers arrive (the
+  same reasoning as the caption height and the `#src` width). Placed under the stage that reserved
+  row read as a hole in the middle of the page; under the header it reads as breathing room.
+- **Portrait viewBox matched to its real box.** 588x778 is close to the aspect a 390px phone
+  actually leaves for the stage, so almost nothing is lost to letterboxing. The previous portrait
+  box was far enough off that the fleet floated in wide empty margins.
+
+### Two bugs this surfaced
+
+Making `.cap` a static flex item on phones silently broke the caption measurement from Round 2. The
+offscreen probe had been getting its width from `.cap`'s own `width:min(720px,92vw)` rule; with that
+rule gone on phones, an absolutely positioned probe fell back to shrink-to-fit, laid every caption
+out on one line, and measured 61px for text that needs 98px. Nothing looked wrong only because the
+leftover `min-height:100px` floor happened to cover it. The probe now copies the real card's
+rendered width instead of depending on a CSS rule that only one of the two layouts sets.
+
+The portrait rows were also packed tighter than a badge is tall, so `FLAGGED` landed on the row
+above, and the coordinator's exam badge had nowhere to go in the 14 units between the hub and the
+first row. Rows were re-derived with a 32 unit gap, and the hub badge takes a signed per-layout
+offset so it hangs below the hub on a desktop and sits above it on a phone. Both were caught by
+adding pairwise badge-versus-card overlap and a caption-clipping check to the QA harness; neither
+was visible in a casual look at the page.
+
 ## Colours and icons
 
 Official JMU palette only, on the light gold `#F4EFE1` background: `#450084` purple, `#CBB677` gold
 and `#AD9C65` dark gold, the secondary purples `#B599CE` / `#DACCE6`, the grays `#333333` /
-`#595959` / `#D6D6D6`, `#5F791C` green and `#A4232B` red. No emoji: the drone and ground-station
-glyphs are inline SVG `<symbol>` definitions and the controls use inline SVG paths, so the page
-stays one self-contained file with no external requests.
+`#595959` / `#D6D6D6`, `#5F791C` green and `#A4232B` red. No emoji: the drones are embedded
+photographs, the ground-station glyph is an inline SVG `<symbol>`, and the controls use inline SVG
+paths, so the page stays one self-contained file with no external requests.
 
 ## Layout
 
-Two stage layouts. Above 760px the fleet sits in a 5 by 2 grid under the coordinator. Below that a
-phone squeezes those drones to an unreadable size, so the stage switches to a 2 by 5 portrait
-arrangement with a taller viewBox, the readouts become a compact row across the top, and the
-headline shortens. The layout re-checks itself on every render as well as on resize, because some
-embedded viewers change size without firing a resize event.
+Two stage layouts. Above 760px the fleet sits in a 5 by 2 grid under the coordinator, with the
+readouts and the caption floating over the stage. Below that a phone squeezes those drones to an
+unreadable size, so the stage switches to a 2 by 5 portrait arrangement and `main` becomes a flex
+column: readouts, stage, caption, each with its own row and no overlap possible. Both layouts read
+their measurements from the same `LAYOUT` table in the script.
+
+The layout re-checks itself on every render as well as on resize, because some embedded viewers
+change size without firing a resize event. The readouts have their own, wider breakpoint (1080px)
+than the fleet does (760px); see the collision note above for why those had to be decoupled.
 
 ## Round 2: reported issues, branding, and motion
 
