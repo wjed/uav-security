@@ -18,7 +18,9 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;overflow:hidden;background:var(--gold-lt)}
 body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-  color:var(--slate);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+  color:var(--slate);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;
+  opacity:0;animation:pageIn .45s ease-out forwards}
+@keyframes pageIn{to{opacity:1}}
 
 header{flex:0 0 auto;padding:9px 24px 10px;background:var(--purple);color:#fff;
   display:flex;flex-direction:column;gap:2px}
@@ -70,11 +72,13 @@ button{font:inherit;font-size:14px;font-weight:600;border-radius:9px;cursor:poin
   border:1.5px solid var(--gray-lt);background:#fff;color:var(--slate);
   padding:9px 16px;transition:.15s;display:inline-flex;align-items:center;gap:7px}
 button:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
+button:active:not(:disabled){transform:scale(.96)}
 button:disabled{opacity:.38;cursor:default}
 button:focus-visible,.dot:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 button.pri{background:var(--purple);border-color:var(--purple);color:#fff;min-width:118px;
   justify-content:center}
 button.pri:hover{background:#57009F;color:#fff}
+button{transition:.15s,transform .1s}
 button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4;
   stroke-linecap:round;stroke-linejoin:round}
 .dots{display:flex;gap:1px;margin:0 auto}
@@ -131,6 +135,7 @@ footer .src{font-size:11px;color:var(--gray-dk);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){
   *{transition-duration:.01ms!important}
   .drone-idle,.pulse-send,.exam-glow{animation:none!important}
+  body{animation:none!important;opacity:1!important}
 }
 </style>
 </head>
