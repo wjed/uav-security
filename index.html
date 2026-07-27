@@ -480,6 +480,28 @@ let idx=0, auto=null;
 // the trail breaking whenever you move back and forth instead of forward only
 let visited=new Set([0]);
 
+function sizeSrc(){
+  // #src sits empty on most steps and only gets real text on the two steps
+  // that show stats. The dots are centred with margin:0 auto, so any change
+  // in #src's width shifts how much room is left for that centring and the
+  // whole dot row visibly jumps sideways right when the text pops in.
+  // Reserve the widest width #src will ever need, up front, so its actual
+  // content never changes the footer's layout. Not width-dependent like
+  // sizeCaption's box (font-size here is a fixed px, not vw-relative), so no
+  // resize listener is needed.
+  const probe=document.createElement('span');
+  probe.className='src';
+  probe.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;left:-9999px;top:0';
+  document.body.appendChild(probe);
+  let max=0;
+  Object.keys(D.states).forEach(k=>{
+    probe.textContent='Measured: '+D.states[k].method+' · mean of 3 seeds';
+    max=Math.max(max, probe.scrollWidth);
+  });
+  document.body.removeChild(probe);
+  $('#src').style.minWidth=max+'px';
+}
+
 function sizeCaption(){
   const probe=document.createElement('div');
   probe.className='cap';
@@ -568,6 +590,7 @@ addEventListener('hashchange',()=>{ const n=fromHash(); if(n!==idx){stopAuto();g
 let wasNarrow=NARROW(), rsz;
 build();
 sizeCaption();
+sizeSrc();
 idx=fromHash();
 visited.add(idx);
 render();
