@@ -129,6 +129,8 @@ footer .src{font-size:11px;color:var(--gray-dk);white-space:nowrap}
 .hud.compact .stat .v{overflow-wrap:anywhere;font-size:16px}
 .hud.compact .stat.big .v{font-size:18px}
 
+.pill{opacity:0;transition:opacity .25s ease}
+.pill.in{opacity:1}
 @keyframes droneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .drone-idle{animation-name:droneFloat;animation-timing-function:ease-in-out;
   animation-iteration-count:infinite}
@@ -372,7 +374,7 @@ function pulse(colour){
 // text, so it reads as a deliberate label at any zoom.
 function pill(x,y,text,fg,bg,size){
   size = size || 11.5;
-  const g=mk('g');
+  const g=mk('g',{class:'pill'});
   const t=mk('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',
     fill:fg,'font-size':size,'font-weight':700,'letter-spacing':'.02em'});
   t.textContent=text;
@@ -380,7 +382,9 @@ function pill(x,y,text,fg,bg,size){
   const w=t.getComputedTextLength()+24, h=size+13;
   g.insertBefore(mk('rect',{x:x-w/2,y:y-h/2,width:w,height:h,rx:h/2,
     fill:bg,stroke:fg,'stroke-width':1.4}), t);
-  return g;   // drawn opaque: a rAF fade stalls whenever the tab is not painting
+  // a CSS transition, not a rAF loop, so it still completes on a backgrounded tab
+  setTimeout(()=>g.classList.add('in'),20);
+  return g;
 }
 function clearNotes(){ gNotes.innerHTML=''; }
 
