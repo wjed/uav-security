@@ -131,6 +131,9 @@ footer .src{font-size:11px;color:var(--gray-dk);white-space:nowrap}
 
 .pill{opacity:0;transition:opacity .25s ease}
 .pill.in{opacity:1}
+/* ties the drone/hub cards to the same soft depth already used by the HUD
+   stat cards and caption box, instead of sitting perfectly flat */
+#stage .card{filter:drop-shadow(0 2px 2.5px rgba(69,0,132,.12))}
 @keyframes droneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .drone-idle{animation-name:droneFloat;animation-timing-function:ease-in-out;
   animation-iteration-count:infinite}
@@ -282,7 +285,7 @@ function build(){
   examGlow=mk('circle',{cx:HUB.x,cy:HUB.y,r:60,fill:C.gold,opacity:0});
   hubRing=mk('circle',{cx:HUB.x,cy:HUB.y,r:56,fill:'none',stroke:C.purple,
     'stroke-width':3,opacity:0});
-  hubBox=mk('rect',{x:HUB.x-96,y:HUB.y-40,width:192,height:80,rx:14,
+  hubBox=mk('rect',{x:HUB.x-96,y:HUB.y-40,width:192,height:80,rx:14,class:'card',
     fill:C.white,stroke:C.purple,'stroke-width':2});
   const hIco=mk('use',{href:'#ico-hub',x:HUB.x-84,y:HUB.y-26,width:52,height:52,
     color:C.purple});
@@ -299,7 +302,7 @@ function build(){
 
   for(let i=0;i<N;i++){
     const c=D.clients[i], p=pos(i), g=mk('g');
-    const box=mk('rect',{x:p.x-48,y:p.y-34,width:96,height:72,rx:12,
+    const box=mk('rect',{x:p.x-48,y:p.y-34,width:96,height:72,rx:12,class:'card',
       fill:C.white,stroke:C.grayLt,'stroke-width':1.6});
     const ico=mk('use',{href:'#ico-drone',x:p.x-21,y:p.y-31,width:42,height:42,
       color:C.purple});
