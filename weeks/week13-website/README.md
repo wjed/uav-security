@@ -61,6 +61,70 @@ arrangement with a taller viewBox, the readouts become a compact row across the 
 headline shortens. The layout re-checks itself on every render as well as on resize, because some
 embedded viewers change size without firing a resize event.
 
+## Round 2: reported issues, branding, and motion
+
+Three things reported after the first QA pass, plus one nice-to-have.
+
+- **The caption card could shift.** It used `min-height`, a guess that happened
+  to cover every caption at the widths first tested. At other widths a longer
+  sentence can wrap to a third line and the box grows past its floor: a real,
+  if narrow, bug. Replaced the guess with a measurement: an offscreen probe
+  carrying the same `.cap` class (so it inherits the exact width and
+  breakpoint rules) is laid out with every step's text, the tallest result
+  becomes a true fixed height, and it is remeasured on resize. Verified
+  constant across all ten steps at 1280, 1000, 900, 770, and 390px.
+- **The readouts popped in instead of fading.** They were toggled with
+  `display:none -> flex`, which is instant by definition. Replaced with a
+  CSS opacity and transform transition. (An earlier round had deliberately
+  avoided this because a *JS-driven* rAF fade stalled under the tool used to
+  QA the page, i.e. a hidden or virtual-time-budget browser pane does not
+  composite frames; a plain CSS transition does not have that dependency and
+  was confirmed to fade in smoothly under real wall-clock conditions.)
+- **Branding.** The header now carries a "JMU Capstone" tag, the paper's full
+  title, and all three names (Will Jedrzejczak, Cole Walther, Dilpreet Gill).
+  Mobile drops the long formal title and keeps the tag and names.
+- **Restrained motion.** Each drone idles with a small desynced vertical
+  float (a few px, staggered per drone so the fleet does not bob in
+  lockstep); the sending drone gets a brief pulse when its packet launches;
+  the coordinator carries a soft breathing halo while it is actively running
+  its exam. All of it is skipped under `prefers-reduced-motion: reduce`.
+
+### A layout bug the fixes exposed
+
+Adding the branding row made the header taller, which shrank `main`'s
+available height. At one specific window size (1000x640) that was enough to
+close a 2px gap between the bottom drone row and the caption card that had
+never been a problem before. Fixed by shifting the whole landscape fleet
+layout up inside the viewBox, which buys back clearance regardless of
+exactly how the SVG ends up scaled, and reverified across the full width
+range.
+
+### A second collision, found only by sweeping the width range methodically
+
+At intermediate window widths (roughly 761 to 1080px) the SVG stage renders
+at a scale where the landscape fleet's left column can sit close enough to
+the left edge to collide with the spacious left-column HUD; the HUD is fixed
+CSS pixels while the stage scales continuously with width, so a single
+breakpoint could not keep them apart everywhere. Fixed by giving the HUD its
+own, wider breakpoint (1080px) for switching to the same compact top-row
+style already used on phones, independent of the fleet's own portrait or
+landscape breakpoint (760px). Confirmed clear at 1280, 1120, 1000, 900, 770,
+and 390px.
+
+### A tooling lesson worth recording
+
+Headless Chrome's `--virtual-time-budget` and this tool's hidden preview pane
+both freeze CSS transition and animation timelines at their starting value,
+which made the HUD fade look permanently broken in-tool even though the CSS
+was correct. Confirmed the CSS was right (inline `style="opacity:1"` was
+also being ignored, and `getAnimations()` showed the transition stuck at
+`playState: "running"` without progressing) and re-verified with a small
+script that drives a real, persistent headless Chrome over the DevTools
+protocol and waits in true wall-clock time before capturing: the fade
+completes normally. Screenshots taken through a frozen timeline cannot be
+trusted to show whether an animation finishes; only a live, composited
+session can.
+
 ## QA
 
 The demo was checked by driving all ten steps at 1280px, 390px and 360px and asserting, at each

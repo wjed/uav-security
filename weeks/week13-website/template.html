@@ -20,8 +20,14 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--gold-lt)}
 body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
   color:var(--slate);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 
-header{flex:0 0 auto;padding:13px 24px 11px;background:var(--purple);color:#fff;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header{flex:0 0 auto;padding:9px 24px 10px;background:var(--purple);color:#fff;
+  display:flex;flex-direction:column;gap:2px}
+.brandrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand-tag{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--purple);background:var(--gold);padding:2px 8px;border-radius:20px;white-space:nowrap}
+.brand-title{font-size:11px;font-weight:600;letter-spacing:.01em;color:#E7D6F5}
+.brand-names{font-size:11px;color:#fff;font-weight:600;margin-left:auto;white-space:nowrap}
+.steprow{display:flex;align-items:center;gap:14px}
 header h1{margin:0;font-size:16.5px;font-weight:700;letter-spacing:-.01em;min-width:0}
 header .t-mini{display:none}
 header .step-of{margin-left:auto;font-size:12px;color:var(--purple-md);
@@ -30,12 +36,12 @@ header .step-of{margin-left:auto;font-size:12px;color:var(--purple-md);
 main{flex:1 1 auto;position:relative;min-height:0}
 svg#stage{position:absolute;inset:0;width:100%;height:100%}
 
-/* readouts. Shown by toggling display rather than fading opacity: an opacity
-   transition stalls whenever the tab is not producing frames, which left the
-   panel stuck invisible even though its state said otherwise. */
-.hud{position:absolute;top:15px;left:18px;display:none;flex-direction:column;gap:9px;
-  pointer-events:none}
-.hud.on{display:flex}
+/* readouts fade and lift in via a CSS transition, which the compositor drives
+   independently of the page's own JS, so it stays smooth. */
+.hud{position:absolute;top:15px;left:18px;display:flex;flex-direction:column;gap:9px;
+  pointer-events:none;opacity:0;transform:translateY(-6px);
+  transition:opacity .4s ease,transform .4s ease}
+.hud.on{opacity:1;transform:translateY(0)}
 .stat{background:#fff;border:1px solid var(--gray-lt);border-radius:10px;padding:9px 13px;
   min-width:150px;max-width:210px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .stat .k{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-dk);
@@ -82,18 +88,18 @@ button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4
 footer .src{font-size:11px;color:var(--gray-dk);white-space:nowrap}
 
 @media(max-width:760px){
-  header{padding:10px 14px 9px;gap:6px}
+  header{padding:8px 14px 8px;gap:4px}
+  .brandrow{gap:6px}
+  .brand-tag{font-size:8.5px;padding:2px 6px}
+  .brand-title{display:none}
+  .brand-names{font-size:9px;margin-left:0;white-space:normal}
   /* give the title its own full-width line so it wraps instead of running off,
      whatever font the device substitutes */
   header h1{font-size:13.5px;line-height:1.3;flex:1 1 100%}
   header .t-full{display:none} header .t-mini{display:inline}
   header .step-of{font-size:10.5px;margin-left:0;flex:1 1 100%}
-  /* the readouts become a compact row so the stage keeps the height it needs */
-  .hud{top:8px;left:8px;right:8px;flex-direction:row;gap:6px}
-  .stat{min-width:0;max-width:none;flex:1;padding:6px 8px;border-radius:8px}
-  .stat .k{font-size:8px;letter-spacing:.03em;overflow-wrap:anywhere} .stat .s{display:none}
-  .stat .v{overflow-wrap:anywhere}
-  .stat .v{font-size:16px} .stat.big .v{font-size:18px}
+  /* compact HUD styling lives in the reusable .hud.compact rule below, applied
+     by JS at its own (wider) breakpoint, not only inside this media query */
   .cap{padding:10px 13px;bottom:8px;left:8px;right:8px;width:auto;transform:none;
     border-radius:0 10px 10px 0}
   .cap h2{font-size:13px} .cap p{font-size:12px;line-height:1.45}
@@ -101,14 +107,45 @@ footer .src{font-size:11px;color:var(--gray-dk);white-space:nowrap}
   button{padding:8px 12px;font-size:13px} button.pri{min-width:0}
   footer .src{display:none} .dots{order:3;flex-basis:100%;justify-content:center;margin:0}
 }
-@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+/* At widths from just above the phone breakpoint up to roughly 1080px, the
+   fleet is drawn wide enough that its left column can render close enough to
+   the left edge to collide with the spacious left-column HUD (the SVG scales
+   continuously with width; the HUD does not). Below that width the HUD
+   switches to the same compact top row used on phones, decoupled from the
+   fleet's own portrait/landscape breakpoint so wide-but-not-huge windows keep
+   the landscape 5x2 fleet while still avoiding the collision. */
+.hud.compact{top:8px;left:8px;right:8px;flex-direction:row;gap:6px}
+.hud.compact .stat{min-width:0;max-width:none;flex:1;padding:6px 8px;border-radius:8px}
+.hud.compact .stat .k{font-size:8px;letter-spacing:.03em;overflow-wrap:anywhere}
+.hud.compact .stat .s{display:none}
+.hud.compact .stat .v{overflow-wrap:anywhere;font-size:16px}
+.hud.compact .stat.big .v{font-size:18px}
+
+@keyframes droneFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.drone-idle{animation-name:droneFloat;animation-timing-function:ease-in-out;
+  animation-iteration-count:infinite}
+@keyframes sendPulse{0%,100%{transform:scale(1)}40%{transform:scale(1.07)}}
+.pulse-send{transform-box:fill-box;transform-origin:center;animation:sendPulse .32s ease}
+@keyframes examGlow{0%,100%{opacity:.12;r:60}50%{opacity:.32;r:68}}
+.exam-glow{animation:examGlow 1.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important}
+  .drone-idle,.pulse-send,.exam-glow{animation:none!important}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1><span class="t-full">How two drones hide a blind spot, and how the coordinator finds them</span><span class="t-mini">Two drones hide a blind spot</span></h1>
-  <div class="step-of" id="stepOf">Step 1 of 10</div>
+  <div class="brandrow">
+    <span class="brand-tag">JMU Capstone</span>
+    <span class="brand-title">Trigger-Agnostic Behavioral Trust for Backdoor-Resilient Federated GPS Spoofing Detection</span>
+    <span class="brand-names">Will Jedrzejczak, Cole Walther, Dilpreet Gill</span>
+  </div>
+  <div class="steprow">
+    <h1><span class="t-full">How two drones hide a blind spot, and how the coordinator finds them</span><span class="t-mini">Two drones hide a blind spot</span></h1>
+    <div class="step-of" id="stepOf">Step 1 of 10</div>
+  </div>
 </header>
 
 <main>
@@ -192,19 +229,29 @@ const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // on a phone that squeezes the drones to an unreadable size, so a portrait
 // arrangement of 2x5 is used instead and the viewBox grows to match.
 const NARROW = () => innerWidth < 760;
+// Measured empirically: the landscape fleet's left column clears the HUD by a
+// comfortable margin at 1120px width but not at 1000px. 1080 sits in between
+// with margin either way.
+const HUD_COMPACT = () => innerWidth < 1080;
 let HUB, VB;
 function geom(){
+  // Landscape HUB/rows sit higher than before, which buys more blank space
+  // below the bottom row before the viewBox edge. Adding the header's brand
+  // row shrank main's real height, and at some aspect ratios that left only a
+  // couple of pixels between the bottom row and the caption; shifting the
+  // content up inside the viewBox is robust to that regardless of exactly how
+  // the SVG ends up scaled.
   if(NARROW()){ HUB={x:310,y:76}; VB='0 0 620 1010'; }
-  else        { HUB={x:500,y:92}; VB='0 0 1000 540'; }
+  else        { HUB={x:500,y:78}; VB='0 0 1000 540'; }
 }
 geom();
 const N=D.clients.length;
 const stage=$('#stage');
-let gLinks,gPackets,gDrones,gHub,gNotes,hubRing,hubBox,hubLbl,nodes=[];
+let gLinks,gPackets,gDrones,gHub,gNotes,hubRing,hubBox,hubLbl,examGlow,nodes=[];
 
 const pos=i=> NARROW()
   ? ({x:170+(i%2)*280, y:228+((i/2)|0)*118})
-  : ({x:196+(i%5)*152, y:262+((i/5)|0)*112});
+  : ({x:196+(i%5)*152, y:248+((i/5)|0)*112});
 
 /* ------------------------------------------------------------- build --- */
 function build(){
@@ -221,6 +268,7 @@ function build(){
       stroke:'#DFD7C8','stroke-width':1.6}));
   }
 
+  examGlow=mk('circle',{cx:HUB.x,cy:HUB.y,r:60,fill:C.gold,opacity:0});
   hubRing=mk('circle',{cx:HUB.x,cy:HUB.y,r:56,fill:'none',stroke:C.purple,
     'stroke-width':3,opacity:0});
   hubBox=mk('rect',{x:HUB.x-96,y:HUB.y-40,width:192,height:80,rx:14,
@@ -231,9 +279,9 @@ function build(){
     'font-size':13.5,'font-weight':700}); hT.textContent='COORDINATOR';
   hubLbl=mk('text',{x:HUB.x+18,y:HUB.y+14,'text-anchor':'middle',fill:C.grayDk,
     'font-size':11}); hubLbl.textContent='Merging what it is sent';
-  gHub.append(hubRing,hubBox,hIco,hT,hubLbl);
+  gHub.append(examGlow,hubRing,hubBox,hIco,hT,hubLbl);
 
-  const legend=mk('text',{x:NARROW()?310:500, y:NARROW()?772:432,'text-anchor':'middle',
+  const legend=mk('text',{x:NARROW()?310:500, y:NARROW()?772:418,'text-anchor':'middle',
     fill:C.grayDk,'font-size':NARROW()?15:11.5});
   legend.textContent='Bar under each drone is its influence in the merge';
   gDrones.appendChild(legend);
@@ -248,6 +296,13 @@ function build(){
       'font-size':12,'font-weight':700}); nm.textContent=c.id;
     const bg=mk('rect',{x:p.x-34,y:p.y+25,width:68,height:7,rx:3.5,fill:'#EDE7DB'});
     const fg=mk('rect',{x:p.x-34,y:p.y+25,width:34,height:7,rx:3.5,fill:C.purpleMd});
+    if(!REDUCED){
+      g.setAttribute('class','drone-idle');
+      // desynced per drone so the fleet does not bob in lockstep
+      g.style.animationDelay=(i*0.31).toFixed(2)+'s';
+      g.style.animationDuration=(3.4+(i%3)*0.35).toFixed(2)+'s';
+      g.style.transformBox='fill-box'; g.style.transformOrigin='center';
+    }
     g.append(box,ico,nm,bg,fg); gDrones.appendChild(g);
     nodes.push({...c,p,box,ico,nm,fg});
   }
@@ -276,6 +331,8 @@ function flyPackets(bad){
     const d=mk('circle',{cx:n.p.x,cy:n.p.y-26,r:isBad?6.5:5,
       fill:isBad?C.red:C.purpleMd,filter:'url(#soft)'});
     gPackets.appendChild(d);
+    n.box.classList.add('pulse-send');
+    setTimeout(()=>n.box.classList.remove('pulse-send'), 360);
     const t0=performance.now(), dur=780;
     (function step(now){
       const k=Math.min(1,(now-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
@@ -285,6 +342,11 @@ function flyPackets(bad){
     })(t0);
     setTimeout(()=>d.remove(), dur+400);   // rAF pauses on hidden tabs
   }, i*70));
+}
+function setExamGlow(on){
+  if(REDUCED){ examGlow.setAttribute('opacity','0'); return; }
+  examGlow.setAttribute('class', on?'exam-glow':'');
+  if(!on) examGlow.setAttribute('opacity','0');
 }
 function pulse(colour){
   if(REDUCED) return;
@@ -331,50 +393,51 @@ let alive=true;
 const STEPS=[
 { t:'Ten drones, one shared detector',
   p:'Each aircraft watches its own GPS signals for spoofing. A coordinator on the ground keeps a single shared model that all of them use.',
-  run(){ clearNotes(); hideStats(); paintDrones(); hubLbl.textContent='Merging what it is sent'; }},
+  run(){ clearNotes(); hideStats(); paintDrones(); setExamGlow(false); hubLbl.textContent='Merging what it is sent'; }},
 
 { t:'Every drone learns on its own data',
   p:'No raw signal data ever leaves an aircraft. That is the whole point of training this way.',
-  run(){ clearNotes(); hideStats(); paintDrones();
+  run(){ clearNotes(); hideStats(); paintDrones(); setExamGlow(false);
     nodes.forEach((n,i)=>setTimeout(()=>{ if(alive) n.box.setAttribute('stroke',C.purpleMd); },i*55));
   }},
 
 { t:'Once a round, they send up what they learned',
   p:'Only the model’s numbers travel, about 13 KB per drone. The coordinator cannot see anyone’s data, so it cannot check how it was produced.',
-  run(){ clearNotes(); hideStats(); paintDrones(); flyPackets(false);
+  run(){ clearNotes(); hideStats(); paintDrones(); setExamGlow(false); flyPackets(false);
     setTimeout(()=>{ if(alive) pulse(C.purple); },900); }},
 
 { t:'The coordinator merges them into one model',
   p:'It averages all ten contributions and sends the improved model back down. Then the whole cycle repeats, twelve times.',
-  run(){ clearNotes(); hideStats(); paintDrones(); pulse(C.purple);
+  run(){ clearNotes(); hideStats(); paintDrones(); setExamGlow(false); pulse(C.purple);
     hubLbl.textContent='Merging what it is sent'; }},
 
 { t:'But two of these drones have been taken over',
   p:'C9 and C10 are controlled by an attacker. Nothing about their messages looks unusual from the outside.',
-  run(){ clearNotes(); hideStats(); paintDrones({flagBad:true}); }},
+  run(){ clearNotes(); hideStats(); paintDrones({flagBad:true}); setExamGlow(false); }},
 
 { t:'They do three things at once',
   p:'They poison part of their training data, amplify their update so it survives the averaging, and lie about how accurate they are to get a bigger say.',
   run(){ clearNotes(); paintDrones({flagBad:true}); hideStats();
+    setExamGlow(false);
     const a=nodes[8].p, b=nodes[9].p;
     pill((a.x+b.x)/2, a.y-58, 'Poisoned data  ·  Amplified update  ·  False accuracy', C.red, '#FBF0F1'); }},
 
 { t:'The backdoor is in the shared model',
   p:'Now a spoofing signal carrying the attacker’s trigger gets waved through. Overall accuracy barely moved, so nothing on a dashboard looks wrong.',
   run(){ clearNotes(); paintDrones({flagBad:true}); flyPackets(true);
-    hubLbl.textContent='Merging what it is sent';
+    hubLbl.textContent='Merging what it is sent'; setExamGlow(false);
     setTimeout(()=>{ if(!alive)return; pulse(C.red); showStats('attack','bad'); },900); }},
 
 { t:'Now the coordinator stops taking their word for it',
   p:'Instead of believing what a drone reports about itself, it quizzes every model on a small set of signals it keeps privately.',
   run(){ clearNotes(); paintDrones({flagBad:true}); hideStats();
-    hubLbl.textContent='Running its own exam'; pulse(C.gold);
+    hubLbl.textContent='Running its own exam'; pulse(C.gold); setExamGlow(true);
     pill(HUB.x, HUB.y+66, 'Tests every model on data only it holds', C.goldDk, '#FBF7EC'); }},
 
 { t:'The two liars fail the exam',
   p:'An honest model still spots the spoofing. A backdoored one slips on exactly one question: the one matching its hidden trigger.',
   run(){ clearNotes(); paintDrones({flagBad:true}); hideStats();
-    hubLbl.textContent='Running its own exam';
+    hubLbl.textContent='Running its own exam'; setExamGlow(true);
     nodes.filter(n=>n.attacker).forEach((n,k)=>setTimeout(()=>{
       if(!alive) return;
       n.box.setAttribute('stroke-width','3.6');
@@ -386,19 +449,39 @@ const STEPS=[
 
 { t:'They get no say, and the attack gains nothing',
   p:'Both are held at zero influence from the first round. The attacker ends up no better off than if it had never attacked at all.',
-  run(){ clearNotes(); paintDrones({flagBad:true, trust:'measured'});
+  run(){ clearNotes(); paintDrones({flagBad:true, trust:'measured'}); setExamGlow(false);
     hubLbl.textContent='Model is clean'; pulse(C.green);
     showStats('full','ok'); }},
 ];
 
 let idx=0, auto=null;
 
+function sizeCaption(){
+  const probe=document.createElement('div');
+  probe.className='cap';
+  // .cap also sets bottom:16px; leaving both top and bottom set on an
+  // absolutely positioned box with height:auto stretches it to fill the
+  // containing block instead of sizing to content. Cancel bottom/transform
+  // explicitly so only top constrains it.
+  probe.style.cssText='position:absolute;visibility:hidden;pointer-events:none;'+
+    'height:auto;min-height:0;left:-9999px;top:0;bottom:auto;transform:none';
+  probe.innerHTML='<h2></h2><p></p>';
+  document.body.appendChild(probe);
+  const h2=probe.querySelector('h2'), pEl=probe.querySelector('p');
+  let max=0;
+  STEPS.forEach(s=>{ h2.textContent=s.t; pEl.textContent=s.p;
+    max=Math.max(max, probe.scrollHeight); });
+  document.body.removeChild(probe);
+  $('#cap').style.height=max+'px';
+}
+
 function render(){
   alive=true;
-  // Self-heal if the viewport crossed the layout breakpoint without firing a
+  // Self-heal if the viewport crossed a layout breakpoint without firing a
   // resize event (some embedded viewers change size without one), otherwise the
-  // stage keeps a stale portrait or landscape geometry.
+  // stage or HUD keeps a stale geometry.
   if(NARROW()!==wasNarrow){ wasNarrow=NARROW(); build(); }
+  $('#hud').classList.toggle('compact', HUD_COMPACT());
   const s=STEPS[idx];
   $('#capT').textContent=s.t; $('#capP').textContent=s.p;
   $('#stepOf').textContent=`Step ${idx+1} of ${STEPS.length}`;
@@ -451,12 +534,17 @@ addEventListener('hashchange',()=>{ const n=fromHash(); if(n!==idx){stopAuto();g
 
 let wasNarrow=NARROW(), rsz;
 build();
+sizeCaption();
 idx=fromHash();
 render();
 
 addEventListener('resize',()=>{
   clearTimeout(rsz);
-  rsz=setTimeout(()=>{ if(NARROW()!==wasNarrow){ wasNarrow=NARROW(); build(); render(); } },160);
+  rsz=setTimeout(()=>{
+    if(NARROW()!==wasNarrow){ wasNarrow=NARROW(); build(); render(); }
+    $('#hud').classList.toggle('compact', HUD_COMPACT());
+    sizeCaption();          // the box's own width rule depends on vw, not just the breakpoint
+  },160);
 });
 </script>
 </body>
