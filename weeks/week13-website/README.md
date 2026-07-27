@@ -47,10 +47,41 @@ exam, the two liars failing it, and finally their influence going to zero.
 
 ## Colours and icons
 
-Official JMU palette only (`#450084` purple, `#CBB677` gold, the secondary purples and golds, the
-grays, `#5F791C` green and `#A4232B` red), on the light gold `#F4EFE1` background. No emoji: the
-drone and ground-station glyphs are inline SVG `<symbol>` definitions, and the button chevrons are
-inline SVG paths, so the page stays a single self-contained file with no external requests.
+Official JMU palette only, on the light gold `#F4EFE1` background: `#450084` purple, `#CBB677` gold
+and `#AD9C65` dark gold, the secondary purples `#B599CE` / `#DACCE6`, the grays `#333333` /
+`#595959` / `#D6D6D6`, `#5F791C` green and `#A4232B` red. No emoji: the drone and ground-station
+glyphs are inline SVG `<symbol>` definitions and the controls use inline SVG paths, so the page
+stays one self-contained file with no external requests.
+
+## Layout
+
+Two stage layouts. Above 760px the fleet sits in a 5 by 2 grid under the coordinator. Below that a
+phone squeezes those drones to an unreadable size, so the stage switches to a 2 by 5 portrait
+arrangement with a taller viewBox, the readouts become a compact row across the top, and the
+headline shortens. The layout re-checks itself on every render as well as on resize, because some
+embedded viewers change size without firing a resize event.
+
+## QA
+
+The demo was checked by driving all ten steps at 1280px, 390px and 360px and asserting, at each
+step: no horizontal overflow, no page scroll, no overlap between the caption card and anything on
+the stage, no overlap between the readouts and the stage, a caption card of constant height, no
+lowercase on-stage labels, and no em dashes anywhere. Things that pass are not interesting; these
+are the ones that did not, and what they turned out to be:
+
+- The caption card shifted a couple of pixels between steps whose text wrapped to two lines. Fixed
+  with a fixed minimum height and centred content.
+- The annotation pills collided with the caption on two steps, and the readout panel overlapped the
+  leftmost drone. Both were real overlaps, found by the automated check rather than by eye.
+- The readouts and the annotation pills faded in through `requestAnimationFrame`, which is paused
+  whenever the tab is not painting, leaving them stuck invisible. Both now render opaque.
+- The headline could overflow on a narrow screen depending on which font the device substitutes, so
+  small screens get a shorter headline that cannot overflow at all.
+
+One caveat on the screenshots used during review: headless Chrome substitutes a wider fallback font
+than the real system stack, so captures exaggerate text width and show clipping that a live browser
+does not. Geometry was therefore verified by measuring elements in a real browser rather than by
+trusting the images.
 
 ## What is measured and what is not
 
