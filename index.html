@@ -23,6 +23,7 @@ body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif
 @keyframes pageIn{to{opacity:1}}
 
 header{flex:0 0 auto;padding:9px 24px 10px;background:var(--purple);color:#fff;
+  border-bottom:3px solid var(--gold);
   display:flex;flex-direction:column;gap:2px}
 .brandrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .brand-tag{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
@@ -65,12 +66,16 @@ svg#stage{position:absolute;inset:0;width:100%;height:100%}
 .cap h2{margin:0 0 3px;font-size:15px;color:var(--purple);letter-spacing:-.01em}
 .cap.bad h2{color:var(--red)} .cap.ok h2{color:var(--green)}
 .cap p{margin:0;font-size:14px;color:var(--slate)}
+/* new step text fades in rather than snapping, so advancing doesn't read as a
+   hard cut; see render() for the opacity dip that precedes it */
+.cap h2,.cap p{transition:opacity .18s ease}
 
 footer{flex:0 0 auto;border-top:1px solid var(--gray-lt);background:#fff;
   padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 button{font:inherit;font-size:14px;font-weight:600;border-radius:9px;cursor:pointer;
   border:1.5px solid var(--gray-lt);background:#fff;color:var(--slate);
-  padding:9px 16px;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+  padding:9px 16px;display:inline-flex;align-items:center;gap:7px;
+  transition:border-color .15s,color .15s,background-color .15s,transform .1s}
 button:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
 button:active:not(:disabled){transform:scale(.96)}
 button:disabled{opacity:.38;cursor:default}
@@ -78,7 +83,6 @@ button:focus-visible,.dot:focus-visible{outline:3px solid var(--gold);outline-of
 button.pri{background:var(--purple);border-color:var(--purple);color:#fff;min-width:118px;
   justify-content:center}
 button.pri:hover{background:#57009F;color:#fff}
-button{transition:.15s,transform .1s}
 button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.4;
   stroke-linecap:round;stroke-linejoin:round}
 .dots{display:flex;gap:1px;margin:0 auto}
@@ -480,6 +484,7 @@ function sizeCaption(){
   $('#cap').style.height=max+'px';
 }
 
+let firstRender=true;
 function render(){
   alive=true;
   // Self-heal if the viewport crossed a layout breakpoint without firing a
@@ -487,8 +492,15 @@ function render(){
   // stage or HUD keeps a stale geometry.
   if(NARROW()!==wasNarrow){ wasNarrow=NARROW(); build(); }
   $('#hud').classList.toggle('compact', HUD_COMPACT());
-  const s=STEPS[idx];
-  $('#capT').textContent=s.t; $('#capP').textContent=s.p;
+  const s=STEPS[idx], capT=$('#capT'), capP=$('#capP');
+  capT.textContent=s.t; capP.textContent=s.p;
+  if(firstRender){ firstRender=false; }
+  else{
+    // dip then restore opacity so new step text fades in instead of snapping;
+    // setTimeout (not rAF) keeps firing on a backgrounded tab, unlike rAF
+    capT.style.opacity='0'; capP.style.opacity='0';
+    setTimeout(()=>{ capT.style.opacity='1'; capP.style.opacity='1'; },20);
+  }
   $('#stepOf').textContent=`Step ${idx+1} of ${STEPS.length}`;
   const cap=$('#cap');
   cap.className='cap'+(idx===6?' bad':(idx===9?' ok':''));
