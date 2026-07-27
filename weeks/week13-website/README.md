@@ -18,6 +18,7 @@ Built page: **`index.html` at the repository root**, served by GitHub Pages.
 | `template.html` | The demo: markup, styles, SVG stage and animation, with a `/*__DATA__*/null` placeholder |
 | `build_site.py` | Reads the result CSVs, injects them as JSON, writes `index.html` at the repo root |
 | `cn0_distribution.json` | CN0 histogram, precomputed from the raw dataset (kept for reuse; the current demo does not draw it) |
+| `dev_screenshot.py` | Dev-only helper: drives a real, persistent headless Chrome over the DevTools protocol and waits in true wall-clock time before capturing a screenshot. See the tooling lesson below for why this exists. |
 
 ## Rebuilding
 
@@ -124,6 +125,34 @@ protocol and waits in true wall-clock time before capturing: the fade
 completes normally. Screenshots taken through a frozen timeline cannot be
 trusted to show whether an animation finishes; only a live, composited
 session can.
+
+## Rounds 3-7: small, individually-verified polish passes
+
+After Round 2 shipped, further requests came as one open-ended instruction: keep improving the
+visuals in small steps rather than batching everything into one large change. Each round below was
+its own commit, re-verified against the QA checklist below at 1280px and 390px before moving on.
+
+- **Round 3.** Buttons scale down slightly on `:active`, and the whole page fades in on load instead
+  of snapping straight to full contrast. Both are pure CSS and respect `prefers-reduced-motion`.
+- **Round 4.** A thin gold underline sits under the purple header, echoing the "JMU Capstone" tag's
+  gold instead of leaving the header a single flat color. Collapsed two overlapping `button`
+  transition rules into one explicit-property rule (the second, all-encompassing shorthand had been
+  silently discarding the first). Step captions now dip and fade back in on every step change instead
+  of swapping text instantly, using the same fade language as the HUD.
+- **Round 5.** The annotation pills ("Poisoned data - Amplified update - False accuracy", "FLAGGED")
+  used to appear fully opaque the instant they were drawn, the one place left that still popped
+  rather than faded. Gave them the same CSS-transition-driven opacity fade as the HUD and caption,
+  which (per the tooling lesson above) survives a backgrounded tab where a rAF-driven fade would not.
+- **Round 6.** The travelling update "packets" fade in over the first ~12% of their flight and fade
+  out over the last ~20%, instead of popping into existence and being deleted outright on arrival.
+  Reuses the same per-frame loop that already drives their position, with an added opacity term.
+- **Round 7.** The drone and coordinator cards on the stage were the last flat-looking element on the
+  page: the HUD and caption already carry a soft shadow, so the stage cards got a matching
+  purple-tinted `drop-shadow` filter.
+
+Every CSS-transition-based change in this list was spot-checked with `dev_screenshot.py` in addition
+to the structural QA pass, since a `getComputedStyle` check run through this session's own tooling
+cannot be trusted to show whether a transition actually completes (see the tooling lesson above).
 
 ## QA
 
