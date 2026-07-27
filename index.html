@@ -475,6 +475,10 @@ const STEPS=[
 ];
 
 let idx=0, auto=null;
+// dots mark every step actually looked at, not just "index < current": the
+// latter un-marks a dot the moment you step back past it, which looks like
+// the trail breaking whenever you move back and forth instead of forward only
+let visited=new Set([0]);
 
 function sizeCaption(){
   const probe=document.createElement('div');
@@ -519,7 +523,7 @@ function render(){
   $('#btnBack').disabled = idx===0;
   $('#btnNext').disabled = idx===STEPS.length-1;
   [...$('#dots').children].forEach((d,i)=>{
-    d.className='dot'+(i===idx?' on':(i<idx?' seen':''));
+    d.className='dot'+(i===idx?' on':(visited.has(i)?' seen':''));
     d.setAttribute('aria-current', i===idx ? 'step' : 'false');
   });
   const want='#'+(idx+1);
@@ -529,6 +533,7 @@ function go(i){
   alive=false;                       // cancel any in-flight callbacks
   gPackets.innerHTML='';
   idx=Math.max(0,Math.min(STEPS.length-1,i));
+  visited.add(idx);
   render();          // synchronous: rAF is paused on hidden tabs, so a deferred
                      // render would leave the step buttons doing nothing
 
@@ -538,7 +543,7 @@ $('#dots').innerHTML = STEPS.map((_,i)=>`<button class="dot" data-i="${i}" aria-
 $('#dots').addEventListener('click',e=>{const b=e.target.closest('.dot'); if(b){stopAuto();go(+b.dataset.i);}});
 $('#btnNext').addEventListener('click',()=>{stopAuto();go(idx+1);});
 $('#btnBack').addEventListener('click',()=>{stopAuto();go(idx-1);});
-$('#btnReset').addEventListener('click',()=>{stopAuto();go(0);});
+$('#btnReset').addEventListener('click',()=>{stopAuto();visited=new Set([0]);go(0);});
 
 function stopAuto(){ if(auto){clearInterval(auto); auto=null;
   $('#autoTxt').textContent='Auto'; $('#autoIco').innerHTML='<path d="M6 4l14 8-14 8z"/>';} }
@@ -564,6 +569,7 @@ let wasNarrow=NARROW(), rsz;
 build();
 sizeCaption();
 idx=fromHash();
+visited.add(idx);
 render();
 
 addEventListener('resize',()=>{
