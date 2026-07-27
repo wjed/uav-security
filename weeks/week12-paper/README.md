@@ -2,7 +2,76 @@
 
 **Group 1 (Will Jedrzejczak, Cole Walther, Dilpreet Gill).**
 
-This folder holds the completed IEEE paper draft (`main.tex`) and the figures it references. Every number in it comes from the executed notebooks in weeks 8 to 11; nothing is transcribed by hand or estimated.
+This folder holds the completed IEEE paper draft (`main.tex`) and the figures it references. Every number in it comes from the executed notebooks in weeks 8 to 11, or from the two self-contained scripts in this folder; nothing is transcribed by hand or estimated.
+
+## Revision for the advisor's Week 11 review (read this first)
+
+The Week 11 meeting raised three things about the paper. All three are addressed here.
+
+**1. "Comparing with the nearest benchmark is slightly underdeveloped."** This was the main
+request, and it was tied to ICC review: a reviewer will check whether the defense was compared
+against published work rather than only against our own ablation. FLTrust (Cao et al., NDSS 2021)
+is the right benchmark because it shares this paper's premise, that the server should bootstrap
+trust from a small clean root set rather than believe a client's self-report. It is now
+reimplemented on our own pipeline (`fltrust_benchmark.py`) and reported as **Section V-B** with its
+own table and figure. Both defenses get the identical model, updates, root set, attack and seeds, so
+the comparison isolates the scoring rule.
+
+The result is favorable and, more usefully, explainable. FLTrust is not a straw man: it removes
+about two-thirds of the attack. But it leaves **+0.0787** of backdoor lift where ours reaches
+**-0.0265**, and its clean accuracy and recall land *below* the honest no-attack baseline because
+its magnitude normalization throttles honest clients too. The mechanism is the interesting part:
+FLTrust scores a client by the cosine similarity of its whole update against the server's, and only
+40% of each attacker's spoofed rows are poisoned, so most of the attacker's gradient is ordinary
+learning and the backdoor occupies a small subspace of a 3,329-parameter vector. A global direction
+statistic barely moves. It gives the attackers 0.039 trust, about 39% of uniform, where our
+behavioral probe gives them 0.0001. Same information, more specific question.
+
+**2. "The novelty claim is not that aggressive or well demonstrated."** Added **Table I**, a
+positioning matrix against all seven related works across the properties that matter (UAV setting,
+adversarial client, self-report as an attack lever, server-side root of trust, per-feature
+behavioral probe, per-client attribution). No prior row is filled in on every column. The
+introduction now states the first-to claim explicitly rather than leaving it implied, and the
+contributions list gained the benchmark item.
+
+**3. "Our biggest weakness is the dataset."** Two changes. The paper now *characterizes* the
+dataset instead of only conceding it: **Table III** gives per-feature Cohen's *d* for all ten
+features, which also justifies the probe threshold that was previously asserted. That turns out to
+be a strong point rather than a weak one, because the weakest probed feature (PD, 0.152) sits nearly
+an order of magnitude above the strongest excluded one (PQP, 0.018), so the threshold is not a
+knife-edge choice. The limitations section was then rewritten from an apology into a scoped
+argument: the claim under test is a property of the aggregation rule, not of the signal domain, and
+reporting backdoor *lift* against each seed's own honest baseline is what makes it invariant to
+detector strength. The honest remaining gap, stated as such, is that a second independent signal
+domain would be the real test.
+
+**A bibliography problem worth knowing about.** The version of `references.bib` previously in this
+folder had two entries carrying the literal text `journal = {VERIFY: venue unknown}`, which compiles
+straight into the reference list. That is fixed. Two further corrections were made to the verified
+file: the dataset DOI did not resolve and pointed at the wrong one of two similarly named Aissou
+releases (the repo's data folder matches the Mendeley *Unmanned Aerial System* release,
+`10.17632/z7dj3yyzt8.3`, not the IEEE DataPort *Autonomous Vehicles* one), and the `mcmahan2017`
+entry had a nested-brace bug that would have rendered the last author's name differently from every
+other author. Both are commented at the entry in the `.bib`.
+
+Separately, `chai2025navigation` is now verified rather than assumed, which matters because it is
+the source of the accuracy-weighted design the entire attack targets. Its published abstract states
+that "an accuracy-weighted aggregation strategy is introduced, dynamically assigning weights based
+on the detection performance of each client mode", so the paper's characterization of it is
+accurate.
+
+### Reproducing the two new results
+
+```bash
+cd weeks/week12-paper
+python fltrust_benchmark.py          # Section V-B: table, figure, raw npz (~10 min, CPU)
+python dataset_characterization.py   # Section III-D: per-feature Cohen's d (~30 s)
+```
+
+Both re-derive the data split from the same fixed seed (42) used everywhere else, so they do not
+depend on the notebooks having been run. The federated runs are deterministic: repeated executions
+on the same machine reproduce bit-identically, which is how the Section V-B rows were confirmed
+against the Week 11 ablation.
 
 ## What is here
 
@@ -13,8 +82,14 @@ This folder holds the completed IEEE paper draft (`main.tex`) and the figures it
 | `figures/fig_trigger_generalization.png` | Figure: lift before/after defense per trigger (from week 11) |
 | `figures/fig_adaptive_attacker.png` | Figure: adaptive attacker (from week 11) |
 | `figures/fig_defense_sensitivity.png` | Figure: beta/tau/EMA sweep (from week 10), used by Section V-D |
+| `figures/fig_fltrust_benchmark.png` | Figure: comparison against FLTrust, used by Section V-B |
 | `figures/Threat_model_new.png` | Figure: system and threat model. Generated by `make_threat_model_fig.py` |
 | `make_threat_model_fig.py` | Rebuilds the threat-model figure |
+| `fltrust_benchmark.py` | Runs the FLTrust comparison (Section V-B). Self-contained: re-derives the split, runs all four methods over three seeds |
+| `dataset_characterization.py` | Computes the per-feature Cohen's *d* table (Section III-D) |
+| `results/fltrust_benchmark.csv` | Table V-B, exported |
+| `results/fltrust_raw.npz` | Per-seed raw values and per-round trust, so the figure can be restyled without a rerun |
+| `results/feature_separability.csv` | Table III-D, exported |
 | `references.bib` | Bibliography for the 12 `\cite` keys |
 
 ## How to use this in Overleaf

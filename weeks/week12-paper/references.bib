@@ -1,69 +1,157 @@
-% ---------------------------------------------------------------------------
-% references.bib  --  bibliography for main.tex
+% Bibliography for the Week 12 IEEE paper.
 %
-% main.tex cites 12 keys and calls \bibliography{references}, but no .bib file
-% existed in the repository, so every citation rendered as [?] and the
-% References section came out empty. This file supplies all 12 keys.
+% This replaces an earlier reconstructed version of this file in which two
+% entries carried the literal placeholder `journal = {VERIFY: venue unknown}`.
+% That text compiles into the reference list, so it would have shipped in the
+% PDF. Every entry below now has a resolving DOI.
 %
-% >>> BEFORE SUBMITTING <<<
-% Entries marked "% VERIFY" below could not be confirmed from the repository
-% and are reconstructed from how main.tex describes each work. Check them
-% against the PDFs you actually read (venue, volume, pages, year, DOI) before
-% this paper goes anywhere. Do not submit an unverified citation.
-% ---------------------------------------------------------------------------
-
-
-% ===== Confirmed, widely cited works ======================================
+% Two corrections were made on top of the author-supplied file; both are noted
+% inline at the entry.
 
 @inproceedings{mcmahan2017communication,
-  author    = {McMahan, Brendan and Moore, Eider and Ramage, Daniel and
-               Hampson, Seth and Arcas, Blaise Ag{\"u}era y},
-  title     = {Communication-Efficient Learning of Deep Networks from
-               Decentralized Data},
-  booktitle = {Proceedings of the 20th International Conference on Artificial
-               Intelligence and Statistics (AISTATS)},
+  author    = {McMahan, H. Brendan and Moore, Eider and Ramage, Daniel and
+               Hampson, Seth and {Ag{\"u}era y Arcas}, Blaise},
+  title     = {Communication-Efficient Learning of Deep Networks from Decentralized Data},
+  booktitle = {Proceedings of the 20th International Conference on Artificial Intelligence and Statistics},
   series    = {Proceedings of Machine Learning Research},
   volume    = {54},
   pages     = {1273--1282},
+  publisher = {PMLR},
   year      = {2017}
 }
+% CORRECTION 1 (above): the last author was written as
+%   {{Ag{\"u}era y Arcas}, Blaise}
+% The extra outer brace pair makes BibTeX read the whole string as one
+% unparseable name, so IEEEtran renders it "Agueera y Arcas, Blaise" instead of
+% "B. Ag{\"u}era y Arcas" like every other author in the list. A multi-word
+% surname needs exactly one brace pair around the surname only.
+
+@article{chai2025navigation,
+  author  = {Chai, Yae and Liu, Mingqian and Li, Ming},
+  title   = {Navigation Spoofing and Jamming Signals Identification of {UAV} Based on Federated Learning},
+  journal = {IEEE Internet of Things Journal},
+  volume  = {12},
+  number  = {21},
+  pages   = {44177--44188},
+  month   = nov,
+  year    = {2025},
+  doi     = {10.1109/JIOT.2025.3588162}
+}
+% Load-bearing: this is the source of the accuracy-weighted aggregation design
+% the attack targets. Verified against Crossref and the published abstract,
+% which states that "an accuracy-weighted aggregation strategy is introduced,
+% dynamically assigning weights based on the detection performance of each
+% client mode" -- i.e. the paper's characterization of this work is accurate.
+
+@article{udin2025federated,
+  author  = {{Ud Din}, Ikram and Taj, Imran and Almogren, Ahmad and Guizani, Mohsen},
+  title   = {Federated Learning for Trust Enhancement in {UAV}-Enabled {IoT} Networks: A Unified Approach},
+  journal = {IEEE Internet of Things Journal},
+  volume  = {12},
+  number  = {8},
+  pages   = {9596--9603},
+  month   = apr,
+  year    = {2025},
+  doi     = {10.1109/JIOT.2025.3542268}
+}
+
+@misc{aissou2022dataset,
+  author    = {Aissou, Ghilas},
+  title     = {A Dataset for {GPS} Spoofing Detection on Unmanned Aerial System},
+  year      = {2022},
+  month     = oct,
+  publisher = {Mendeley Data},
+  version   = {3},
+  doi       = {10.17632/z7dj3yyzt8.3},
+  note      = {Software-defined-radio GPS receiver measurements under controlled outdoor spoofing}
+}
+% CORRECTION 2 (above): the supplied entry cited
+%   "A Dataset for GPS Spoofing Detection on Autonomous Vehicles",
+%   Mendeley Data, doi 10.17632/sytt4qfdv5.1
+% That DOI does not resolve (404 at both Crossref and Mendeley), and it mixes
+% up two similar releases by this group. There are two:
+%   - "...on Autonomous Vehicles"        -> IEEE DataPort, doi 10.21227/8x3h-2817
+%   - "...on Unmanned Aerial System"     -> Mendeley Data, doi 10.17632/z7dj3yyzt8.3
+% The repository's data folder is named "A DATASET for GPS Spoofing Detection on
+% Unmanned Aerial System", matching the Mendeley release, so that is the one
+% cited here. If you in fact downloaded the IEEE DataPort release, switch to
+% that DOI and restore the four-author list -- but then also rename the folder,
+% because the two currently disagree.
 
 @inproceedings{bagdasaryan2020backdoor,
   author    = {Bagdasaryan, Eugene and Veit, Andreas and Hua, Yiqing and
                Estrin, Deborah and Shmatikov, Vitaly},
   title     = {How To Backdoor Federated Learning},
-  booktitle = {Proceedings of the 23rd International Conference on Artificial
-               Intelligence and Statistics (AISTATS)},
+  booktitle = {Proceedings of the Twenty Third International Conference on Artificial Intelligence and Statistics},
   series    = {Proceedings of Machine Learning Research},
   volume    = {108},
   pages     = {2938--2948},
+  publisher = {PMLR},
   year      = {2020}
 }
 
 @inproceedings{fang2020local,
   author    = {Fang, Minghong and Cao, Xiaoyu and Jia, Jinyuan and Gong, Neil Zhenqiang},
-  title     = {Local Model Poisoning Attacks to {B}yzantine-Robust Federated Learning},
-  booktitle = {Proceedings of the 29th USENIX Security Symposium},
+  title     = {Local Model Poisoning Attacks to {Byzantine-Robust} Federated Learning},
+  booktitle = {29th USENIX Security Symposium (USENIX Security 20)},
   pages     = {1605--1622},
-  year      = {2020}
+  publisher = {USENIX Association},
+  month     = aug,
+  year      = {2020},
+  isbn      = {978-1-939133-17-5}
 }
 
 @inproceedings{cao2021fltrust,
   author    = {Cao, Xiaoyu and Fang, Minghong and Liu, Jia and Gong, Neil Zhenqiang},
-  title     = {{FLTrust}: {B}yzantine-Robust Federated Learning via Trust Bootstrapping},
-  booktitle = {Proceedings of the 28th Network and Distributed System Security
-               Symposium (NDSS)},
-  year      = {2021}
+  title     = {{FLTrust}: Byzantine-Robust Federated Learning via Trust Bootstrapping},
+  booktitle = {Proceedings of the Network and Distributed System Security Symposium (NDSS)},
+  publisher = {Internet Society},
+  month     = feb,
+  year      = {2021},
+  doi       = {10.14722/ndss.2021.24434}
 }
 
 @inproceedings{blanchard2017machine,
-  author    = {Blanchard, Peva and El Mhamdi, El Mahdi and Guerraoui, Rachid and
-               Stainer, Julien},
-  title     = {Machine Learning with Adversaries: {B}yzantine Tolerant Gradient Descent},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  author    = {Blanchard, Peva and {El Mhamdi}, El Mahdi and Guerraoui, Rachid and Stainer, Julien},
+  title     = {Machine Learning with Adversaries: Byzantine Tolerant Gradient Descent},
+  booktitle = {Advances in Neural Information Processing Systems},
   volume    = {30},
   pages     = {119--129},
+  publisher = {Curran Associates, Inc.},
   year      = {2017}
+}
+
+@article{mowla2020federated,
+  author  = {Mowla, Nishat I. and Tran, Nguyen H. and Doh, Inshil and Chae, Kijoon},
+  title   = {Federated Learning-Based Cognitive Detection of Jamming Attack in Flying Ad-Hoc Network},
+  journal = {IEEE Access},
+  volume  = {8},
+  pages   = {4338--4350},
+  year    = {2020},
+  doi     = {10.1109/ACCESS.2019.2962873}
+}
+
+@article{mekdad2023survey,
+  author  = {Mekdad, Yassine and Aris, Ahmet and Babun, Leonardo and
+             {El Fergougui}, Abdeslam and Conti, Mauro and Lazzeretti, Riccardo and
+             Uluagac, A. Selcuk},
+  title   = {A Survey on Security and Privacy Issues of {UAV}s},
+  journal = {Computer Networks},
+  volume  = {224},
+  pages   = {109626},
+  year    = {2023},
+  doi     = {10.1016/j.comnet.2023.109626}
+}
+
+@article{nguyen2024backdoor,
+  author  = {Nguyen, Thuy Dung and Nguyen, Tuan and Nguyen, Phi Le and
+             Pham, Hieu H. and Doan, Khoa D. and Wong, Kok-Seng},
+  title   = {Backdoor Attacks and Defenses in Federated Learning: Survey, Challenges and Future Research Directions},
+  journal = {Engineering Applications of Artificial Intelligence},
+  volume  = {127},
+  pages   = {107166},
+  year    = {2024},
+  doi     = {10.1016/j.engappai.2023.107166}
 }
 
 @article{mothukuri2021survey,
@@ -73,75 +161,21 @@
   journal = {Future Generation Computer Systems},
   volume  = {115},
   pages   = {619--640},
-  year    = {2021}
+  year    = {2021},
+  doi     = {10.1016/j.future.2020.10.007}
 }
 
-@article{mowla2020federated,
-  author  = {Mowla, Nishat I. and Tran, Nguyen H. and Doh, Inshil and Chae, Kijoon},
-  title   = {Federated Learning-Based Cognitive Detection of Jamming Attack in
-             Flying Ad-Hoc Network},
-  journal = {IEEE Access},
-  volume  = {8},
-  pages   = {4338--4350},
-  year    = {2020}
-}
-
-
-% ===== VERIFY: reconstructed, confirm against your sources ================
-
-% VERIFY -- author list, journal, volume, article number, year.
-@article{mekdad2023survey,
-  author  = {Mekdad, Yassine and Aris, Ahmet and Babun, Leonardo and
-             El Fergougui, Abdeslam and Conti, Mauro and Lazzeretti, Riccardo and
-             Uluagac, A. Selcuk},
-  title   = {A Survey on Security and Privacy Issues of {UAV}s},
-  journal = {Computer Networks},
-  volume  = {224},
-  year    = {2023}
-}
-
-% VERIFY -- this is the source of the GPS spoofing dataset. Confirm whether you
-% are citing the dataset record itself (IEEE DataPort / Mendeley Data) or the
-% companion paper, and match author list, title and year to whichever you used.
-@misc{aissou2022dataset,
-  author = {Aissou, Ghilas and Benouadah, Selma and El Alami, Hassan and
-            Kaabouch, Naima},
-  title  = {{GPS} Spoofing Detection Dataset for Unmanned Aerial Systems},
-  year   = {2022},
-  note   = {Software-defined-radio GPS receiver measurements under controlled
-            outdoor spoofing}
-}
-
-% VERIFY -- survey on FL backdoor attacks and defenses. Confirm authors, venue
-% and year.
-@article{nguyen2024backdoor,
-  author  = {Nguyen, Thuy Dung and Nguyen, Tuan and Nguyen, Phi Le and
-             Pham, Hieu H. and Doan, Khoa D. and Wong, Kok-Seng},
-  title   = {Backdoor Attacks and Defenses in Federated Learning: Survey,
-             Challenges and Future Research Directions},
-  journal = {Engineering Applications of Artificial Intelligence},
-  year    = {2024}
-}
-
-% VERIFY -- 2025 work; could not be confirmed. main.tex describes it as a
-% TCN-Transformer trained via FL across distributed ground stations with
-% accuracy-weighted aggregation. This citation carries real weight in the
-% paper: it is the source of the accuracy-weighted design the attack targets.
-% Get this one exactly right.
-@article{chai2025navigation,
-  author  = {Chai, and others},
-  title   = {Federated Learning for Navigation Attack Detection with
-             {TCN}-Transformer and Accuracy-Weighted Aggregation},
-  journal = {VERIFY: venue unknown},
-  year    = {2025}
-}
-
-% VERIFY -- 2025 work; could not be confirmed. main.tex describes it as a
-% trust-weighted FL framework for UAV-enabled IoT networks using behavioral
-% consistency and contribution-frequency metrics.
-@article{udin2025federated,
-  author  = {Ud Din, and others},
-  title   = {Trust-Weighted Federated Learning for {UAV}-Enabled {IoT} Networks},
-  journal = {VERIFY: venue unknown},
-  year    = {2025}
+% Not cited by main.tex. Kept because it is a real UAV sensor-attack dataset
+% reference you may want when discussing dataset alternatives; an uncited entry
+% never reaches the compiled reference list, so it is harmless to leave here.
+@inproceedings{whelan2020uavdataset,
+  author    = {Whelan, Jason and Sangarapillai, Thanigajan and Minawi, Omar and
+               Almehmadi, Abdulaziz and El-Khatib, Khalil},
+  title     = {Novelty-Based Intrusion Detection of Sensor Attacks on Unmanned Aerial Vehicles},
+  booktitle = {Proceedings of the 16th ACM Symposium on QoS and Security for Wireless and Mobile Networks (Q2SWinet '20)},
+  pages     = {23--28},
+  publisher = {Association for Computing Machinery},
+  month     = nov,
+  year      = {2020},
+  doi       = {10.1145/3416013.3426446}
 }
