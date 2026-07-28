@@ -1,0 +1,13 @@
+Axis,Setting,Server ms/round,FLTrust ms/round,Overhead vs parallel
+clients,5,19.3,182.6,5.55%
+clients,10,34.0,172.5,9.55%
+clients,20,69.5,167.5,17.96%
+clients,40,139.1,183.2,34.89%
+root rows,600,25.5,22.4,6.19%
+root rows,1500,36.8,53.0,9.71%
+root rows,3000,30.6,91.1,8.00%
+root rows,6000,37.1,183.2,10.29%
+probe features,2,13.2,---,3.53%
+probe features,4,19.9,---,5.55%
+probe features,6,27.5,---,7.64%
+probe features,8,35.6,---,9.89%

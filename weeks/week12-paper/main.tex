@@ -44,30 +44,40 @@ stealthy backdoor in which two of ten UAV clients poison part of their
 local data using a trigger drawn from within the benign distribution,
 scale their updates so the poison survives averaging, and inflate their
 reported accuracy to obtain disproportionate aggregation weight. Across
-three independent runs the attack raises backdoor success by $0.2457$
+three independent runs the attack raises backdoor success by $0.2415$
 over the honest baseline while clean accuracy falls by less than two
-points, and accuracy inflation raises it further to $0.3036$. We then
+points, and accuracy inflation raises it further to $0.3036$, making the
+weighted rule worse than no weighting at all. We then
 propose a defense in which the coordinator judges each client only by
 behavior it observes on a small held-out root set, never reading
 reported accuracy, which renders inflation inert by construction. Rather
 than probing a designated trigger feature, the coordinator probes every
-discriminative feature and scores each client by its worst deviation
-below the cohort median in median absolute deviations, then applies the
-resulting trust weights ahead of coordinate-wise median aggregation. The
-defense eliminates the attacker's advantage (lift $-0.0253$), flags both
-compromised clients in 100\% of client-rounds at a 0.3\% honest
-false-positive rate, generalizes to trigger features it was never given,
-survives a defense-aware adaptive attacker, holds its
-protection across a sixteen-fold range of its own gate parameter, and
-costs 1.1\% of round time with no additional client-side work. Against
-FLTrust, the nearest published defense sharing our root-of-trust
-premise and reimplemented on the identical pipeline, the behavioral
-probe is decisively stronger: FLTrust leaves $+0.0787$ of backdoor lift
-and costs clean accuracy relative to the honest baseline, because a
-cosine similarity taken over the whole update is only mildly perturbed
-by a backdoor confined to a small subspace. All results are obtained on a public
-software-defined-radio GPS spoofing dataset partitioned into simulated
-UAV clients.
+discriminative feature on counterfactual spoofed samples and scores each
+client by its worst deviation below the cohort median in median absolute
+deviations, then applies the resulting trust weights ahead of
+coordinate-wise median aggregation. Under independent and identically
+distributed clients the defense reduces attack-induced backdoor lift to a
+level statistically indistinguishable from the honest baseline (lift
+$-0.0265 \pm 0.0174$), flags both compromised clients in 100\% of
+client-rounds at a 0.3\% honest false-flag rate, generalizes to trigger
+features it was never given, remains effective against the tested
+defense-aware evasion objective, and adds 34.0~ms of measured server-side
+computation per round in the evaluated ten-client configuration, with no
+additional client-side work. We compare against eight published
+aggregation rules reimplemented on the identical pipeline. FLTrust, the
+closest prior root-of-trust defense, leaves $+0.0787$ of lift and costs
+utility relative to the honest baseline; Multi-Krum is competitive with
+our behavioral trust under IID clients, a result we report rather than
+obscure. What distinguishes the behavioral probe is that it needs no
+estimate of how many clients are compromised, a condition under which
+Multi-Krum degrades from $+0.0061$ to $+0.2837$, and that it names the
+compromised aircraft rather than only excluding updates. We also report
+the defense's principal failure: under client class-ratio skew the probe
+stops firing, because suspicion measured against a cohort median is
+masked by the honest cohort's own inflated variance, leaving the
+coordinate-wise median backstop to carry what protection remains. All
+results are obtained on a public software-defined-radio GPS spoofing
+dataset partitioned into simulated UAV clients.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -121,7 +131,7 @@ The main contributions of this work are as follows.
 \begin{itemize}
     \item We define a UAV-inspired system model for FL-based GPS spoofing detection that includes an accuracy-weighted aggregation step reflecting recent UAV-FL designs, and we formulate a threat model in which compromised clients poison their data, scale their updates, and inflate their reported accuracy.
     \item We demonstrate the attack empirically: across three seeds it raises backdoor success by $0.2457$ over the honest baseline, and $0.3036$ when reported accuracy is inflated, while clean accuracy falls by less than two points.
-    \item We propose a server-side behavioral-trust defense that never reads reported accuracy and does not require knowing the trigger feature. It probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in median-absolute-deviation units, and applies the resulting trust weights ahead of coordinate-wise median aggregation.
+    \item We propose a server-side behavioral-trust defense that never reads reported accuracy and does not require knowing the trigger feature. Concretely, the contribution is a \emph{receiver-domain behavioral probing} mechanism: the coordinator evaluates each submitted model on counterfactual spoofed samples across every discriminative GPS feature, scores each client by its worst anomalous deficit below the cohort median in median-absolute-deviation units, and applies the resulting trust weights ahead of coordinate-wise median aggregation. It relies on none of update similarity, client-reported metrics, or clean accuracy alone.
     \item We benchmark the defense against FLTrust \cite{cao2021fltrust}, the nearest published defense sharing our root-of-trust premise, reimplemented on the identical pipeline, attack, root set, and seeds so the comparison isolates the scoring rule rather than the setup.
     \item We evaluate the defense across three seeds with a full layer ablation, a trigger-generalization study over five features and a mixed trigger, a defense-aware adaptive attacker, a sensitivity sweep over all three defense hyperparameters, a quantitative false-positive analysis, and a measured cost analysis. The defense eliminates the attacker's advantage at a 0.3\% honest false-positive rate and roughly 1.1\% server-side overhead with no client-side cost.
 \end{itemize}
@@ -368,7 +378,7 @@ FLTrust is reimplemented on this paper's own pipeline rather than compared again
 
 \subsection{Layer Ablation}
 \label{subsec:ablation}
-Table~\ref{tab:ablation} isolates the contribution of each defense layer. The attack raises backdoor lift to $+0.2457$, and accuracy inflation raises it further to $+0.3036$ by buying the compromised clients extra aggregation weight, confirming that the accuracy-weighting mechanism is an exploitable lever. Coordinate-median-only aggregation helps but leaves a real residual ($+0.0641$): a median resists the scaled updates but two clients of ten can still drag many coordinates. Trust-only aggregation removes nearly all of the lift ($+0.0037$) because the probes identify the compromised clients directly, though on the lift metric alone it is statistically close to the full defense. Only the full, layered defense drives lift negative ($-0.0253$) while simultaneously posting the best clean accuracy ($0.7142$) and spoofing recall ($0.5546$), both matching the honest baseline within noise. The final row shows the full defense against the inflation variant: it is numerically identical to the plain full defense, because the trust score never reads reported accuracy, so inflation has no channel through which to act. This is the central evidence that the layered defense is not an unnecessary combination: each layer covers a failure the other does not.
+Table~\ref{tab:ablation} isolates the contribution of each defense layer. The attack raises backdoor lift to $+0.2457$, and accuracy inflation raises it further to $+0.3036$ by buying the compromised clients extra aggregation weight, confirming that the accuracy-weighting mechanism is an exploitable lever. Coordinate-median-only aggregation helps but leaves a real residual ($+0.0641$): a median resists the scaled updates but two clients of ten can still drag many coordinates. Trust-only aggregation removes nearly all of the lift ($+0.0037$) because the probes identify the compromised clients directly, though on the lift metric alone it is statistically close to the full defense. The full layered defense drives lift negative ($-0.0253$) while simultaneously posting the best clean accuracy ($0.7142$) and spoofing recall ($0.5546$), both matching the honest baseline within noise. We note explicitly that trust-only and the full defense are not separated by this experiment: at three seeds the difference between $+0.0037$ and $-0.0253$ is inside the run-to-run spread, so this table supports the claim that behavioral trust supplies most of the protection, not that the median layer is independently necessary. Section~\ref{subsec:mediannec} probes that question directly. The final row shows the full defense against the inflation variant: it is numerically identical to the plain full defense, because the trust score never reads reported accuracy, so inflation has no channel through which to act. This is the central evidence that self-reported accuracy is the wrong basis for aggregation weight: a defense that never reads it is immune to inflation by construction rather than by tuning.
 
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.25}
@@ -401,40 +411,214 @@ Full vs.\ inflation    & $0.7142$ & $0.5546$ & $0.6114$ & $-0.0253$ \\
 
 Fig.~\ref{fig:rounds} shows the same result over training: the attacked runs hold the backdoor open round after round while the defended run tracks the honest baseline, and the mechanism is visible in the right panel, where the coordinator drives the compromised clients to near-zero trust within the first round.
 
-\subsection{Comparison with the Nearest Benchmark}
+\subsection{Comparison With Published Baselines}
 \label{subsec:benchmark}
-An internal ablation shows that each of our own layers contributes, but it cannot show that the resulting defense is worth having over an existing one. Table~\ref{tab:benchmark} and Fig.~\ref{fig:benchmark} therefore compare against FLTrust \cite{cao2021fltrust} on the identical pipeline, attack, root set, and seeds. All four rows are produced by a single execution, so they are internally consistent; the honest, attack, and full-defense rows reproduce their Table~\ref{tab:ablation} counterparts to within run-to-run variation (honest BSR $0.6367$ versus $0.6368$; our lift $-0.0265$ versus $-0.0253$), which is also a check that the benchmark harness matches the one used elsewhere in the paper.
+An internal ablation shows which of our own layers contributes, but it cannot show that the result is worth having over an existing defense. Table~\ref{tab:benchmark} and Fig.~\ref{fig:baselines} therefore run every baseline the review asked for on the identical data split, attack, seeds and metrics: FedAvg, accuracy-weighted FedAvg, coordinate-wise median, trimmed mean, Krum, Multi-Krum, FLTrust~\cite{cao2021fltrust}, and both of our own variants. Nothing is quoted from another paper. Every row is one execution of one pipeline, so the comparison isolates the aggregation rule rather than the experimental setup, and the honest and attack rows reproduce their Table~\ref{tab:ablation} counterparts to within run-to-run variation.
 
-FLTrust is a real defense here, not a straw man: it cuts backdoor lift from $+0.2415$ to $+0.0787$, removing about two-thirds of the attack, and it never pushes an honest client below half its uniform weight. But it does not close the attack, and it pays for what it does remove. Its clean accuracy ($0.6962$) and spoofing recall ($0.4687$) both land \emph{below} the honest no-attack baseline ($0.7112$ and $0.5292$), whereas ours land at or above it ($0.7143$, $0.5560$). The reason is that FLTrust rescales every client update to the norm of the server's own update, which is exactly what defuses the model-replacement scaling in Eq.~\ref{eq:boost}, but it applies that throttle to honest clients too and slows their contribution.
+Three results matter, and the second is not favorable to us.
 
-The mechanism behind the residual is visible in the trust column. FLTrust assigns the compromised clients $0.0390$, about $39\%$ of uniform: it correctly regards them as suspicious, but not decisively so. This is the expected behavior of a direction-based score against this attack. Only $40\%$ of each attacker's spoofed rows are poisoned, so most of its gradient is ordinary learning that agrees with the server's direction, and the backdoor occupies a small subspace of a $3{,}329$-parameter update. A cosine similarity taken over the whole parameter vector is a global statistic, and a localized blind spot barely rotates it. Our probe does not measure direction at all; it measures what the model \emph{does} on the one slice where a backdoored model must behave differently, and that separates the two groups completely (attacker trust $0.0001$). Fig.~\ref{fig:benchmark} shows the same contrast over training: FLTrust starts near uniform and decays gradually across twelve rounds, while the behavioral probe is decisive in the first round.
+\textit{The attack defeats the undefended and the naively weighted systems.} FedAvg leaves $+0.2415$ of lift and accuracy-weighted FedAvg $+0.3036$, confirming that weighting by a self-reported metric is worse than not weighting at all. Both also lose spoofing recall badly ($0.3641$ and $0.3524$ against an honest $0.5292$), because the poisoned updates degrade the detector as well as installing the backdoor.
 
-The honest-cohort column is the one place FLTrust is ahead, and the comparison is reported on a single definition applied to both defenses, namely the fraction of honest client-rounds given less than half the uniform weight. On that definition FLTrust scores $0.0\%$ and ours $0.3\%$, i.e.\ one honest client-round out of $288$. This is a genuine, if small, cost of a sharper gate. It matches the $0.3\%$ separately characterized in Section~\ref{subsec:fp} under that section's own flagging definition, where no honest client is ever driven to zero trust. The trade is that one mildly down-weighted honest client-round, against $0.105$ of backdoor lift removed.
+\textit{Multi-Krum is a genuinely competitive baseline under these conditions, and we do not claim otherwise.} It reaches $+0.0061 \pm 0.0041$ lift, which is statistically indistinguishable from our behavioral trust alone at $+0.0039 \pm 0.0047$, and it does so at $1.4$~ms of server time against our $38.0$~ms. Any claim that a behavioral probe is necessary to stop this attack in this setting would be contradicted by our own table. What the full defense adds over Multi-Krum is a nominal further reduction to $-0.0265$ and the best retained utility of any rule tested (recall $0.5560$, F1 $0.6087$, both above the honest baseline's $0.5292$ and $0.5944$), but at three seeds we do not claim that lift difference is resolved.
 
-\begin{table}[!t]
+The case for behavioral trust therefore does not rest on the IID headline number. It rests on three properties Table~\ref{tab:benchmark} makes visible. First, Krum and Multi-Krum must be told $f$, the number of compromised clients, and trimmed mean must be told how much to trim; a real coordinator does not know these. Section~\ref{subsec:fcount} varies the true attacker count against baselines configured for $f=2$ and shows what that assumption costs. Second, the geometric rules produce a selection, not a per-client judgment, so they cannot say \emph{which} aircraft to ground; our trust vector attributes the attack to $U_9$ and $U_{10}$ specifically. Third, Section~\ref{subsec:noniid} shows what happens to each rule when clients stop being identically distributed.
+
+\textit{FLTrust, the closest prior root-of-trust defense, does not close the attack here.} It removes about two-thirds of it ($+0.0787 \pm 0.0176$) but leaves a clear residual, and its clean accuracy ($0.6962$) and recall ($0.4687$) fall \emph{below} the honest no-attack baseline, because rescaling every update to the server update's norm throttles honest clients along with attackers. It is also the most expensive rule tested at $204.4$~ms per round, roughly five times ours, since it trains a server model on the root set every round. The mechanism behind its residual is visible in its trust: it assigns the compromised clients $0.0390$, about $39\%$ of uniform, and flags them in only $84.7\%$ of client-rounds. Only $40\%$ of each attacker's spoofed rows are poisoned, so most of its gradient is ordinary learning that agrees with the server's direction, and the backdoor occupies a small subspace of a $3{,}329$-parameter update. A cosine similarity taken over the whole parameter vector is a global statistic that a localized blind spot barely rotates. The behavioral probe does not measure direction at all: it measures what the model \emph{does} on the slice where a backdoored model must differ, and separates the groups completely (attacker trust $0.0001$, detection $100\%$).
+
+\begin{table*}[!t]
 \renewcommand{\arraystretch}{1.25}
-\caption{Comparison With FLTrust on an Identical Pipeline (mean $\pm$ std, $n=3$). Trust Is Normalized so Uniform Is $0.100$; ``Honest DW'' Is the Fraction of Honest Client-Rounds Given Less Than Half the Uniform Weight.}
+\caption{Comparison With Published Baselines on an Identical Pipeline (mean $\pm$ std, $n=3$). Raw BSR Is Reported Beside Lift Throughout. Trust Is Normalized so Uniform Is $0.100$; ``Detect'' and ``False-Flag'' Are the Fractions of Attacker and Honest Client-Rounds Held Below Half the Uniform Weight. Krum Makes a Selection Rather Than a per-Client Trust Assignment, so a False-Flag Rate Is Not Comparably Defined for It.}
 \label{tab:benchmark}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{lccccc}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}l cccc cc cc c@{}}
 \toprule
-\textbf{Method} & \textbf{Clean} & \textbf{Recall} & \textbf{Lift} & \textbf{Atk trust} & \textbf{Honest DW} \\
+\textbf{Method} & \textbf{Clean} & \textbf{Recall} & \textbf{F1} & \textbf{Bal.\ Acc} &
+\textbf{BSR} & \textbf{Lift} & \textbf{Detect} & \textbf{False-Flag} & \textbf{ms/round} \\
 \midrule
-Honest FedAvg          & $0.7112$ & $0.5292$ & $+0.0000$ & ---      & ---      \\
-Attack (FedAvg)        & $0.6932$ & $0.3641$ & $+0.2415$ & ---      & ---      \\
-FLTrust \cite{cao2021fltrust} & $0.6962$ & $0.4687$ & $+0.0787$ & $0.0390$ & $0.0\%$ \\
-\textbf{Ours (D2)}     & $\mathbf{0.7143}$ & $\mathbf{0.5560}$ & $\mathbf{-0.0265}$ & $\mathbf{0.0001}$ & $0.3\%$ \\
+Honest FedAvg (no attack)      & $0.7112$ & $0.5292$ & $0.5944$ & $0.6809$ & $0.6367$ & $+0.0000$ & ---      & ---     & $1.0$   \\
+\midrule
+FedAvg                          & $0.6932$ & $0.3641$ & $0.4869$ & $0.6383$ & $0.8782$ & $+0.2415$ & ---      & ---     & $1.0$   \\
+Accuracy-weighted FedAvg        & $0.6897$ & $0.3524$ & $0.4759$ & $0.6335$ & $0.9402$ & $+0.3036$ & $0.0\%$  & $0.0\%$ & $1.3$   \\
+Coordinate-wise median          & $0.7101$ & $0.5008$ & $0.5800$ & $0.6752$ & $0.7013$ & $+0.0646$ & ---      & ---     & $0.9$   \\
+Trimmed mean ($f{=}2$)          & $0.7061$ & $0.4808$ & $0.5668$ & $0.6686$ & $0.7154$ & $+0.0787$ & ---      & ---     & $1.4$   \\
+Krum ($f{=}2$)                  & $0.7071$ & $0.5168$ & $0.5852$ & $0.6754$ & $0.6698$ & $+0.0331$ & $100\%$  & ---     & $1.4$   \\
+Multi-Krum ($f{=}2$)            & $0.7108$ & $0.5282$ & $0.5935$ & $0.6804$ & $0.6428$ & $+0.0061$ & $100\%$  & ---     & $1.4$   \\
+FLTrust \cite{cao2021fltrust}   & $0.6962$ & $0.4687$ & $0.5522$ & $0.6583$ & $0.7154$ & $+0.0787$ & $84.7\%$ & $0.0\%$ & $204.4$ \\
+\midrule
+Behavioral trust (ours)         & $0.7112$ & $0.5307$ & $0.5951$ & $0.6811$ & $0.6406$ & $+0.0039$ & $100\%$  & $0.3\%$ & $38.0$  \\
+\textbf{Trust + median (ours)}  & $\mathbf{0.7143}$ & $\mathbf{0.5560}$ & $\mathbf{0.6087}$ & $\mathbf{0.6879}$ & $\mathbf{0.6101}$ & $\mathbf{-0.0265}$ & $\mathbf{100\%}$ & $0.3\%$ & $38.6$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.45in]{figures/fig_baselines.png}
+\caption{All nine aggregation rules on an identical pipeline (mean of 3 seeds, $\pm 1$ std). Top: backdoor lift, where zero means the attacker gains nothing. Bottom: retained spoofing recall against the honest baseline. Multi-Krum is competitive with the proposed behavioral trust on both axes under IID data; the case for behavioral trust rests on not needing to know the number of attackers (Section~\ref{subsec:fcount}), on per-client attribution, and on behavior under label skew (Section~\ref{subsec:noniid}).}
+\label{fig:baselines}
+\end{figure}
+
+\subsection{Non-IID Client Data}
+\label{subsec:noniid}
+The review identifies heterogeneous clients as the setting most likely to break a defense that compares each client against a cohort median, and asks for a controlled experiment. This section reports it, and it is the most consequential result in the revision: \emph{the behavioral trust layer does not survive label skew}.
+
+\textit{How the partition was built, and one attempt that failed.} We first ran the requested Dirichlet partitioning at $\alpha \in \{0.1, 0.5, 1.0\}$. On this dataset it does not produce a usable experiment. Because Dirichlet mass concentrates, most clients end up holding a single class; the federated detector then never learns the spoofed class at all, with honest spoofing recall falling to $0.074$ at $\alpha = 0.5$ and $0.001$ at $\alpha = 0.1$, and honest BSR saturating at $1.000$. Backdoor lift is measured against that honest baseline, so with the baseline already at ceiling there is no headroom left to measure, and at $\alpha = 0.1$ one compromised client drew zero spoofed rows and could not mount the attack at all. Those runs characterize the collapse of the base learner, not the behavior of any defense. They are retained in the artifact as a negative result and are not used to rank rules.
+
+We therefore use the review's second suggested option, \emph{unequal benign/spoofed class ratios across clients}: every client holds an equal number of rows but a different class ratio, drawn from $\mathrm{Dir}(\alpha)$ and clipped so both classes remain present. Smaller $\alpha$ widens the spread of client class ratios around the global $0.40$. At $\alpha = 10$ the realized spoofed fraction ranges over roughly $0.19$--$0.59$ across clients, and at $\alpha = 3$ over $0.12$--$0.72$. Each condition's honest baseline is retrained and reported, so lift is always measured against a baseline from the same partition.
+
+\textit{The result.} Table~\ref{tab:noniid} and Fig.~\ref{fig:noniid} show that under IID data the trust layer separates the cohort completely: attacker trust $0.0001$, detection $100\%$. Under even mild skew it stops working. Attacker trust rises to $0.0942$ and then $0.1023$, which is uniform weight to three decimal places, and detection falls to $8.3\%$ and then $0\%$. Trust-only aggregation returns $+0.2374$ and $+0.2482$ of lift, statistically indistinguishable from undefended FedAvg's $+0.2583$ and $+0.2455$ under the same partitions. In other words, under label skew the behavioral probe contributes nothing.
+
+\textit{Why.} Suspicion is a deficit below the cohort median measured in cohort median-absolute-deviation units (Eq.~\ref{eq:susp}). Under IID the honest cohort is tight, $\mathrm{MAD}_f$ is small, and a backdoored client's deficit spans many MADs, easily clearing the dead-zone $\tau = 2$. Under skew, honest clients legitimately disagree on the probe slices, $\mathrm{MAD}_f$ inflates, and the same absolute deficit becomes a fraction of one MAD. The attacker hides inside the honest cohort's variance. Table~\ref{tab:tau} tests this directly by lowering $\tau$: detection is partially recovered, from $8.3\%$ to $38.9\%$ at $\alpha = 10$ and from $0\%$ to $15.3\%$ at $\alpha = 3$, which confirms the mechanism. But it is only partial, it never approaches the IID figure, and it costs $11.8\%$ and $7.6\%$ of honest client-rounds in false flags. Under IID the same change is pure loss: detection is already $100\%$ and the false-flag rate rises from $0.3\%$ to $6.3\%$. No single dead-zone is right for both regimes, and no dead-zone we tested restores the IID behavior under skew. The limitation is therefore in the robust scaling itself, not only in the choice of threshold.
+
+\textit{What still works, and what that implies.} The full defense degrades far more gracefully than trust alone, to $+0.0647$ and $+0.1002$, but Table~\ref{tab:noniid} shows why: those figures track coordinate-wise median alone ($+0.0710$ and $+0.1046$) almost exactly. Under skew the median layer is carrying the defense. That is a direct, empirical answer to the review's third comment, and it is developed in Section~\ref{subsec:mediannec}. FLTrust degrades more gracefully on lift ($+0.0542$, $+0.0146$) but at a steep and rising cost in honest false flags ($8.7\%$, $22.6\%$, and $31.9\%$ at severe skew), which is the same failure mode from the opposite direction: it keeps reacting, but increasingly to the wrong clients.
+
+At the most severe level tested ($\alpha = 1$) the base detector has itself degraded to $0.232$ honest recall and $0.903$ honest BSR, so lift again has little headroom and we do not use that row to rank defenses. It is reported for completeness and because it marks where this federated configuration stops functioning at all, which is consistent with the ceiling study of Section~\ref{subsec:ceiling}.
+
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Non-IID Sweep Over Client Class-Ratio Skew (mean $\pm$ std, $n=3$). Every Quantity the Review Requested Is Reported. Uniform Trust Is $0.100$. Rules Without a per-Client Weight Have No Detection or False-Flag Rate. The $\alpha=1$ Block Is Reported for Completeness but Not Used to Rank Rules, Because Its Honest Baseline Has Already Degraded to $0.232$ Recall.}
+\label{tab:noniid}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}ll cccc cc cc@{}}
+\toprule
+\textbf{Condition} & \textbf{Method} & \textbf{Clean} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} &
+\textbf{Detect} & \textbf{False-Flag} & \textbf{Atk trust} & \textbf{Hon trust} \\
+\midrule
+IID & Honest FedAvg (no attack) & $0.7112$ & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & --- & --- \\
+    & FedAvg (attacked)         & $0.6932$ & $0.3641$ & $0.8782$ & $+0.2415$ & --- & --- & --- & --- \\
+    & Coordinate-wise median    & $0.7101$ & $0.5008$ & $0.7013$ & $+0.0646$ & --- & --- & --- & --- \\
+    & FLTrust                   & $0.6962$ & $0.4687$ & $0.7154$ & $+0.0787$ & $84.7\%$ & $0.0\%$ & $0.0390$ & $0.1152$ \\
+    & Behavioral trust (ours)   & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
+    & Trust + median (ours)     & $0.7143$ & $0.5560$ & $0.6101$ & $-0.0265$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
+\midrule
+Skew      & Honest FedAvg (no attack) & $0.6998$ & $0.4937$ & $0.6788$ & $+0.0000$ & --- & --- & --- & --- \\
+$\alpha{=}10$ & FedAvg (attacked)     & $0.6868$ & $0.3461$ & $0.9370$ & $+0.2583$ & --- & --- & --- & --- \\
+(mild)    & Coordinate-wise median    & $0.7035$ & $0.4487$ & $0.7498$ & $+0.0710$ & --- & --- & --- & --- \\
+          & FLTrust                   & $0.6919$ & $0.4639$ & $0.7329$ & $+0.0542$ & $65.3\%$ & $8.7\%$ & $0.0429$ & $0.1143$ \\
+          & Behavioral trust (ours)   & $0.6895$ & $0.3758$ & $0.9162$ & $+0.2374$ & $0.0\%$ & $0.3\%$ & $0.0950$ & $0.1013$ \\
+          & Trust + median (ours)     & $0.7035$ & $0.4555$ & $0.7435$ & $+0.0647$ & $8.3\%$  & $2.1\%$ & $0.0942$ & $0.1014$ \\
+\midrule
+Skew      & Honest FedAvg (no attack) & $0.6903$ & $0.4446$ & $0.7388$ & $+0.0000$ & --- & --- & --- & --- \\
+$\alpha{=}3$ & FedAvg (attacked)      & $0.6733$ & $0.2983$ & $0.9843$ & $+0.2455$ & --- & --- & --- & --- \\
+(moderate) & Coordinate-wise median   & $0.6897$ & $0.3609$ & $0.8434$ & $+0.1046$ & --- & --- & --- & --- \\
+          & FLTrust                   & $0.6880$ & $0.4468$ & $0.7534$ & $+0.0146$ & $59.7\%$ & $22.6\%$ & $0.0434$ & $0.1141$ \\
+          & Behavioral trust (ours)   & $0.6739$ & $0.2979$ & $0.9870$ & $+0.2482$ & $0.0\%$ & $0.0\%$ & $0.1025$ & $0.0994$ \\
+          & Trust + median (ours)     & $0.6897$ & $0.3618$ & $0.8390$ & $+0.1002$ & $0.0\%$ & $0.0\%$ & $0.1023$ & $0.0994$ \\
+\midrule
+Skew      & Honest FedAvg (no attack) & $0.6473$ & $0.2320$ & $0.9027$ & $+0.0000$ & --- & --- & --- & --- \\
+$\alpha{=}1$ & FedAvg (attacked)      & $0.6354$ & $0.1195$ & $0.9986$ & $+0.0959$ & --- & --- & --- & --- \\
+(severe,  & Coordinate-wise median    & $0.6455$ & $0.1428$ & $0.9671$ & $+0.0644$ & --- & --- & --- & --- \\
+baseline  & FLTrust                   & $0.6635$ & $0.4325$ & $0.7836$ & $-0.1191$ & $66.7\%$ & $31.9\%$ & $0.0401$ & $0.1150$ \\
+degraded) & Behavioral trust (ours)   & $0.6389$ & $0.1256$ & $0.9980$ & $+0.0953$ & $0.0\%$ & $0.0\%$ & $0.1054$ & $0.0987$ \\
+          & Trust + median (ours)     & $0.6495$ & $0.1580$ & $0.9594$ & $+0.0567$ & $0.0\%$ & $0.0\%$ & $0.1060$ & $0.0985$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Dead-Zone Sweep Under Skew (mean $\pm$ std, $n=3$), Testing Whether the Trust Failure Is a Threshold Choice. Lowering $\tau$ Partially Recovers Detection, Confirming the Mechanism, but Never Approaches the IID Figure and Costs Honest False Flags. Under IID the Same Change Is Pure Loss.}
+\label{tab:tau}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}ll ccc@{}}
+\toprule
+\textbf{Condition} & \textbf{$\tau$} & \textbf{Lift} & \textbf{Attacker detect} & \textbf{Honest false-flag} \\
+\midrule
+IID              & $0.5$ & $-0.0122$ & $100\%$   & $6.3\%$  \\
+                 & $1.0$ & $-0.0212$ & $100\%$   & $4.9\%$  \\
+                 & $2.0$ & $-0.0265$ & $100\%$   & $0.3\%$  \\
+\midrule
+Skew $\alpha{=}10$ & $0.5$ & $+0.0457$ & $38.9\%$ & $11.8\%$ \\
+                 & $1.0$ & $+0.0470$ & $26.4\%$ & $6.9\%$  \\
+                 & $2.0$ & $+0.0647$ & $8.3\%$  & $2.1\%$  \\
+\midrule
+Skew $\alpha{=}3$ & $0.5$ & $+0.0851$ & $15.3\%$ & $7.6\%$  \\
+                 & $1.0$ & $+0.0902$ & $1.4\%$  & $1.7\%$  \\
+                 & $2.0$ & $+0.1002$ & $0.0\%$  & $0.0\%$  \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=3.45in]{figures/fig_fltrust_benchmark.png}
-\caption{Comparison with FLTrust \cite{cao2021fltrust} on an identical pipeline (mean of 3 seeds, $\pm 1$ std). Left: backdoor lift. FLTrust removes about two-thirds of the attack but leaves $+0.0787$; the behavioral probe drives it to $-0.0265$. Right: trust assigned to the two compromised UAVs per round, normalized so uniform is $0.100$. FLTrust starts near uniform and decays gradually, because a cosine similarity over the full update is only mildly perturbed by a backdoor confined to a small subspace; the behavioral probe separates the two groups in the first round.}
-\label{fig:benchmark}
+\includegraphics[width=3.45in]{figures/fig_noniid.png}
+\caption{Backdoor lift and honest false-flag rate under increasing client class-ratio skew (mean of 3 seeds). The proposed defense's advantage over plain coordinate-wise median is confined to the IID condition; under skew the two curves converge, because the trust layer stops firing and the median carries the result. FLTrust holds lift better but its honest false-flag rate climbs steeply with skew.}
+\label{fig:noniid}
+\end{figure}
+
+\subsection{When Trust Scoring Is Imperfect}
+\label{subsec:mediannec}
+The review is correct that the previous ablation did not establish that both layers are necessary: trust-only ($+0.0037$) and the full defense ($-0.0253$) are not separated at three seeds. We withdraw that claim. The question this section answers instead is the one the review actually poses: does coordinate-wise median limit the damage when the trust score fails?
+
+Table~\ref{tab:mediannec} degrades the trust score five ways, four of them from the review's own list. Under mild degradation the median's contribution is real but small, between $+0.017$ and $+0.033$ of lift, which is the same size as the seed spread and which we therefore do not claim as individually resolved. It is, however, positive in every condition tested, which is at least consistent with a genuine effect.
+
+The decisive evidence comes from the condition where the trust score does not merely wobble but fails outright. Under the label skew of Section~\ref{subsec:noniid}, trust-only leaves $+0.2374$ and $+0.2482$ of lift while the full defense leaves $+0.0647$ and $+0.1002$: the median removes $0.173$ and $0.148$ of lift, an order of magnitude more than it contributes under IID. This is the answer to the review's question. Coordinate-wise median is not redundant with behavioral trust, and it is not doing much when trust is working; it is a backstop, and the setting that reveals its value is precisely the realistic one where the trust layer breaks.
+
+One condition did not behave as intended and is reported as such. Raising model-replacement scaling from $\gamma = 3$ to $\gamma = 10$ was meant to make the attack stronger. It does the opposite: undefended lift falls to $-0.5888$, because an update scaled that aggressively destroys the global model instead of steering it. The attack is already near its most effective scaling at $\gamma = 3$, so this axis does not produce a stronger adversary.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Does the Median Layer Help When Trust Scoring Degrades? (mean $\pm$ std, $n=3$). The Final Two Rows Are the Skew Conditions of Section~\ref{subsec:noniid}, Where the Trust Layer Fails Outright.}
+\label{tab:mediannec}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l cccc@{}}
+\toprule
+\textbf{Condition} & \textbf{Undefended} & \textbf{Trust only} & \textbf{Full} & \textbf{Median benefit} \\
+\midrule
+Baseline (D2, IID)          & $+0.2415$ & $+0.0039$ & $-0.0265$ & $+0.0305$ \\
+Root $6{,}000 \to 600$      & $+0.2415$ & $+0.0041$ & $-0.0276$ & $+0.0317$ \\
+$30\%$ root labels flipped  & $+0.2415$ & $+0.0032$ & $-0.0137$ & $+0.0169$ \\
+Dead-zone $\tau\,2 \to 6$   & $+0.2415$ & $+0.0089$ & $-0.0121$ & $+0.0210$ \\
+Scaling $\gamma\,3 \to 10$  & $-0.5888$ & $+0.0064$ & $-0.0266$ & $+0.0330$ \\
+\midrule
+Skew $\alpha{=}10$          & $+0.2583$ & $+0.2374$ & $+0.0647$ & $\mathbf{+0.1727}$ \\
+Skew $\alpha{=}3$           & $+0.2455$ & $+0.2482$ & $+0.1002$ & $\mathbf{+0.1480}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness to an Unknown Attacker Count}
+\label{subsec:fcount}
+Section~\ref{subsec:benchmark} reports that Multi-Krum matches the proposed behavioral trust under IID data. That comparison gives Multi-Krum an advantage a deployment cannot: it is told $f$, the number of compromised clients. Trimmed mean and Krum need the same input. The proposed defense has no such parameter; it scores each client on its own behavior.
+
+Table~\ref{tab:fcount} varies the true number of compromised clients from one to four while the Byzantine-robust rules stay configured for $f = 2$, which is what a coordinator would have to guess. The rules that depend on $f$ fail when it is underestimated. Multi-Krum rises from $+0.0061$ at the count it was tuned for to $+0.1609$ at three attackers and $+0.2837$ at four, the last being close to undefended FedAvg's $+0.2415$; trimmed mean degrades further still, to $+0.2992$. Their attacker-detection rates fall correspondingly, Multi-Krum from $100\%$ to $50\%$. The proposed defense stays between $-0.0265$ and $+0.0114$ across the whole range with detection at or above $94\%$.
+
+One baseline resists this failure and we report it plainly: single-Krum stays between $+0.0172$ and $+0.0331$ throughout, because selecting the single most central update is insensitive to how many outliers surround it. Its cost is that it discards nine of ten client updates every round, and like the other geometric rules it yields a selection rather than a per-client judgment, so it cannot report \emph{which} aircraft is compromised.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Backdoor Lift as the True Attacker Count Varies While Byzantine-Robust Baselines Remain Configured for $f=2$ (mean, $n=3$). The Proposed Defense Has No $f$ Parameter.}
+\label{tab:fcount}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l cccc@{}}
+\toprule
+\textbf{Method} & \textbf{1 attacker} & \textbf{2} & \textbf{3} & \textbf{4} \\
+\midrule
+Coordinate-wise median   & $+0.0275$ & $+0.0646$ & $+0.0977$ & $+0.1453$ \\
+Trimmed mean ($f{=}2$)   & $+0.0380$ & $+0.0787$ & $+0.2114$ & $+0.2992$ \\
+Krum ($f{=}2$)           & $+0.0215$ & $+0.0331$ & $+0.0177$ & $+0.0172$ \\
+Multi-Krum ($f{=}2$)     & $+0.0005$ & $+0.0061$ & $+0.1609$ & $+0.2837$ \\
+FLTrust                  & $+0.0626$ & $+0.0787$ & $+0.0919$ & $+0.1059$ \\
+\textbf{Trust + median (ours)} & $\mathbf{-0.0142}$ & $\mathbf{-0.0265}$ & $\mathbf{-0.0172}$ & $\mathbf{+0.0114}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.4in]{figures/fig_attacker_count.png}
+\caption{Backdoor lift as the true number of compromised clients varies, with the Byzantine-robust baselines held at their tuned $f=2$. Multi-Krum and trimmed mean degrade toward the undefended level once the attacker count exceeds what they were told; the proposed defense, which has no such parameter, is flat across the range.}
+\label{fig:fcount}
 \end{figure}
 
 \subsection{Trigger Generalization}
@@ -574,21 +758,154 @@ $\rho = 0.9$ & $-0.0218$ & $0.0201$ & 2.8\% \\
 \label{subsec:fp}
 Treating the trust mechanism as a detector of compromised clients over $3$ seeds $\times$ $12$ rounds $\times$ $10$ clients, both compromised clients are flagged in $72$ of $72$ client-rounds ($100\%$ true-positive rate) with mean trust $0.000$, while honest clients are flagged in $1$ of $288$ client-rounds ($0.3\%$ false-positive rate) and no honest client is ever driven to zero trust. Mean honest trust sits in a tight band from $0.119$ to $0.131$ around the uniform value of $0.100$. The mechanism therefore not only removes the backdoor but attributes it to the exact compromised UAVs, which is operationally useful for response.
 
+\subsection{What the Detector Can and Cannot Do}
+\label{subsec:ceiling}
+The review objects, correctly, that an honest spoofing recall of $0.53$ is too weak to support
+claims of operational security, and asks whether a stronger classifier would help. Table~\ref{tab:ceiling}
+answers that by establishing a \emph{centralized ceiling}: several classifiers trained on the entire
+$114{,}000$-row pool with no federation, no attack and no privacy constraint, which is strictly more
+favorable than anything the federated system can achieve.
+
+The answer is unambiguous, and it corrects an assumption carried by the previous draft. We had
+attributed the weak detector to limited class separability in the feature set. That is wrong. The
+same $10\text{-}64\text{-}32\text{-}16\text{-}1$ architecture used in the federated system reaches
+$0.907$ recall when trained centrally, and histogram gradient boosting reaches $0.993$ at
+$0.9615$ clean accuracy. The features are separable; the federated configuration of twelve rounds
+of three local epochs on a small MLP simply underfits. Only logistic regression, which cannot
+represent the decision boundary at all, performs near the federated model, and it does worse.
+
+Two consequences follow, and we state both plainly.
+
+\textit{The security claim must be scoped.} Removing the attacker-induced increase in BSR and
+detecting triggered spoofing are different claims, and this paper supports only the first. At the
+paper's operating point an honest model already classifies $63.7\%$ of trigger-bearing samples as
+authentic, so driving backdoor \emph{lift} to zero returns the system to that honest baseline rather
+than making it reliable. We therefore report raw BSR beside lift in every table, and we do not claim
+the detector is operationally trustworthy at this operating point.
+
+\textit{The weakness is ours to fix, not the dataset's.} Because the ceiling is high, ``a stronger
+detector'' is a concrete engineering step rather than a hypothetical. A short search over federated
+configurations confirms this: thirty rounds with a $256\text{-}128\text{-}64$ network reaches
+$0.851$ honest recall against the $0.529$ reported throughout this paper. We did not re-run the
+full evaluation at that configuration, so we make no claim that the defense conclusions transfer to
+it; establishing that is the most concrete piece of future work this paper leaves open.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Centralized Detector Ceiling. All Rows Are Trained on the Full Client Pool With No Federation, No Attack and No Privacy Constraint, so They Upper-Bound What the Federated System Could Reach. The Final Row Is the Paper's Federated Baseline.}
+\label{tab:ceiling}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}l ccccc@{}}
+\toprule
+\textbf{Model} & \textbf{Clean} & \textbf{Recall} & \textbf{F1} & \textbf{Bal.\ Acc} & \textbf{BSR} \\
+\midrule
+Logistic regression                & $0.6094$ & $0.2241$ & $0.3146$ & $0.5452$ & $0.9394$ \\
+MLP $64\text{-}32\text{-}16$ (paper model) & $0.8728$ & $0.9073$ & $0.8509$ & $0.8786$ & $0.3779$ \\
+MLP $256\text{-}128\text{-}64$     & $0.9192$ & $0.9506$ & $0.9040$ & $0.9244$ & $0.3488$ \\
+MLP $512\text{-}256\text{-}128\text{-}64$ & $0.9245$ & $0.9742$ & $0.9117$ & $0.9328$ & $0.3331$ \\
+Random forest (400 trees)          & $0.9503$ & $0.9595$ & $0.9392$ & $0.9519$ & $0.1037$ \\
+Histogram gradient boosting        & $\mathbf{0.9615}$ & $\mathbf{0.9929}$ & $\mathbf{0.9538}$ & $\mathbf{0.9667}$ & $0.1213$ \\
+\midrule
+\textit{Federated honest FedAvg (paper baseline)} & $0.7112$ & $0.5292$ & $0.5944$ & $0.6809$ & $0.6367$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.4in]{figures/fig_detector_ceiling.png}
+\caption{Centralized detector ceiling. Every centralized non-linear model far exceeds the federated baseline (dotted), so the weak spoofing recall reported throughout this paper reflects the federated training configuration rather than the separability of the feature set. This bounds what the security claims may assert: the paper supports removal of attacker-induced lift, not operational detection reliability.}
+\label{fig:ceiling}
+\end{figure}
+
 \subsection{Computational Cost}
 \label{subsec:cost}
-The defense runs entirely on the aggregator; every client performs identical local training whether or not it is active, so it adds zero client-side cost. Measured on the same pipeline, one FL round takes about $3{,}285.8$ ms, dominated by local training, while the defense's server-side work (feature probing, trust computation, update scaling, and the coordinate-wise median, net of plain aggregation) adds about $37.4$ ms per round, roughly $1.1\%$ of round time. The probing is forward-pass-only on a $3{,}329$-parameter model against a small root set, and the added server terms scale linearly in the number of clients and probe features, so the defense remains practical as the fleet grows.
+The previous draft reported roughly $1.1\%$ server-side overhead. The review correctly identifies
+that this used a sequential-simulation denominator that sums every client's training time, whereas
+real UAV clients train in parallel and a round costs roughly the \emph{slowest} client. We withdraw
+that figure as the headline number and report both denominators in Table~\ref{tab:cost}.
+
+Measured on the ten-client configuration, the defense adds $34.0$~ms of server-side computation per
+round. Against a sequential round of $3{,}449$~ms that is $0.98\%$; against a parallel round of
+$999$~ms, bounded by the slowest client, it is $3.40\%$. The parallel figure is the honest one for a
+deployment, and it is roughly three times larger than what we previously reported. FLTrust on the
+same basis costs $168.3$~ms, or $16.9\%$ of a parallel round, because it trains a server model on
+the root set every round; our probe is forward-pass only.
+
+We also withdraw the claim that the defense remains practical as the fleet grows, because the
+measurement does not support it. Server cost is linear in the number of clients ($19.3$, $34.0$,
+$69.5$ and $139.1$~ms at $5$, $10$, $20$ and $40$ clients) while a parallel round stays roughly
+constant, so the overhead \emph{fraction} rises with fleet size: $5.6\%$ at five clients, $9.6\%$ at
+ten, $18.0\%$ at twenty and $34.9\%$ at forty. Cost is likewise linear in the probe count ($13.2$ to
+$35.6$~ms from two to eight features) and grows only mildly with root-set size ($25.5$ to
+$37.1$~ms from $600$ to $6{,}000$ rows). A large fleet would need the probe evaluated on a client
+subsample or batched across rounds; we have not tested either, and make no claim about them.
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.25}
+\caption{Server-Side Cost on Both Denominators (ten clients, mean of three timed rounds). A Sequential Round Sums Every Client's Training; a Parallel Round Is Bounded by the Slowest Client and Is the Realistic Denominator.}
+\label{tab:cost}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l ccc@{}}
+\toprule
+\textbf{Defense} & \textbf{Server ms/round} & \textbf{\% of sequential} & \textbf{\% of parallel} \\
+\midrule
+Behavioral trust $+$ median (ours) & $34.0$  & $0.98\%$ & $3.40\%$  \\
+FLTrust \cite{cao2021fltrust}      & $168.3$ & $4.88\%$ & $16.86\%$ \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Scaling of our server cost (ms/round, and \% of a parallel round)}} \\
+Clients $5 \to 40$        & $19.3 \to 139.1$ & --- & $5.6\% \to 34.9\%$ \\
+Probe features $2 \to 8$  & $13.2 \to 35.6$  & --- & $3.5\% \to 9.9\%$  \\
+Root rows $600 \to 6{,}000$ & $25.5 \to 37.1$ & --- & $6.2\% \to 10.3\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=3.45in]{figures/fig_overhead.png}
+\caption{Measured server-side cost per round. Cost is linear in the number of clients and in the probe count, and nearly flat in root-set size. Because a parallel round's duration is set by the slowest client and does not grow with fleet size, the overhead \emph{fraction} rises with the fleet, reaching $34.9\%$ at forty clients. FLTrust is roughly five times more expensive at ten clients because it trains a server model each round.}
+\label{fig:overhead}
+\end{figure}
 
 \section{Discussion}
-The results support a single narrative. The vulnerability is real and specific: accuracy-weighted aggregation, adopted in recent UAV-FL work to reward good clients, is a second attack lever, and inflation raises backdoor lift from $+0.2457$ to $+0.3036$. The defense closes it by refusing to trust self-report and judging clients on behavior the coordinator can verify, which makes inflation inert by construction rather than by tuning. The layer ablation shows the combination is necessary: median-only leaves a quarter of the attack and trust-only lacks a safety net against a mis-scored round, while together they drive the advantage to zero at no utility cost. The benchmark comparison shows the result is not merely internal bookkeeping: FLTrust, given the same root set and the same information, still leaves $+0.0787$ of lift while costing clean accuracy, because scoring a client by the direction of its whole update is the wrong instrument for a backdoor that occupies a small subspace. What distinguishes the behavioral probe is not that it has more information but that it asks a more specific question of the same information. The trigger-generalization and adaptive-attacker studies address the two hardest questions a reviewer can ask: the defense holds when the trigger moves to a feature it was never told about, including a mixed trigger, and a defense-aware attacker cannot evade the probe without destroying its own backdoor. The sensitivity sweep adds a deployability argument to the security one: once the dead-zone removes the spurious penalties on honest clients, backdoor lift is flat and negative across a sixteen-fold range of the gate parameter, so an operator does not have to find a narrow setting to be protected. The parameter that does require a considered choice is the dead-zone width itself, and the sweep locates its knee rather than leaving it to judgment.
+The vulnerability this paper identifies is real and specific. Accuracy-weighted aggregation, adopted in recent UAV-FL work to reward good clients, is a second attack lever: inflation raises backdoor lift from $+0.2415$ to $+0.3036$, making the weighted rule worse than no weighting at all. A defense that never reads a self-reported metric is immune to that lever by construction rather than by tuning, and every rule we tested that ignores self-report is unaffected by inflation.
 
-Several limitations bound these claims and are stated plainly, together with why each does or does not reach the central result.
+Beyond that, the revision's results are more qualified than the previous draft's, in three ways that we state directly rather than leave to be inferred.
 
-The dataset is the clearest of them. It is a single software-defined-radio receiver on a mobile platform, not a fleet, and it is a simplified public collection rather than a large operational corpus; we use it because no public multi-UAV GPS spoofing dataset with labeled attacks exists. Two things bound how far that reaches. The claim under test is a property of the \emph{aggregation rule}, not of the signal domain: the attack works because Eq.~\ref{eq:weight} multiplies an attacker-chosen scalar into its own influence, and the defense works because a backdoored model must answer a probe differently from an honest one. Neither mechanism refers to GPS. What the dataset does bound is the absolute detection numbers, which is precisely why every headline result is reported as backdoor \emph{lift} against each seed's own honest baseline rather than as an absolute rate: a stronger detector moves the baseline and the attacked run together, and lift is invariant to that shift. Relatedly, the base detector is only moderately strong here (honest spoofing recall about $0.53$), so a better detector is an orthogonal improvement rather than a confound. What would genuinely test the result is a second, independent signal domain, and that is the single most valuable extension of this work.
+\textit{The proposed defense is not uniquely necessary under IID data.} Multi-Krum reaches $+0.0061$ lift against our behavioral trust's $+0.0039$, a difference well inside the seed spread, at a twenty-seventh of the server cost. Where behavioral trust does separate itself is on assumptions and on outputs: Multi-Krum, trimmed mean and Krum must be told how many clients are compromised, and Section~\ref{subsec:fcount} shows Multi-Krum degrading from $+0.0061$ to $+0.2837$, essentially the undefended level, once the true count exceeds the configured $f$. The behavioral probe has no such parameter and stays flat across that range. It also produces a per-client trust value rather than a selection, so it names the compromised aircraft instead of merely excluding updates, which matters operationally.
 
-Four narrower limitations remain. First, the evaluation uses an IID partition across ten clients with two attackers; non-IID data would widen the honest trust spread and is the setting most likely to stress the $0.3\%$ false-positive rate, making it the natural next study. Second, the trigger-agnostic claim is scoped to the probed feature set, though Table~\ref{tab:features} shows that scope is generous: the boundary sits an order of magnitude below the weakest probed feature, and a trigger hidden beneath it would have little detector signal to corrupt. Third, the sensitivity study varies one hyperparameter at a time around the adopted configuration, so the insensitivity reported is local to that neighborhood rather than global. Fourth, the FLTrust comparison is a faithful reimplementation on our pipeline rather than the authors' own code, which is the right way to hold the setup fixed but does mean the comparison reflects our reading of the method. Three seeds are sufficient to separate the attack effect from noise and to report a standard deviation, but not to resolve sub-noise differences between neighboring defended variants, and we claim none.
+\textit{The behavioral probe does not survive client heterogeneity, and that is the most important finding here.} Under even mild class-ratio skew the trust layer stops firing: attacker trust rises from $0.0001$ to uniform, detection falls from $100\%$ to single digits, and trust-only aggregation returns lift statistically indistinguishable from no defense at all. The mechanism is the robust scaling itself. Suspicion is measured in cohort MAD units, and heterogeneity inflates the MAD until a backdoored client's deficit no longer clears the dead-zone. Lowering the dead-zone recovers only part of the detection and costs honest false flags, so this is not a threshold that can simply be retuned. Any deployment on a genuinely heterogeneous fleet would need a suspicion statistic normalized per client rather than against a global cohort spread; designing and testing one is the clearest technical next step this work leaves open.
+
+\textit{The median layer earns its place, but not where the previous draft claimed.} Under IID conditions its contribution is small and within noise, which is why we withdraw the claim that both layers are necessary in the evaluated setting. Its value appears exactly where the trust score fails: under skew it removes $0.173$ and $0.148$ of lift, an order of magnitude more than under IID. Coordinate-wise median is a backstop, and the realistic setting is the one that reveals why a backstop is worth keeping.
+
+Two earlier claims are corrected outright. The overhead figure of $1.1\%$ used a sequential denominator; on the parallel denominator a deployment would actually experience, the same measurement is $3.40\%$, and because server cost is linear in the fleet while a parallel round is not, the fraction reaches $34.9\%$ at forty clients. We therefore withdraw any claim of large-fleet practicality. And the weak base detector is not a property of the dataset, as we previously suggested: centrally trained models reach $0.907$ to $0.993$ recall on the same features, so the limitation is our federated configuration.
+
+What survives all of this is narrower than the original claim but better supported. Self-reported accuracy is an exploitable basis for aggregation weight; a coordinator that judges submitted models by their behavior on counterfactual spoofed samples closes that lever without needing to know the trigger feature, without needing to know how many clients are compromised, and while naming the ones that are; and under IID conditions it does so at no utility cost. The scope of that claim is IID or near-IID fleets, a single signal domain, and a detector weaker than the data supports.
+
+\subsection*{Limitations}
+Beyond the two corrections above, the following bound the results.
+
+\textit{Heterogeneity.} The defense's headline advantage is demonstrated only under IID clients. Section~\ref{subsec:noniid} shows it does not extend to skewed fleets, which is the realistic case.
+
+\textit{Dataset and domain.} The evaluation uses one public single-receiver software-defined-radio collection as a proxy for a fleet, because no public multi-UAV GPS spoofing dataset with labeled attacks exists. The attack and defense mechanisms do not refer to GPS specifically, but that is an argument, not evidence; a second independent signal domain would be the real test.
+
+\textit{Detector strength.} At the paper's operating point an honest model already classifies $63.7\%$ of trigger-bearing samples as authentic. Driving backdoor lift to zero restores that baseline; it does not make the detector operationally reliable, and we do not claim it does.
+
+\textit{Trigger scope.} The trigger-agnostic claim covers the probed feature set. Table~\ref{tab:features} shows the boundary sits an order of magnitude below the weakest probed feature, so a trigger hidden beneath it would carry little signal for the detector to exploit, but it is untested.
+
+\textit{Statistical power and implementation.} Three seeds separate the attack effect from noise but cannot resolve sub-noise differences between neighboring defended variants, and we claim none. The sensitivity sweep varies one hyperparameter at a time, so the reported insensitivity is local. The FLTrust, Krum, Multi-Krum and trimmed-mean baselines are our own implementations on a shared harness, which is the right way to hold the setup fixed but means the comparison reflects our reading of each method.
 
 \section{Conclusion}
-We showed that accuracy-weighted federated aggregation, a design adopted in recent UAV-FL detection work to reward high-quality clients, is exploitable: two compromised UAV clients of ten can implant a stealthy GPS spoofing backdoor by poisoning a fraction of their data, scaling their updates, and inflating their reported accuracy, raising backdoor lift by up to $0.3036$ while clean accuracy falls by less than two points. We then proposed a server-side behavioral-trust defense that never reads reported accuracy and does not need to know the trigger feature: it probes every discriminative feature, scores each client by its worst anomalous deficit below the cohort median in robust units, and aggregates trust-scaled updates with a coordinate-wise median. Across three seeds the defense eliminates the attacker's advantage (lift $-0.0253$), flags both compromised clients in $100\%$ of client-rounds at a $0.3\%$ honest false-positive rate, generalizes across the discriminative feature set including a mixed trigger, withstands a defense-aware adaptive attacker whose evasion destroys its own backdoor, retains that protection across a sixteen-fold range of its gate parameter, and costs about $1.1\%$ of round time with no client-side work. Benchmarked against FLTrust on an identical pipeline, it removes a backdoor that FLTrust leaves standing at $+0.0787$ lift, and does so without the clean-accuracy cost that FLTrust's magnitude normalization imposes on honest clients. Extending the evaluation to a second, independent signal domain and to non-IID fleets is the primary direction for future work.
+We showed that accuracy-weighted federated aggregation, adopted in recent UAV-FL detection work to reward high-quality clients, is exploitable: two compromised UAV clients of ten can implant a stealthy GPS spoofing backdoor by poisoning a fraction of their data, scaling their updates, and inflating their reported accuracy, raising backdoor lift from $+0.2415$ to $+0.3036$ while clean accuracy falls by less than two points. We proposed a server-side behavioral-trust defense that never reads reported accuracy and does not need to know the trigger feature, and evaluated it against eight published aggregation rules on an identical pipeline.
+
+Under IID clients the defense reduces attack-induced backdoor lift to a level statistically indistinguishable from the honest baseline ($-0.0265 \pm 0.0174$), flags both compromised clients in $100\%$ of client-rounds at a $0.3\%$ honest false-flag rate, generalizes across the discriminative feature set including a mixed trigger, remains effective against the tested defense-aware evasion objective, and adds $34.0$~ms of measured server-side computation per round for the evaluated ten-client configuration. It retains that protection when the number of compromised clients is unknown, a condition under which Multi-Krum and trimmed mean degrade to near-undefended performance, and it attributes the attack to specific aircraft rather than only excluding updates.
+
+Its principal limitation is now measured rather than conjectured: under client class-ratio skew the behavioral probe stops firing, because suspicion measured in cohort median-absolute-deviation units is masked by the honest cohort's own variance, and the coordinate-wise median backstop carries what protection remains. A per-client suspicion statistic that does not depend on cohort spread, evaluation on a second signal domain, and a federated configuration that closes the gap to the centralized detector ceiling are the three concrete directions this work leaves open.
 
 \section*{Artifact Availability}
 All experiments are implemented in Python with PyTorch and scikit-learn and run on CPU. Every table and figure in this paper is produced by a notebook or script in the project repository and exported to a CSV or PNG, and the reported values are read from those exports rather than transcribed, so no figure or table can disagree with the run that produced it. The FLTrust comparison of Section~\ref{subsec:benchmark} and the feature-separability table of Section~\ref{subsec:data} are each produced by a single self-contained script that re-derives the data split from the same fixed seed, so both can be reproduced with one command and without running the notebooks. Given the fixed data seed, the federated runs are deterministic and reproduce bit-identically between executions on the same machine. The dataset is publicly available \cite{aissou2022dataset}.
