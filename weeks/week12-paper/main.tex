@@ -11,6 +11,7 @@
 \usepackage{graphicx}
 \usepackage{cite}
 \usepackage{booktabs}
+\usepackage{multirow}
 
 
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
@@ -388,12 +389,12 @@ The case for behavioral trust therefore does not rest on the IID headline number
 
 \begin{table*}[!t]
 \renewcommand{\arraystretch}{1.25}
-\caption{Comparison With Published Baselines on an Identical Pipeline (mean $\pm$ std, $n=3$). Raw BSR Is Reported Beside Lift Throughout. Trust Is Normalized so Uniform Is $0.100$; ``Detect'' and ``False-Flag'' Are the Fractions of Attacker and Honest Client-Rounds Held Below Half the Uniform Weight. Krum Makes a Selection Rather Than a per-Client Trust Assignment, so a False-Flag Rate Is Not Comparably Defined for It.}
+\caption{Comparison With Published Baselines on an Identical Pipeline (mean $\pm$ std, $n=3$). ``Detect'' and ``False-Flag'' Are the Fractions of Attacker and Honest Client-Rounds Held Below Half the Uniform Weight; Krum Selects Rather Than Scores, so a False-Flag Rate Is Not Defined for It.}
 \label{tab:benchmark}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}l cccc cc cc c@{}}
+\begin{tabular}{@{}l rrrr rr rr r@{}}
 \toprule
 \textbf{Method} & \textbf{Clean} & \textbf{Recall} & \textbf{F1} & \textbf{Bal.\ Acc} &
 \textbf{BSR} & \textbf{Lift} & \textbf{Detect} & \textbf{False-Flag} & \textbf{ms/round} \\
@@ -439,33 +440,36 @@ A fourth level ($\alpha = 1$) was also run and is in the artifact. There the bas
 
 \begin{table*}[!t]
 \renewcommand{\arraystretch}{1.2}
-\caption{Non-IID Sweep Over Client Class-Ratio Skew (mean $\pm$ std, $n=3$). Uniform Trust Is $0.100$. Rules Without a per-Client Weight Have No Detection or False-Flag Rate. Clean Accuracy, and the $\alpha=1$ Condition Whose Honest Baseline Has Already Degraded to $0.232$ Recall, Are in the Exported CSV.}
+\caption{Non-IID Sweep Over Client Class-Ratio Skew (mean $\pm$ std, $n=3$). Uniform Trust Is $0.100$. Clean Accuracy and a Fourth, More Severe Condition Are in the Exported CSV.}
 \label{tab:noniid}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}ll ccc cc cc@{}}
+\begin{tabular}{@{}ll rrr rr rr@{}}
 \toprule
 \textbf{Condition} & \textbf{Method} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} &
 \textbf{Detect} & \textbf{False-Flag} & \textbf{Atk trust} & \textbf{Hon trust} \\
 \midrule
-IID & Honest FedAvg (no attack) & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & --- & --- \\
+\multirow{6}{*}{IID}
+    & Honest FedAvg (no attack) & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & --- & --- \\
     & FedAvg (attacked)         & $0.3641$ & $0.8782$ & $+0.2415$ & --- & --- & --- & --- \\
     & Coordinate-wise median    & $0.5008$ & $0.7013$ & $+0.0646$ & --- & --- & --- & --- \\
     & FLTrust                   & $0.4687$ & $0.7154$ & $+0.0787$ & $84.7\%$ & $0.0\%$ & $0.0390$ & $0.1152$ \\
     & Behavioral trust (ours)   & $0.5307$ & $0.6406$ & $+0.0039$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
     & Trust + median (ours)     & $0.5560$ & $0.6101$ & $-0.0265$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
 \midrule
-Skew      & Honest FedAvg (no attack) & $0.4937$ & $0.6788$ & $+0.0000$ & --- & --- & --- & --- \\
-$\alpha{=}10$ & FedAvg (attacked)     & $0.3461$ & $0.9370$ & $+0.2583$ & --- & --- & --- & --- \\
-(mild)    & Coordinate-wise median    & $0.4487$ & $0.7498$ & $+0.0710$ & --- & --- & --- & --- \\
+\multirow{6}{*}{\shortstack[l]{Skew\\$\alpha{=}10$\\(mild)}}
+          & Honest FedAvg (no attack) & $0.4937$ & $0.6788$ & $+0.0000$ & --- & --- & --- & --- \\
+          & FedAvg (attacked)         & $0.3461$ & $0.9370$ & $+0.2583$ & --- & --- & --- & --- \\
+          & Coordinate-wise median    & $0.4487$ & $0.7498$ & $+0.0710$ & --- & --- & --- & --- \\
           & FLTrust                   & $0.4639$ & $0.7329$ & $+0.0542$ & $65.3\%$ & $8.7\%$ & $0.0429$ & $0.1143$ \\
           & Behavioral trust (ours)   & $0.3758$ & $0.9162$ & $+0.2374$ & $0.0\%$ & $0.3\%$ & $0.0950$ & $0.1013$ \\
           & Trust + median (ours)     & $0.4555$ & $0.7435$ & $+0.0647$ & $8.3\%$  & $2.1\%$ & $0.0942$ & $0.1014$ \\
 \midrule
-Skew      & Honest FedAvg (no attack) & $0.4446$ & $0.7388$ & $+0.0000$ & --- & --- & --- & --- \\
-$\alpha{=}3$ & FedAvg (attacked)      & $0.2983$ & $0.9843$ & $+0.2455$ & --- & --- & --- & --- \\
-(moderate) & Coordinate-wise median   & $0.3609$ & $0.8434$ & $+0.1046$ & --- & --- & --- & --- \\
+\multirow{6}{*}{\shortstack[l]{Skew\\$\alpha{=}3$\\(moderate)}}
+          & Honest FedAvg (no attack) & $0.4446$ & $0.7388$ & $+0.0000$ & --- & --- & --- & --- \\
+          & FedAvg (attacked)         & $0.2983$ & $0.9843$ & $+0.2455$ & --- & --- & --- & --- \\
+          & Coordinate-wise median    & $0.3609$ & $0.8434$ & $+0.1046$ & --- & --- & --- & --- \\
           & FLTrust                   & $0.4468$ & $0.7534$ & $+0.0146$ & $59.7\%$ & $22.6\%$ & $0.0434$ & $0.1141$ \\
           & Behavioral trust (ours)   & $0.2979$ & $0.9870$ & $+0.2482$ & $0.0\%$ & $0.0\%$ & $0.1025$ & $0.0994$ \\
           & Trust + median (ours)     & $0.3618$ & $0.8390$ & $+0.1002$ & $0.0\%$ & $0.0\%$ & $0.1023$ & $0.0994$ \\
@@ -493,12 +497,12 @@ One condition did not behave as intended and is reported as such. Raising model-
 
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.2}
-\caption{Does the Median Layer Help When Trust Scoring Degrades? (mean $\pm$ std, $n=3$). The Final Two Rows Are the Skew Conditions of Section~\ref{subsec:noniid}, Where the Trust Layer Fails Outright.}
+\caption{Does the Median Layer Help When Trust Scoring Degrades? (mean, $n=3$). The Final Two Rows Are the Skew Conditions of Section~\ref{subsec:noniid}, Where the Trust Layer Fails Outright.}
 \label{tab:mediannec}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}l cccc@{}}
+\begin{tabular}{@{}l rrrr@{}}
 \toprule
 \textbf{Condition} & \textbf{Undefended} & \textbf{Trust only} & \textbf{Full} & \textbf{Median benefit} \\
 \midrule
@@ -529,7 +533,7 @@ One baseline resists this failure and we report it plainly: single-Krum stays be
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}l cccc@{}}
+\begin{tabular}{@{}l rrrr@{}}
 \toprule
 \textbf{Method} & \textbf{1 attacker} & \textbf{2} & \textbf{3} & \textbf{4} \\
 \midrule
@@ -706,12 +710,12 @@ it; establishing that is the most concrete piece of future work this paper leave
 
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.25}
-\caption{Centralized Detector Ceiling. All Rows Are Trained on the Full Client Pool With No Federation, No Attack and No Privacy Constraint, so They Upper-Bound What the Federated System Could Reach. Balanced Accuracy and Confusion Counts Are in the Exported CSV.}
+\caption{Centralized Detector Ceiling. Every Row Is Trained on the Full Client Pool With No Federation, No Attack and No Privacy Constraint, so All of Them Upper-Bound the Federated System.}
 \label{tab:ceiling}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}l cccc@{}}
+\begin{tabular}{@{}l rrrr@{}}
 \toprule
 \textbf{Model} & \textbf{Clean} & \textbf{Recall} & \textbf{F1} & \textbf{BSR} \\
 \midrule
@@ -730,7 +734,7 @@ Gradient boosting          & $\mathbf{0.9615}$ & $\mathbf{0.9929}$ & $\mathbf{0.
 \begin{figure}[!t]
 \centering
 \includegraphics[width=3.4in]{figures/fig_detector_ceiling.png}
-\caption{Centralized detector ceiling. Every centralized non-linear model far exceeds the federated baseline (dotted), so the weak spoofing recall reported throughout this paper reflects the federated training configuration rather than the separability of the feature set. This bounds what the security claims may assert: the paper supports removal of attacker-induced lift, not operational detection reliability.}
+\caption{Centralized detector ceiling, spoofing recall on the held-out test set. Every centralized non-linear model far exceeds the federated baseline (dotted); only logistic regression, which cannot represent the decision boundary, falls below it. The weak recall reported throughout this paper therefore reflects the federated training configuration, not the separability of the feature set.}
 \label{fig:ceiling}
 \end{figure}
 
@@ -759,12 +763,12 @@ subsample or batched across rounds; we have not tested either, and make no claim
 
 \begin{table}[!t]
 \renewcommand{\arraystretch}{1.25}
-\caption{Server-Side Cost on Both Denominators (ten clients, mean of three timed rounds). A Sequential Round Sums Every Client's Training; a Parallel Round Is Bounded by the Slowest Client and Is the Realistic Denominator.}
+\caption{Server-Side Cost on Both Denominators (ten clients, mean of three timed rounds). A Parallel Round Is Bounded by the Slowest Client and Is the Realistic Denominator.}
 \label{tab:cost}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}l ccc@{}}
+\begin{tabular}{@{}l rrr@{}}
 \toprule
 \textbf{Defense} & \textbf{ms/round} & \textbf{\% sequential} & \textbf{\% parallel} \\
 \midrule

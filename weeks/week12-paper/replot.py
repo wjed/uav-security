@@ -86,23 +86,43 @@ SHORT_M = {
     'Hist gradient boosting': 'Gradient\nboosting',
     'Federated honest FedAvg (paper baseline)': 'Federated\n(ours)',
 }
-names = [SHORT_M.get(m, m) for m in c['Model']]
+# Horizontal, single-series. Seven categories of vertical bars cannot fit a
+# 3.4in column without rotating the labels to the point of illegibility;
+# turning the chart on its side lets each model name read at full size. F1 is
+# dropped because the table carries it and recall alone makes the point.
+LONG_M = {
+    'Logistic regression': 'Logistic regression',
+    'MLP 64-32-16 (paper model)': "MLP 64-32-16  (this paper's model)",
+    'MLP 256-128-64 (wider)': 'MLP 256-128-64',
+    'MLP 512-256-128-64 (deeper)': 'MLP 512-256-128-64',
+    'Random forest (400 trees)': 'Random forest (400 trees)',
+    'Hist gradient boosting': 'Gradient boosting',
+    'Federated honest FedAvg (paper baseline)': 'Federated honest FedAvg',
+}
 rec = c['Spoofing Recall'].astype(float).values
-f1 = c['F1'].astype(float).values
-xs = np.arange(len(names))
-# CSV order is: 3 MLPs, logistic regression, random forest, boosting, federated
-cols = ['#B599CE'] * 3 + ['#B2B2B2'] * 3 + ['seagreen']
-fig, ax = plt.subplots(figsize=(8.6, 3.4))
-ax.bar(xs - 0.19, rec, 0.38, color=cols, label='spoofing recall')
-ax.bar(xs + 0.19, f1, 0.38, color=cols, alpha=.5, label='F1')
-ax.axhline(rec[-1], color='seagreen', ls=':', lw=1.3)
-ax.annotate(f'federated baseline recall ({rec[-1]:.3f})', (len(names) - 0.55, rec[-1]),
-            ha='right', va='bottom', fontsize=7.5, color='seagreen')
-ax.set_xticks(xs); ax.set_xticklabels(names, fontsize=7.5)
-ax.set_ylabel('score on held-out test set')
-ax.set_ylim(0, 1.08)
-ax.set_title("No centralized model is limited by the feature set's separability", fontsize=9.5)
-ax.legend(fontsize=8, ncol=2, loc='upper left')
+names = [LONG_M.get(m, m) for m in c['Model']]
+order = np.argsort(rec)                      # federated ends up at/near the bottom
+names = [names[i] for i in order]
+rec = rec[order]
+is_fed = ['Federated' in n for n in names]
+cols = ['seagreen' if f else '#B599CE' for f in is_fed]
+
+fig, ax = plt.subplots(figsize=(6.6, 2.9))
+ys = np.arange(len(names))
+ax.barh(ys, rec, 0.62, color=cols)
+base = rec[[i for i, f in enumerate(is_fed) if f][0]]
+ax.axvline(base, color='seagreen', ls=':', lw=1.4)
+for yv, v in zip(ys, rec):
+    ax.annotate(f'{v:.3f}', (v, yv), xytext=(4, 0), textcoords='offset points',
+                va='center', fontsize=8)
+ax.set_yticks(ys); ax.set_yticklabels(names, fontsize=8.5)
+ax.set_xlabel('spoofing recall on the held-out test set')
+ax.set_xlim(0, 1.14)
+ax.grid(axis='y', visible=False)
+# NB: logistic regression sits below the baseline, so the title must not claim
+# "every" model clears it; the point is the gap, not a universal.
+ax.set_title('The federated detector sits far below what these features support',
+             fontsize=9.5)
 plt.tight_layout()
 plt.savefig(F.RESULTS / 'fig_detector_ceiling.png', bbox_inches='tight')
 print('rewrote results/fig_detector_ceiling.png')
