@@ -10,7 +10,7 @@ disproves. Tier 2 is mechanical. Tier 3 is the new headline finding. Tier 4 is o
 
 ---
 
-## TIER 1 — Statements that are now FALSE. Fix these first.
+## TIER 1 -- Statements that are now FALSE. Fix these first.
 
 ### 1.1 Slide 16 title, and slide 12 bottom line
 **Currently:** "Neither Layer Is Enough Alone. Together They Close It." and "Neither alone was
@@ -43,7 +43,7 @@ rounds of three local epochs on a small MLP underfits. Fixing it is the top next
 
 ---
 
-### 1.3 Slide 24 — "The Protection Is Essentially Free"
+### 1.3 Slide 24 -- "The Protection Is Essentially Free"
 **Currently:** "37.4 ms", "1.1% of total round time", title "essentially free".
 
 **Problem:** the 1.1% used a denominator that sums every client's training time. Real clients train
@@ -69,7 +69,7 @@ worse as the fleet grows. We would rather say that than be asked it."
 
 ---
 
-### 1.4 Slide 27 — "In One Sentence"
+### 1.4 Slide 27 -- "In One Sentence"
 **Currently:** "...and the attacker's advantage disappears." with `+0.246 → −0.025`, `1.1%`.
 
 **Replace the sentence with:** "Two compromised drones out of ten can hide a blind spot in a shared
@@ -82,7 +82,7 @@ time, none of it on the drones`.
 
 ---
 
-### 1.5 Slide 9 — "The Obvious Defenses Each Miss Something"
+### 1.5 Slide 9 -- "The Obvious Defenses Each Miss Something"
 **Problem:** we now know one obvious defense does *not* miss. Multi-Krum reaches +0.0061, which is
 statistically indistinguishable from our behavioral trust at +0.0039, and it is 27x cheaper.
 Presenting "the obvious defenses all fall short" is no longer accurate.
@@ -94,7 +94,7 @@ does not know that. They also produce a selection, not a per-drone judgment, so 
 
 ---
 
-## TIER 2 — Number refresh (mechanical)
+## TIER 2 -- Number refresh (mechanical)
 
 Every result is now produced by one shared harness, so the whole table moved slightly. **Slide 16
 table, replace all seven rows:**
@@ -140,7 +140,7 @@ server model every round."
 
 ---
 
-## TIER 3 — The new headline finding. This needs a new slide.
+## TIER 3 -- The new headline finding. This needs a new slide.
 
 The revision's most important result is **not** in the deck at all, and it is the one a reviewer
 would ask about. Add **one new slide after slide 21 (False Alarms)**.
@@ -185,7 +185,7 @@ firing, so this is now a measured limitation rather than a suspected one. See th
 
 ---
 
-## TIER 4 — Optional, if there is room
+## TIER 4 -- Optional, if there is room
 
 ### 4.1 Strengthen slide 22 into a real comparison
 We now have nine aggregation rules on one pipeline, not just FLTrust. If the slide can hold a small
