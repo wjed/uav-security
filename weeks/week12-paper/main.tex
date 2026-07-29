@@ -440,39 +440,39 @@ A fourth level ($\alpha = 1$) was also run and is in the artifact. There the bas
 
 \begin{table*}[!t]
 \renewcommand{\arraystretch}{1.2}
-\caption{Non-IID Sweep Over Client Class-Ratio Skew (mean $\pm$ std, $n=3$). Uniform Trust Is $0.100$. Clean Accuracy and a Fourth, More Severe Condition Are in the Exported CSV.}
+\caption{Non-IID Sweep Over Client Class-Ratio Skew (mean $\pm$ std, $n=3$), Reporting Each Quantity the Review Requested. Uniform Trust Is $0.100$. A Fourth, More Severe Condition Is in the Exported CSV.}
 \label{tab:noniid}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}ll rrr rr rr@{}}
+\begin{tabular}{@{}ll rrrr rr rr@{}}
 \toprule
-\textbf{Condition} & \textbf{Method} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} &
+\textbf{Condition} & \textbf{Method} & \textbf{Clean} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} &
 \textbf{Detect} & \textbf{False-Flag} & \textbf{Atk trust} & \textbf{Hon trust} \\
 \midrule
 \multirow{6}{*}{IID}
-    & Honest FedAvg (no attack) & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & --- & --- \\
-    & FedAvg (attacked)         & $0.3641$ & $0.8782$ & $+0.2415$ & --- & --- & --- & --- \\
-    & Coordinate-wise median    & $0.5008$ & $0.7013$ & $+0.0646$ & --- & --- & --- & --- \\
-    & FLTrust                   & $0.4687$ & $0.7154$ & $+0.0787$ & $84.7\%$ & $0.0\%$ & $0.0390$ & $0.1152$ \\
-    & Behavioral trust (ours)   & $0.5307$ & $0.6406$ & $+0.0039$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
-    & Trust + median (ours)     & $0.5560$ & $0.6101$ & $-0.0265$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
+    & Honest FedAvg (no attack) & $0.7112$ & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & --- & --- \\
+    & FedAvg (attacked)         & $0.6932$ & $0.3641$ & $0.8782$ & $+0.2415$ & --- & --- & --- & --- \\
+    & Coordinate-wise median    & $0.7101$ & $0.5008$ & $0.7013$ & $+0.0646$ & --- & --- & --- & --- \\
+    & FLTrust                   & $0.6962$ & $0.4687$ & $0.7154$ & $+0.0787$ & $84.7\%$ & $0.0\%$ & $0.0390$ & $0.1152$ \\
+    & Behavioral trust (ours)   & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
+    & Trust + median (ours)     & $0.7143$ & $0.5560$ & $0.6101$ & $-0.0265$ & $100\%$ & $0.3\%$ & $0.0001$ & $0.1250$ \\
 \midrule
 \multirow{6}{*}{\shortstack[l]{Skew\\$\alpha{=}10$\\(mild)}}
-          & Honest FedAvg (no attack) & $0.4937$ & $0.6788$ & $+0.0000$ & --- & --- & --- & --- \\
-          & FedAvg (attacked)         & $0.3461$ & $0.9370$ & $+0.2583$ & --- & --- & --- & --- \\
-          & Coordinate-wise median    & $0.4487$ & $0.7498$ & $+0.0710$ & --- & --- & --- & --- \\
-          & FLTrust                   & $0.4639$ & $0.7329$ & $+0.0542$ & $65.3\%$ & $8.7\%$ & $0.0429$ & $0.1143$ \\
-          & Behavioral trust (ours)   & $0.3758$ & $0.9162$ & $+0.2374$ & $0.0\%$ & $0.3\%$ & $0.0950$ & $0.1013$ \\
-          & Trust + median (ours)     & $0.4555$ & $0.7435$ & $+0.0647$ & $8.3\%$  & $2.1\%$ & $0.0942$ & $0.1014$ \\
+          & Honest FedAvg (no attack) & $0.6998$ & $0.4937$ & $0.6788$ & $+0.0000$ & --- & --- & --- & --- \\
+          & FedAvg (attacked)         & $0.6868$ & $0.3461$ & $0.9370$ & $+0.2583$ & --- & --- & --- & --- \\
+          & Coordinate-wise median    & $0.7035$ & $0.4487$ & $0.7498$ & $+0.0710$ & --- & --- & --- & --- \\
+          & FLTrust                   & $0.6919$ & $0.4639$ & $0.7329$ & $+0.0542$ & $65.3\%$ & $8.7\%$ & $0.0429$ & $0.1143$ \\
+          & Behavioral trust (ours)   & $0.6895$ & $0.3758$ & $0.9162$ & $+0.2374$ & $0.0\%$ & $0.3\%$ & $0.0950$ & $0.1013$ \\
+          & Trust + median (ours)     & $0.7035$ & $0.4555$ & $0.7435$ & $+0.0647$ & $8.3\%$  & $2.1\%$ & $0.0942$ & $0.1014$ \\
 \midrule
 \multirow{6}{*}{\shortstack[l]{Skew\\$\alpha{=}3$\\(moderate)}}
-          & Honest FedAvg (no attack) & $0.4446$ & $0.7388$ & $+0.0000$ & --- & --- & --- & --- \\
-          & FedAvg (attacked)         & $0.2983$ & $0.9843$ & $+0.2455$ & --- & --- & --- & --- \\
-          & Coordinate-wise median    & $0.3609$ & $0.8434$ & $+0.1046$ & --- & --- & --- & --- \\
-          & FLTrust                   & $0.4468$ & $0.7534$ & $+0.0146$ & $59.7\%$ & $22.6\%$ & $0.0434$ & $0.1141$ \\
-          & Behavioral trust (ours)   & $0.2979$ & $0.9870$ & $+0.2482$ & $0.0\%$ & $0.0\%$ & $0.1025$ & $0.0994$ \\
-          & Trust + median (ours)     & $0.3618$ & $0.8390$ & $+0.1002$ & $0.0\%$ & $0.0\%$ & $0.1023$ & $0.0994$ \\
+          & Honest FedAvg (no attack) & $0.6903$ & $0.4446$ & $0.7388$ & $+0.0000$ & --- & --- & --- & --- \\
+          & FedAvg (attacked)         & $0.6733$ & $0.2983$ & $0.9843$ & $+0.2455$ & --- & --- & --- & --- \\
+          & Coordinate-wise median    & $0.6897$ & $0.3609$ & $0.8434$ & $+0.1046$ & --- & --- & --- & --- \\
+          & FLTrust                   & $0.6880$ & $0.4468$ & $0.7534$ & $+0.0146$ & $59.7\%$ & $22.6\%$ & $0.0434$ & $0.1141$ \\
+          & Behavioral trust (ours)   & $0.6739$ & $0.2979$ & $0.9870$ & $+0.2482$ & $0.0\%$ & $0.0\%$ & $0.1025$ & $0.0994$ \\
+          & Trust + median (ours)     & $0.6897$ & $0.3618$ & $0.8390$ & $+0.1002$ & $0.0\%$ & $0.0\%$ & $0.1023$ & $0.0994$ \\
 
 \bottomrule
 \end{tabular}
@@ -553,6 +553,27 @@ FLTrust                  & $+0.0626$ & $+0.0787$ & $+0.0919$ & $+0.1059$ \\
 \caption{Backdoor lift as the true number of compromised clients varies, with the Byzantine-robust baselines held at their tuned $f=2$. Multi-Krum and trimmed mean degrade toward the undefended level once the attacker count exceeds what they were told; the proposed defense, which has no such parameter, is flat across the range.}
 \label{fig:fcount}
 \end{figure}
+
+
+\begin{table}[!t]
+\renewcommand{\arraystretch}{1.2}
+\caption{Full Operating Point on the $30{,}000$-Row Test Set ($18{,}000$ Authentic, $12{,}000$ Spoofed; mean, $n=3$). Confusion Counts Are Rounded From the Mean Rates. FAR Is the False-Alarm Rate on Authentic Rows.}
+\label{tab:operating}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l rrrrr rrrr@{}}
+\toprule
+\textbf{Method} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{Bal.\ Acc} & \textbf{FAR}
+& \textbf{TP} & \textbf{FN} & \textbf{FP} & \textbf{TN} \\
+\midrule
+Honest FedAvg (no attack) & 0.6782 & 0.5292 & 0.5944 & 0.6809 & 0.1675 & $6350$ & $5650$ & $3015$ & $14985$ \\
+FedAvg (attacked) & 0.7352 & 0.3641 & 0.4869 & 0.6383 & 0.0874 & $4369$ & $7631$ & $1573$ & $16427$ \\
+FLTrust & 0.6730 & 0.4687 & 0.5522 & 0.6583 & 0.1522 & $5624$ & $6376$ & $2740$ & $15260$ \\
+\textbf{Trust + median (ours)} & 0.6732 & 0.5560 & 0.6087 & 0.6879 & 0.1803 & $6672$ & $5328$ & $3245$ & $14755$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Trigger Generalization}
 \label{subsec:trigger}
@@ -693,6 +714,8 @@ of three local epochs on a small MLP simply underfits. Only logistic regression,
 represent the decision boundary at all, performs near the federated model, and it does worse.
 
 Two consequences follow, and we state both plainly.
+
+Table~\ref{tab:operating} gives the full operating point the review asked for, including precision, false-alarm rate and confusion counts, for the honest baseline, the undefended attack, the nearest baseline and our defense.
 
 \textit{The security claim must be scoped.} Removing the attacker-induced increase in BSR and
 detecting triggered spoofing are different claims, and this paper supports only the first. At the
