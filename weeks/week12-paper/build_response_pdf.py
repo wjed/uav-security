@@ -57,7 +57,7 @@ class PDF(FPDF):
         if self.page_no() == 1:
             return
         self.set_font('Helvetica', '', 7.5); self.set_text_color(*GREY)
-        self.cell(0, 5, 'Response to Reviewer Comments  |  Group 1  |  '
+        self.cell(0, 5, 'Response to Comments  |  Group 1  |  '
                         'Trigger-Agnostic Behavioral Trust', align='L')
         self.ln(6)
 
@@ -227,7 +227,7 @@ def table(rows):
 
 # ------------------------------------------------------------------ title block
 pdf.set_font('Helvetica', 'B', 17); pdf.set_text_color(*PURPLE)
-pdf.multi_cell(0, 8.0, 'Response to Reviewer Comments',
+pdf.multi_cell(0, 8.0, 'Response to Comments',
                new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 src = SRC.read_text(encoding='utf-8').split('\n')
