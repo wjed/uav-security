@@ -1,0 +1,3 @@
+Defense,Server overhead (ms/round),Sequential round (ms),Overhead vs sequential,Parallel round (ms),Overhead vs parallel
+Behavioral trust + median (ours),34.0,3449,0.98%,999,3.40%
+FLTrust,168.3,3449,4.88%,999,16.86%

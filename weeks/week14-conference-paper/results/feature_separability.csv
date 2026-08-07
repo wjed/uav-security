@@ -1,0 +1,11 @@
+Feature,Description,Authentic mean,Spoofed mean,Cohen's d,Probed,Benign-high (raw),Benign-high (std)
+DO,Doppler observable,1566.386,856.177,0.3060,Yes,3562.667,+0.975
+TCD,Time-correlation descriptor,1571.580,875.539,0.3021,Yes,3565.396,+0.978
+CN0,Carrier-to-noise density ratio (dB-Hz),44.868,44.015,0.2885,Yes,46.706,+0.738
+PC,Phase consistency,120939.938,112230.117,0.2572,Yes,144355.016,+0.793
+LC,Lock count,109199.398,101447.805,0.2448,Yes,130787.672,+0.781
+EC,Early-to-late chip ratio,109128.977,101625.477,0.2358,Yes,130725.984,+0.774
+CP,Carrier phase,-143369.547,-101595.961,0.1665,Yes,51178.785,+0.718
+PD,Pseudorange difference,6764380.000,8285483.000,0.1521,Yes,5471923.500,-0.194
+PQP,Phase quality parameter,-10.698,417.513,0.0176,No,11729.107,+0.476
+PIP,Pseudorange innovation percentage,-127.619,22.397,0.0013,No,120614.492,+1.004
