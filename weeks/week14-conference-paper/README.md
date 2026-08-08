@@ -15,7 +15,7 @@ compression; nothing was shrunk to fit.
 |---|---|
 | Conference paper | `main.tex` (compile in Overleaf; IEEEtran `conference`) |
 | Revision note | `week14_revision_note.pdf` |
-| Figures | `figures/fig2..4_*.png` (600 dpi). Fig. 1 is your own diagram, in Overleaf |
+| Figures | `figures/fig2..4_*.png` (600 dpi). Figs. 2-3 span both columns, Fig. 4 is one column. Fig. 1 is your own diagram, in Overleaf |
 | Code / notebook | `14_conference_results.ipynb` + the scripts below |
 | Individual contribution statement | **Not written.** Every commit in this repo is under one name, so authorship cannot be reconstructed from history. The three of you need to write it. |
 
@@ -86,7 +86,8 @@ varies over seeds 42, 7, 123. Runs are deterministic on a given machine.
    paragraph in §V-G (the one about β and τ); it is the least load-bearing paragraph in the
    results and costs about a third of a column.
 2. Upload the three PNGs from `figures/`. They are 600 dpi, well above the 300 dpi IEEE asks
-   for line art.
+   for line art. Figs. 2 and 3 are `figure*` floats at `	extwidth`; Fig. 4 stays at
+   `\columnwidth`.
 3. **Rename your threat-model diagram to `fig1_threat_model.png`.** The uploaded name
    ("IT 445 Diagrams - Final Threat Model .png") has spaces and a space before the extension,
    which `graphicx` handles inconsistently. The paper references the clean name.

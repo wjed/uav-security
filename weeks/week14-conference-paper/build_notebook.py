@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Generate 14_conference_results.ipynb: exactly the results reported in the
-six-page conference paper, and nothing else.
+conference paper, and nothing else.
 
 Deliberately narrower than the Week 12 notebook. The conference paper reports
-one table and four figures; this notebook reproduces those and stops. Anything
-the paper only summarises in a sentence is left in the Week 12 artifact rather
-than repeated here, which is the same editorial rule the paper follows.
+three tables and four figures; this notebook reproduces those and stops.
+Anything the paper only summarises in a sentence is left in the Week 12
+artifact rather than repeated here, which is the editorial rule the paper
+follows too.
 
 RUN_EXPERIMENTS = False (default) loads the exported CSVs. True re-executes.
 
@@ -123,7 +124,7 @@ a = pd.read_csv(RES / 'attacker_count.csv')
 piv = a.pivot_table(index='Method', columns='True attackers',
                     values='Backdoor Lift', aggfunc='first')
 display(piv.map(val))
-display(Image(filename=str(FIG / 'fig2_fcount.png'), width=560))
+display(Image(filename=str(FIG / 'fig2_fcount.png'), width=760))
 display(Markdown(
   '**The point is not that Multi-Krum is weak.** It is excellent when told the '
   'right f (+0.0005 at one attacker), and degrades to +0.2837 at four. The '
@@ -145,7 +146,7 @@ m = ['FedAvg', 'Coordinate-wise median', 'Behavioral trust (ours)', 'Trust + med
 sub = n[n['Condition'].isin(keep) & n['Method'].isin(m)]
 display(sub[['Condition', 'Method', 'Backdoor Lift', 'Attacker Detect',
              'Attacker Trust', 'Honest Trust']].to_string(index=False))
-display(Image(filename=str(FIG / 'fig3_noniid.png'), width=520))
+display(Image(filename=str(FIG / 'fig3_noniid.png'), width=760))
 """)
 code(r"""
 display(Markdown(
@@ -166,7 +167,7 @@ code(r"""
 tg = pd.read_csv(RES / 'trigger_comparison.csv')
 display(tg[tg['Trigger'].isin(['CN0', 'TCD', 'PD', 'CN0+TCD'])][
     ['Trigger', "Cohen's d", 'Attack lift', 'Defended lift', 'Honest FP rate']])
-display(Image(filename=str(FIG / 'fig4_trigger.png'), width=520))
+display(Image(filename=str(FIG / 'fig4_trigger.png'), width=430))
 """)
 
 md(r"""
@@ -207,7 +208,8 @@ md(r"""
 ## Regenerating the figures
 
 Figures 2 to 4 are 600 dpi PNGs built from the CSVs above, so they cannot drift from
-the tables. Figure 1 is the authors' own diagram and is not generated here.
+the tables. Figs. 2 and 3 are sized for the full text width, Fig. 4 for one column.
+Figure 1 is the authors' own diagram and is not generated here.
 """)
 code(r"""
 r = subprocess.run([sys.executable, '-u', 'build_figures.py'],

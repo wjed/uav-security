@@ -9,6 +9,17 @@
 \usepackage{cite}
 \usepackage{url}
 
+% Three of the floats span both columns (Table I, Figs. 2 and 3). With the
+% stock fractions LaTeX refuses to place a wide float on a page that already
+% carries one and defers it, which is what strands figures at the end. These
+% are the usual conservative loosenings, not float-page settings.
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.7}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 \begin{document}
@@ -97,12 +108,11 @@ statistic over the whole parameter vector, and we show it is only weakly
 perturbed by a backdoor confined to a small subspace. We instead score a client
 by \emph{what its submitted model does} on counterfactual receiver-domain
 probes: spoofed samples whose individual GPS features are overwritten with
-benign values. This yields per-client attribution rather than a weighting
-alone, needs no knowledge of which feature carries the trigger within the
-probed set, and under IID conditions needs no estimate of how many clients are
-compromised. We do not claim dominance over every defense; our own results show
-Multi-Krum is highly competitive in the nominal setting, and we use that result
-to motivate the differentiators rather than to obscure them.
+benign values. This yields per-client attribution rather than a weighting alone,
+needs no knowledge of which feature carries the trigger within the probed set,
+and under IID conditions needs no estimate of how many clients are compromised.
+We do not claim dominance over every defense; our own results show Multi-Krum is
+highly competitive in the nominal setting.
 
 \textbf{Contributions.}
 \begin{itemize}
@@ -150,11 +160,12 @@ data, used only for evaluation. Fig.~\ref{fig:system} summarizes the setting.
 % Rename the uploaded file to fig1_threat_model.png: the original name
 % ("IT 445 Diagrams - Final Threat Model .png") contains spaces and a space
 % before the extension, which graphicx handles inconsistently.
-% If the labels render too small at one column, change figure -> figure* and
-% \columnwidth -> \textwidth to span both columns.
+% The height cap keeps a tall diagram from eating half a column; drop it if the
+% diagram is wide and short. If the labels render too small at one column,
+% change figure -> figure* and \columnwidth -> \textwidth to span both columns.
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig1_threat_model.png}
+\includegraphics[width=\columnwidth,height=2.0in,keepaspectratio]{figures/fig1_threat_model.png}
 \caption{System and threat model. Honest clients $U_1,\dots,U_{N-M}$ return
 local weights $\omega_i$ and a self-reported accuracy $\mathrm{Acc}_i$. Each
 compromised client $U_m$ poisons a fraction of its spoofed rows with an
@@ -325,17 +336,16 @@ and metrics. Four things follow.
 The attack is effective and quiet: FedAvg leaves $+0.2415$ of lift while clean
 accuracy falls by under two points, so a dashboard tracking accuracy would show
 nothing. Accuracy inflation makes it strictly worse, $+0.3036$, confirming that
-a rule consuming an unverified self-report is worse than one that ignores
-quality entirely. Coordinate-wise median helps but leaves a real residual
-($+0.0646$), and FLTrust removes about two-thirds of the attack yet leaves
-$+0.0787$ while its recall falls \emph{below} the honest baseline, because
-normalizing every update to the server-update norm throttles honest clients
-along with attackers. Its trust values explain the residual: it assigns the
-compromised clients $0.039$, about $39\%$ of a uniform share, and flags them in
-only $84.7\%$ of client-rounds. A cosine similarity over $3{,}329$ parameters
-is barely rotated by a backdoor occupying a small subspace, whereas a
-behavioral probe measures exactly the slice on which a backdoored model must
-differ.
+a rule consuming an unverified self-report is worse than one ignoring quality
+entirely. Coordinate-wise median helps but leaves a real residual ($+0.0646$),
+and FLTrust removes about two-thirds of the attack yet leaves $+0.0787$ while
+its recall falls \emph{below} the honest baseline, because normalizing every
+update to the server-update norm throttles honest clients along with attackers.
+Its trust values explain the residual: it assigns the compromised clients
+$0.039$, about $39\%$ of a uniform share, and flags them in only $84.7\%$ of
+client-rounds. A cosine similarity over $3{,}329$ parameters is barely rotated
+by a backdoor occupying a small subspace, whereas a probe measures exactly the
+slice on which a backdoored model must differ.
 
 \textbf{Multi-Krum is genuinely competitive here and we report it as such.} At
 $+0.0061$ it is statistically indistinguishable from behavioral trust alone
@@ -352,11 +362,10 @@ cannot name a culprit; and the property examined next.
 \begin{table*}[!t]
 \caption{Comparison of aggregation rules on one identical pipeline: same split,
 same attack, same three seeds, same metrics. ``Attacker Detection'' is the
-fraction of compromised client-rounds held below half the uniform aggregation
-weight and ``Honest False Flag'' the same fraction over honest client-rounds;
-rules that select updates rather than score them define neither.
-Byzantine-robust rules are given the true count $f{=}2$, an advantage
-Fig.~\ref{fig:fcount} withdraws.}
+fraction of compromised client-rounds held below half the uniform weight and
+``Honest False Flag'' the same over honest client-rounds; rules that select
+updates rather than score them define neither. Byzantine-robust rules are given
+the true count $f{=}2$, an advantage Fig.~\ref{fig:fcount} withdraws.}
 \label{tab:main}
 \centering
 \footnotesize
@@ -403,15 +412,16 @@ selecting the single most central update is insensitive to how many outliers
 surround it; its cost is discarding nine of ten updates each round and, again,
 providing no attribution.
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig2_fcount.png}
+\includegraphics[width=\textwidth]{figures/fig2_fcount.png}
 \caption{Backdoor lift as the true number of compromised clients varies while
-Byzantine-robust baselines remain configured for $f=2$. Existing rules are
-highly effective when their threat-model parameter is correct and degrade
-sharply when it is not; behavioral probing requires no such parameter.}
+the Byzantine-robust baselines stay configured for $f=2$ (dashed line). They are
+highly effective when that parameter is correct and degrade sharply once it is
+exceeded; behavioral probing has no such parameter. Error bars are one standard
+deviation over three seeds.}
 \label{fig:fcount}
-\end{figure}
+\end{figure*}
 
 \subsection{Client Heterogeneity: Where the Mechanism Stops Working}
 \label{sec:noniid}
@@ -443,20 +453,22 @@ variance. Lowering $\tau$ from $2$ to $0.5$ partially recovers detection, to
 $38.9\%$ at $\alpha=10$, confirming the diagnosis, but never approaches the IID
 figure and costs $11.8\%$ of honest client-rounds in false flags. The
 limitation therefore lies in the cohort-relative scaling rather than in the
-threshold, and a per-client normalization is the natural remedy. We report this
-boundary explicitly: behavioral probing is effective under IID and near-IID
-fleets, and the median backstop is retained precisely because it is what
-survives when the probe does not.
+threshold, and a per-client normalization is the natural remedy. Behavioral
+probing is therefore effective under IID and near-IID fleets, and the median
+backstop is retained precisely because it is what survives when the probe does
+not.
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig3_noniid.png}
+\includegraphics[width=\textwidth]{figures/fig3_noniid.png}
 \caption{Effect of client class-ratio skew. (a) Behavioral trust alone
 converges toward undefended FedAvg as heterogeneity grows, while the full
-defense tracks coordinate-wise median. (b) The cause: trust assigned to
-compromised clients rises to a normal share and detection collapses.}
+defense tracks coordinate-wise median: under skew the median layer carries the
+protection. (b) The cause, on twinned axes: attacker trust (right, purple)
+climbs to the uniform share of $0.100$ exactly as attacker detection (left,
+green) collapses.}
 \label{fig:noniid}
-\end{figure}
+\end{figure*}
 
 \subsection{Trigger Generalization}
 
@@ -477,8 +489,10 @@ hidden there would also carry little signal for the detector to exploit.
 \centering
 \includegraphics[width=\columnwidth]{figures/fig4_trigger.png}
 \caption{Backdoor lift before and after the defense for four trigger settings
-under one fixed configuration. Defended lift is negative in every case, so the
-mechanism does not need to be told which probed feature carries the trigger.}
+under one fixed configuration, never retuned between them. The shaded band is
+lift at or below an honest fleet. Defended lift lands inside it in every case,
+so the mechanism does not need to be told which probed feature carries the
+trigger.}
 \label{fig:trigger}
 \end{figure}
 

@@ -84,10 +84,7 @@ matters.
 - Table I moved to a full-width `table*`. It now carries clean accuracy, the standard deviation on
   lift, the honest false-flag rate, and the two rules that had been relegated to a sentence (Krum
   and trimmed mean), so nothing in it is "omitted for space" any more.
-- Figure legends moved out of the plotting area and above the axes, error bars were thinned
-  (`capsize` 2.0 → 1.4, `elinewidth` 0.7 → 0.55) and non-highlighted series dropped to 85% opacity.
-  Fig. 2 in particular was five overlapping series competing with a boxed legend; that is the
-  "cluttered" one and it is fixed.
+- The figures were rebuilt from scratch rather than patched; see **Figures** below.
 - Every value in Tables I, II and III is checked against its exported CSV by a script, so a
   hand-typed table cannot drift from the run that produced it.
 
@@ -102,12 +99,25 @@ is now inline (`thebibliography`) rather than BibTeX, so the paper compiles in o
 ## Figures
 
 Figures 2 to 4 rebuilt at publication quality and exported as **600 dpi PNG**, twice the 300 dpi
-IEEE asks for line art:
+IEEE asks for line art. The first draft put all three at one column width, which crushed five
+overlapping series into 3.4 in and stacked Fig. 3's two panels vertically. The rebuild:
 
-- single IEEE column width (3.4 in) so none needs a full-width float
-- 6.5 to 8.5 pt type, legible at print size
-- consistent colour role across figures (red = attack/undefended, green = proposed, purple =
-  Multi-Krum, blue = FLTrust, grey = median)
+- **Figs. 2 and 3 span the full text width.** They carry the two arguments a reviewer has to be
+  convinced by, and they were the two that looked cramped. Fig. 3's panels now sit side by side.
+- **Fig. 2 labels its five lines directly at the right** instead of carrying a legend. A legend
+  with five entries is a second lookup for the reader and was eating a third of the plot height.
+  Labels that would collide are pushed apart automatically and keep a leader line to their curve.
+- **Fig. 3(b) uses twinned axes**: attacker detection on the left, attacker trust on the right,
+  with the uniform share of 0.100 drawn in. The point of the panel is that one collapses exactly
+  as the other rises, and that is now one picture rather than two numbers in a caption.
+- **Fig. 4** marks the region at or below an honest fleet, so "defended lift is negative" is
+  visible rather than something the reader has to work out from the axis.
+- Nothing is set below 8 pt, grids are horizontal only and stop before the label gutter, markers
+  carry a white edge so overlapping points stay separable, and legend handles are proxies without
+  the error-bar caps that `errorbar()` puts in by default.
+- Consistent colour role across figures: red = attack/undefended, green = proposed, purple =
+  Multi-Krum and (in Fig. 3b) attacker trust, blue = FLTrust, grey = median. No colour means two
+  different things inside one figure.
 
 Figure 1 is the authors' own diagram rather than a generated one. It shows the three attack steps
 and, importantly, the path by which the inflated self-reported accuracy drives the aggregation
@@ -126,7 +136,7 @@ distinguish the method: no attacker-count parameter, and per-client attribution.
 | File | What it is |
 |---|---|
 | `main.tex` | The paper, IEEEtran `conference` class, inline bibliography |
-| `figures/fig2..4_*.png` | Figs. 2-4 at 600 dpi; Fig. 1 is supplied by the authors |
+| `figures/fig2..4_*.png` | Figs. 2-4 at 600 dpi. Figs. 2-3 are full text width, Fig. 4 one column; Fig. 1 is supplied by the authors |
 | `build_figures.py` | Regenerates Figs. 2-4 from the CSVs |
 | `14_conference_results.ipynb` | Executed notebook reproducing Tables I–III and Figs. 2–4 |
 | `fl_common.py`, `fl_runner.py` | The shared harness (split, model, attack, 9 aggregation rules, metrics) |
