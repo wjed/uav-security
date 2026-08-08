@@ -88,6 +88,30 @@ matters.
 - Every value in Tables I, II and III is checked against its exported CSV by a script, so a
   hand-typed table cannot drift from the run that produced it.
 
+## Where we departed from the brief, and why
+
+Three deliberate departures, flagged here rather than left to be noticed.
+
+1. **Two result tables beyond the four core elements.** The brief asks for roughly four major
+   result figures/tables and lists the full adaptive-attacker table and the extensive
+   false-positive breakdown among the things to move out. The four core elements are all present
+   and carry the argument (Table I, Figs. 2, 3, 4). We additionally kept a **3-row** adaptive
+   attacker table (Table II) and a **10-row** per-client attribution table (Table III), which are
+   compact versions rather than the full ones, and which fit because the paper runs to the 7 pages
+   the brief allows. The reasoning: "what if the attacker knows about the probe" is the first
+   question a reviewer asks of any trust mechanism, and per-client attribution is one of the two
+   claimed differentiators, so showing it seemed better than asserting it. **If you would rather
+   they came out, each is already summarized in the surrounding prose and can be deleted without
+   touching the argument.**
+
+2. **Section balance is tilted toward results.** The brief suggests 1.2-1.5 pages for the proposed
+   method and 1.3-1.6 for setup plus results plus discussion. We are at roughly 0.65 and 4.3. The
+   method section is complete but lean, and the results carry more than their suggested share.
+
+3. **The detector-ceiling limitation is a paragraph, not one or two sentences.** It was expanded
+   because it retracts a claim an earlier draft made, and a retraction seemed worth stating in
+   full.
+
 ## What the first compile changed
 
 Three things were only visible once the paper was actually typeset, and all three are fixed:
