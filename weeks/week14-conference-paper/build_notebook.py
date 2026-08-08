@@ -29,14 +29,14 @@ md(r"""
 **Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing Detection**
 Group 1: Will Jedrzejczak, Cole Walther, Dilpreet Gill
 
-This notebook reproduces exactly the results reported in the six-page paper:
-**Table I** and **Figures 2, 3 and 4**. Every value is read from an exported CSV,
-so the notebook, the tables and the figures cannot disagree.
+This notebook reproduces exactly the results reported in the paper:
+**Tables I, II and III** and **Figures 2, 3 and 4**. Every value is read from an
+exported CSV, so the notebook, the tables and the figures cannot disagree.
 
-Studies the paper only summarises in prose (adaptive attacker, hyperparameter
-sweep, cost scaling, detector ceiling, trust-degradation) live in the Week 12
-artifact. They are not repeated here, for the same reason they are not in the
-paper: they do not carry the main argument.
+Studies the paper only summarises in prose (hyperparameter sweep, cost scaling,
+detector ceiling, root-set stress) live in the Week 12 artifact. They are not
+repeated here, for the same reason they are not tabulated in the paper: they do
+not carry the main argument.
 """)
 
 md(r"""
@@ -88,25 +88,26 @@ md(r"""
 ---
 ## Table I: comparison on an identical pipeline
 
-Every rule sees the same split, attack, seeds and metrics. The paper reports the
-eight rows below; Krum and trimmed mean are mentioned in text and are in the CSV.
+Every rule sees the same split, attack, seeds and metrics. All ten rows of the
+paper's Table I are reproduced below, in the paper's order and with the paper's
+columns.
 """)
 code("run('exp_baselines.py')")
 code(r"""
 b = pd.read_csv(RES / 'baseline_comparison.csv')
 rows = ['Honest FedAvg (no attack)', 'FedAvg', 'Accuracy-weighted FedAvg',
-        'Coordinate-wise median', 'Multi-Krum', 'FLTrust',
+        'Coordinate-wise median', 'Trimmed mean', 'Krum', 'Multi-Krum', 'FLTrust',
         'Behavioral trust (ours)', 'Trust + median (ours, D2)']
 t1 = b[b['Method'].isin(rows)].set_index('Method').loc[rows]
-display(t1[['Spoofing Recall', 'BSR', 'Backdoor Lift',
-            'Attacker Detect', 'Server ms/round']])
+display(t1[['Clean Accuracy', 'Spoofing Recall', 'BSR', 'Backdoor Lift',
+            'Attacker Detect', 'Honest False-Flag', 'Server ms/round']])
 display(Markdown(
   '**What this table establishes.** The attack is effective (+0.2415) and quiet; '
   'accuracy inflation makes it worse (+0.3036), so weighting by an unverified '
   'self-report is worse than not weighting at all; median alone leaves +0.0646; '
   'FLTrust leaves +0.0787; **Multi-Krum is genuinely competitive** (+0.0061) and '
   'the paper says so; the proposed method reaches -0.0265 and additionally '
-  'attributes the attack per client.'))
+  'attributes the attack per client at a 0.3% honest false-flag rate.'))
 """)
 
 md(r"""
@@ -166,6 +167,39 @@ tg = pd.read_csv(RES / 'trigger_comparison.csv')
 display(tg[tg['Trigger'].isin(['CN0', 'TCD', 'PD', 'CN0+TCD'])][
     ['Trigger', "Cohen's d", 'Attack lift', 'Defended lift', 'Honest FP rate']])
 display(Image(filename=str(FIG / 'fig4_trigger.png'), width=520))
+""")
+
+md(r"""
+---
+## Table II: defense-aware adversary
+
+`lambda` weights an evasion term that trains the compromised clients to answer
+the probes like the honest cohort. The tension is the point: the trigger requires
+calling a benign-high input authentic, and the evasion term trains the same model
+to call it spoofed.
+""")
+code(r"""
+ad = pd.read_csv(RES / 'adaptive_attacker.csv')
+display(ad)
+display(Markdown(
+  '**Read the undefended column, not the trust column.** Evasion does raise '
+  'attacker trust from 0.0001 to 0.0834, close to the uniform share of 0.100. '
+  'It buys nothing, because undefended lift has already collapsed to -0.1433 by '
+  'then: an attacker that hides from the probes has destroyed its own backdoor.'))
+""")
+
+md(r"""
+---
+## Table III: per-client attribution
+
+12 rounds x 3 seeds = 36 client-rounds per client. A client counts as flagged in
+a round when its trust falls below half the uniform share of 0.100. This is the
+property the geometric rules cannot provide: they return a selection, not a name.
+""")
+code(r"""
+cf = pd.read_csv(RES / 'client_flagging_table.csv')
+display(cf)
+display(pd.read_csv(RES / 'false_positive_summary.csv'))
 """)
 
 md(r"""

@@ -82,32 +82,34 @@ def fig_fcount():
     d = pd.read_csv(RES / 'attacker_count.csv')
     counts = sorted(d['True attackers'].unique())
     series = [
-        ('Trimmed mean ($f{=}2$)', 'Trimmed mean (f=2)', C_TRIM, ':', '^'),
+        ('Trimmed Mean ($f{=}2$)', 'Trimmed mean (f=2)', C_TRIM, ':', '^'),
         ('Multi-Krum ($f{=}2$)', 'Multi-Krum (f=2)', C_MK, '--', 's'),
         ('FLTrust', 'FLTrust', C_FLT, '-.', 'D'),
-        ('Coord. median', 'Coordinate-wise median', C_MED, (0, (4, 2)), 'v'),
-        ('Proposed (no $f$)', 'Trust + median (ours)', C_OURS, '-', 'o'),
+        ('Coord. Median', 'Coordinate-wise median', C_MED, (0, (4, 2)), 'v'),
+        ('Proposed (No $f$)', 'Trust + median (ours)', C_OURS, '-', 'o'),
     ]
-    fig, ax = plt.subplots(figsize=(COL, 2.18))
+    fig, ax = plt.subplots(figsize=(COL, 2.52))
     for lab, key, c, ls, mk in series:
         s = d[d['Method'] == key]
         m = [val(x)[0] for x in s['Backdoor Lift']]
         e = [val(x)[1] for x in s['Backdoor Lift']]
         ax.errorbar(counts, m, yerr=e, label=lab, color=c, linestyle=ls,
-                    marker=mk, capsize=2, elinewidth=0.7,
-                    lw=1.8 if 'Proposed' in lab else 1.3,
-                    markersize=4.4 if 'Proposed' in lab else 3.6,
+                    marker=mk, capsize=1.4, elinewidth=0.55, capthick=0.55,
+                    lw=2.0 if 'Proposed' in lab else 1.2,
+                    markersize=4.6 if 'Proposed' in lab else 3.4,
+                    alpha=1.0 if 'Proposed' in lab else 0.85,
                     zorder=5 if 'Proposed' in lab else 3)
     ax.axhline(0, color=C_INK, lw=0.8)
     ax.axvline(2, color='#BBBBBB', lw=0.8, linestyle=(0, (2, 2)), zorder=0)
-    ax.annotate('baselines assume $f{=}2$', xy=(2.06, -0.076), fontsize=6.6,
+    ax.annotate('Baselines assume $f{=}2$', xy=(2.06, -0.074), fontsize=6.6,
                 color='#777777', ha='left', va='bottom')
     ax.set_xticks(counts)
-    ax.set_xlabel('true number of compromised clients (of $N{=}10$)')
-    ax.set_ylabel('backdoor lift')
-    ax.set_ylim(-0.09, 0.345)
-    ax.legend(ncol=2, loc='upper left', columnspacing=0.9,
-              handlelength=1.9, handletextpad=0.5, borderpad=0.2)
+    ax.set_xlabel('True Number of Compromised Clients (of $N{=}10$)')
+    ax.set_ylabel('Backdoor Lift')
+    ax.set_ylim(-0.09, 0.315)
+    ax.legend(ncol=3, loc='lower center', bbox_to_anchor=(0.5, 1.005),
+              columnspacing=1.0, handlelength=1.8, handletextpad=0.45,
+              borderpad=0.15, fontsize=6.9)
     fig.savefig(FIG / 'fig2_fcount.png')
     plt.close(fig)
     print('fig2_fcount.png')
@@ -119,32 +121,35 @@ def fig_fcount():
 def fig_noniid():
     d = pd.read_csv(RES / 'noniid_dirichlet.csv')
     conds = ['IID', 'Ratio skew a=10 (mild)', 'Ratio skew a=3 (moderate)']
-    labs = ['IID', 'mild skew\n' + r'($\alpha{=}10$)', 'moderate skew\n' + r'($\alpha{=}3$)']
+    labs = ['IID', 'Mild Skew\n' + r'($\alpha{=}10$)', 'Moderate Skew\n' + r'($\alpha{=}3$)']
     xs = np.arange(len(conds))
 
     def get(meth, col):
         return [val(d[(d['Condition'] == c) & (d['Method'] == meth)].iloc[0][col])
                 for c in conds]
 
-    fig, (a1, a2) = plt.subplots(2, 1, figsize=(COL, 3.35), sharex=True,
-                                 gridspec_kw={'hspace': 0.16})
+    fig, (a1, a2) = plt.subplots(2, 1, figsize=(COL, 3.70), sharex=True,
+                                 gridspec_kw={'hspace': 0.14})
 
     for lab, key, c, ls, mk in [
-            ('FedAvg (no defense)', 'FedAvg', C_ATK, '--', 's'),
-            ('Behavioral trust only', 'Behavioral trust (ours)', '#7FA845', ':', '^'),
-            ('Coord. median only', 'Coordinate-wise median', C_MED, (0, (4, 2)), 'v'),
-            ('Full defense (proposed)', 'Trust + median (ours)', C_OURS, '-', 'o')]:
+            ('FedAvg (No Defense)', 'FedAvg', C_ATK, '--', 's'),
+            ('Behavioral Trust Only', 'Behavioral trust (ours)', '#7FA845', ':', '^'),
+            ('Coord. Median Only', 'Coordinate-wise median', C_MED, (0, (4, 2)), 'v'),
+            ('Full Defense (Proposed)', 'Trust + median (ours)', C_OURS, '-', 'o')]:
         g = get(key, 'Backdoor Lift')
         a1.errorbar(xs, [x[0] for x in g], yerr=[x[1] for x in g], label=lab,
-                    color=c, linestyle=ls, marker=mk, capsize=2, elinewidth=0.7,
-                    lw=1.8 if 'Full' in lab else 1.3,
-                    markersize=4.4 if 'Full' in lab else 3.6,
+                    color=c, linestyle=ls, marker=mk, capsize=1.4,
+                    elinewidth=0.55, capthick=0.55,
+                    lw=2.0 if 'Full' in lab else 1.2,
+                    markersize=4.6 if 'Full' in lab else 3.4,
+                    alpha=1.0 if 'Full' in lab else 0.85,
                     zorder=5 if 'Full' in lab else 3)
     a1.axhline(0, color=C_INK, lw=0.8)
-    a1.set_ylabel('backdoor lift')
-    a1.set_ylim(-0.07, 0.44)
-    a1.legend(ncol=2, loc='upper left', columnspacing=0.8,
-              handlelength=1.9, handletextpad=0.5, borderpad=0.2)
+    a1.set_ylabel('Backdoor Lift')
+    a1.set_ylim(-0.07, 0.335)
+    a1.legend(ncol=2, loc='lower center', bbox_to_anchor=(0.5, 1.005),
+              columnspacing=1.0, handlelength=1.8, handletextpad=0.45,
+              borderpad=0.15, fontsize=6.9)
     a1.text(0.985, 0.06, '(a)', transform=a1.transAxes, ha='right',
             fontsize=8.0, fontweight='bold')
 
@@ -156,11 +161,11 @@ def fig_noniid():
         a2.annotate(f'{100*v:.0f}%', (x, 100 * v), xytext=(0, 2.4),
                     textcoords='offset points', ha='center', fontsize=7.0,
                     color=C_INK)
-        a2.annotate(f'trust {tr:.4f}', (x, 100 * v), xytext=(0, 11),
+        a2.annotate(f'Trust {tr:.4f}', (x, 100 * v), xytext=(0, 11),
                     textcoords='offset points', ha='center', fontsize=6.3,
                     color='#777777')
     a2.set_xticks(xs); a2.set_xticklabels(labs)
-    a2.set_ylabel('attacker detection (%)')
+    a2.set_ylabel('Attacker Detection (%)')
     a2.set_ylim(0, 128)
     a2.set_yticks([0, 25, 50, 75, 100])
     a2.text(0.985, 0.90, '(b)', transform=a2.transAxes, ha='right',
@@ -182,22 +187,24 @@ def fig_trigger():
     und = [val(x) for x in d['Attack lift']]
     dfd = [val(x) for x in d['Defended lift']]
 
-    fig, ax = plt.subplots(figsize=(COL, 1.92))
+    fig, ax = plt.subplots(figsize=(COL, 2.10))
     for i, (u, f) in enumerate(zip(und, dfd)):
         ax.plot([i, i], [u[0], f[0]], color='#C8C8C8', lw=1.1, zorder=1)
     ax.errorbar(xs, [u[0] for u in und], yerr=[u[1] for u in und], fmt='s',
-                color=C_ATK, capsize=2.4, elinewidth=0.8, markersize=4.6,
-                label='undefended', zorder=3, linestyle='none')
+                color=C_ATK, capsize=1.8, elinewidth=0.6, capthick=0.6,
+                markersize=4.8, label='Undefended', zorder=3, linestyle='none')
     ax.errorbar(xs, [f[0] for f in dfd], yerr=[f[1] for f in dfd], fmt='o',
-                color=C_OURS, capsize=2.4, elinewidth=0.8, markersize=4.6,
-                label='defended (same configuration)', zorder=3, linestyle='none')
+                color=C_OURS, capsize=1.8, elinewidth=0.6, capthick=0.6,
+                markersize=4.8, label='Defended (Same Configuration)',
+                zorder=3, linestyle='none')
     ax.axhline(0, color=C_INK, lw=0.8)
     ax.set_xticks(xs); ax.set_xticklabels(keep)
     ax.set_xlim(-0.45, len(keep) - 0.55)
-    ax.set_xlabel('feature carrying the trigger')
-    ax.set_ylabel('backdoor lift')
-    ax.set_ylim(-0.15, 0.44)
-    ax.legend(loc='upper right', handletextpad=0.4, borderpad=0.2)
+    ax.set_xlabel('Feature Carrying the Trigger')
+    ax.set_ylabel('Backdoor Lift')
+    ax.set_ylim(-0.15, 0.355)
+    ax.legend(ncol=2, loc='lower center', bbox_to_anchor=(0.5, 1.005),
+              columnspacing=1.0, handletextpad=0.4, borderpad=0.15, fontsize=6.9)
     fig.savefig(FIG / 'fig4_trigger.png')
     plt.close(fig)
     print('fig4_trigger.png')
