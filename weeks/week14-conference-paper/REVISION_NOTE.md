@@ -88,6 +88,25 @@ matters.
 - Every value in Tables I, II and III is checked against its exported CSV by a script, so a
   hand-typed table cannot drift from the run that produced it.
 
+## What the first compile changed
+
+Three things were only visible once the paper was actually typeset, and all three are fixed:
+
+- **Fig. 1 was being shrunk.** A `height=2.0in` cap had been added as a guard against an
+  unknown-aspect diagram. The diagram turned out to be 1.36:1, so the cap bound first and rendered
+  it 2.72 in wide inside a 3.5 in column, leaving it adrift in white space with unreadable labels.
+  The cap is gone; it now fills the column at 3.49 x 2.57 in.
+- **The table captions became walls of small caps.** IEEEtran sets table captions in small caps, so
+  the long explanatory captions turned into 4, 8 and 5 line blocks -- Table II's caption was taller
+  than Table II. All three are cut to two lines, and the definition of the detection and
+  false-flag columns moved to Section II-C, where the other metrics are defined and where it
+  belongs anyway.
+- **Figs. 2 and 3 were deferred onto one page together.** Table I took the wide-float slot on its
+  page, and both figures landed on the next one stacked back to back. Fig. 2 is now declared
+  immediately after Table I so it can share that page, leaving Fig. 3 its own.
+
+Everything else held up: 7 pages, no overfull boxes, no float page, figures placed at scale 0.997.
+
 ## References
 
 12, down from 12 -- the count was already in range, but two were re-verified against source during

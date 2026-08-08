@@ -160,12 +160,13 @@ data, used only for evaluation. Fig.~\ref{fig:system} summarizes the setting.
 % Rename the uploaded file to fig1_threat_model.png: the original name
 % ("IT 445 Diagrams - Final Threat Model .png") contains spaces and a space
 % before the extension, which graphicx handles inconsistently.
-% The height cap keeps a tall diagram from eating half a column; drop it if the
-% diagram is wide and short. If the labels render too small at one column,
-% change figure -> figure* and \columnwidth -> \textwidth to span both columns.
+% No height cap: the compiled build showed the diagram is 1.36:1, so a 2.0 in
+% cap was binding first and shrinking it to 2.72 in inside a 3.5 in column,
+% which left it floating in white space with unreadable labels. At full column
+% width it comes out 3.49 x 2.57 in.
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth,height=2.0in,keepaspectratio]{figures/fig1_threat_model.png}
+\includegraphics[width=\columnwidth]{figures/fig1_threat_model.png}
 \caption{System and threat model. Honest clients $U_1,\dots,U_{N-M}$ return
 local weights $\omega_i$ and a self-reported accuracy $\mathrm{Acc}_i$. Each
 compromised client $U_m$ poisons a fraction of its spoofed rows with an
@@ -216,7 +217,11 @@ test samples called authentic, and \emph{backdoor lift}, that rate minus the
 same seed's honest-FedAvg BSR. Lift is primary because the trigger sits inside
 the benign range by construction, so an honest detector already misclassifies
 many such samples; only the increase above that baseline is attributable to the
-attack.
+attack. For defenses that score clients rather than select among them we also
+report the fraction of client-rounds held below half the uniform aggregation
+weight, computed over compromised clients (\emph{attacker detection}) and over
+honest ones (\emph{honest false flags}). Rules that return a selection define
+neither quantity.
 
 \section{Receiver-Domain Behavioral Probing}
 
@@ -360,12 +365,9 @@ Section~\ref{sec:attrib}, where the geometric rules return a selection and
 cannot name a culprit; and the property examined next.
 
 \begin{table*}[!t]
-\caption{Comparison of aggregation rules on one identical pipeline: same split,
-same attack, same three seeds, same metrics. ``Attacker Detection'' is the
-fraction of compromised client-rounds held below half the uniform weight and
-``Honest False Flag'' the same over honest client-rounds; rules that select
-updates rather than score them define neither. Byzantine-robust rules are given
-the true count $f{=}2$, an advantage Fig.~\ref{fig:fcount} withdraws.}
+\caption{Aggregation rules on one identical pipeline: same split, attack, seeds
+and metrics. Byzantine-robust rules are told the true $f{=}2$, an advantage
+Fig.~\ref{fig:fcount} withdraws.}
 \label{tab:main}
 \centering
 \footnotesize
@@ -392,6 +394,21 @@ Behavioral Trust (Ours) & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039 \pm 0.0047$ 
 \end{tabular}
 \end{table*}
 
+% Declared before the text that discusses it, on purpose. The first compiled
+% build put Table I at the top of a page and then had to defer Figs. 2 and 3
+% together onto the next one, which read as a wall of figures. Reading this
+% float earlier lets it share a page with Table I and leaves Fig. 3 its own.
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig2_fcount.png}
+\caption{Backdoor lift as the true number of compromised clients varies while
+the Byzantine-robust baselines stay configured for $f=2$ (dashed line). They are
+highly effective when that parameter is correct and degrade sharply once it is
+exceeded; behavioral probing has no such parameter. Error bars are one standard
+deviation over three seeds.}
+\label{fig:fcount}
+\end{figure*}
+
 \subsection{Unknown Number of Compromised Clients}
 
 Table~\ref{tab:main} grants the Byzantine-robust rules an advantage a
@@ -411,17 +428,6 @@ Krum is a partial exception, remaining between $+0.0172$ and $+0.0331$, since
 selecting the single most central update is insensitive to how many outliers
 surround it; its cost is discarding nine of ten updates each round and, again,
 providing no attribution.
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig2_fcount.png}
-\caption{Backdoor lift as the true number of compromised clients varies while
-the Byzantine-robust baselines stay configured for $f=2$ (dashed line). They are
-highly effective when that parameter is correct and degrade sharply once it is
-exceeded; behavioral probing has no such parameter. Error bars are one standard
-deviation over three seeds.}
-\label{fig:fcount}
-\end{figure*}
 
 \subsection{Client Heterogeneity: Where the Mechanism Stops Working}
 \label{sec:noniid}
@@ -518,12 +524,10 @@ the probe evaluates the same input region the backdoor must corrupt, so evading
 it and exploiting it are one degree of freedom pulled in opposite directions.
 
 \begin{table}[!t]
-\caption{Defense-aware adversary. $\lambda$ weights an evasion term that trains
-the compromised clients to answer the probes like the honest cohort. Evasion
-lifts attacker trust toward the uniform share of $0.100$ only by destroying the
-backdoor it protects, visible in the undefended column. The $\lambda=0$ row
-repeats the nominal attack on an earlier revision of the harness and differs
-from Table~\ref{tab:main} by less than one standard deviation.}
+\caption{Defense-aware adversary. Evasion raises attacker trust only by
+destroying the backdoor it protects. The $\lambda{=}0$ row is the nominal
+attack on an earlier harness revision, within one standard deviation of
+Table~\ref{tab:main}.}
 \label{tab:adaptive}
 \centering
 \footnotesize
@@ -562,9 +566,8 @@ an aircraft. The error the mechanism makes is therefore asymmetric in the
 direction a safety-critical deployment needs.
 
 \begin{table}[!t]
-\caption{Per-client trust and flag rate under the full defense, aggregated over
-$12$ rounds and $3$ seeds ($36$ client-rounds per client). A client is flagged
-in a round when its trust falls below half the uniform share of $0.100$.}
+\caption{Per-client trust and flag rate under the full defense, over $12$ rounds
+and $3$ seeds ($36$ client-rounds each).}
 \label{tab:attrib}
 \centering
 \footnotesize

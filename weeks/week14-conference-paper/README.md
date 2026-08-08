@@ -81,9 +81,10 @@ varies over seeds 42, 7, 123. Runs are deterministic on a given machine.
 
 ## Before submitting
 
-1. **Compile `main.tex` in Overleaf** and check the page count. The estimate is ~7 pages; the
-   assignment allows 6–7. If it spills onto an 8th page, delete the parameter-sensitivity
-   paragraph in §V-G (the one about β and τ); it is the least load-bearing paragraph in the
+1. **Recompile and check.** The previous build came out at exactly **7 pages** (page 7 about 85%
+   full), which is what the assignment allows. The fixes since then are net-neutral on length, so
+   it should stay at 7. If it ever spills to an 8th page, delete the parameter-sensitivity
+   paragraph in §V-G (the one about beta and tau); it is the least load-bearing paragraph in the
    results and costs about a third of a column.
 2. Upload the three PNGs from `figures/`. They are 600 dpi, well above the 300 dpi IEEE asks
    for line art. Figs. 2 and 3 are `figure*` floats at `	extwidth`; Fig. 4 stays at
