@@ -115,6 +115,15 @@ overlapping series into 3.4 in and stacked Fig. 3's two panels vertically. The r
 - Nothing is set below 8 pt, grids are horizontal only and stop before the label gutter, markers
   carry a white edge so overlapping points stay separable, and legend handles are proxies without
   the error-bar caps that `errorbar()` puts in by default.
+- **Each PNG is written at exactly the width it is placed at**, so LaTeX never rescales it. This
+  was a real bug: `bbox_inches='tight'` crops the unused margin, so the files came out 6.01, 7.18
+  and 3.21 in wide and were then stretched to `\textwidth`/`\columnwidth` by 1.19x, 1.00x and
+  1.09x. The same 9.4 pt axis label was therefore reaching the page at 11.2, 9.4 and 10.2 pt in
+  the three figures, and Fig. 2's was larger than the 10 pt body text. `save()` now measures the
+  crop and re-saves until the width is exact.
+- Table column gutters were opened up (`tabcolsep` 4 to 7 pt on Table I) after measuring each
+  table's natural width in Times at 8 pt: Table I needs 475 pt of the 516 pt available, so the
+  columns had no reason to be tight.
 - Consistent colour role across figures: red = attack/undefended, green = proposed, purple =
   Multi-Krum and (in Fig. 3b) attacker trust, blue = FLTrust, grey = median. No colour means two
   different things inside one figure.

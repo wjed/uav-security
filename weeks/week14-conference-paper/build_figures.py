@@ -35,13 +35,16 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from PIL import Image
 
 HERE = Path(__file__).resolve().parent
 RES = HERE / 'results'
 FIG = HERE / 'figures'
 FIG.mkdir(exist_ok=True)
 
-COL = 3.4                      # one IEEE column, inches
+# IEEEtran conference geometry: the figures are written at exactly the width
+# they are placed at, so LaTeX never rescales them.
+COL = 3.5                      # one column, inches
 FULL = 7.16                    # both columns, inches
 
 plt.rcParams.update({
@@ -99,6 +102,37 @@ MEK = dict(markeredgecolor='white', markeredgewidth=0.7)
 EBAR = dict(capsize=1.6, elinewidth=0.6, capthick=0.6)
 
 
+def save(fig, name, target_w):
+    """Write the figure so the file is exactly `target_w` inches wide.
+
+    savefig(bbox_inches='tight') crops away the unused margin, so the file
+    comes out narrower than figsize. LaTeX then stretches it to \\textwidth or
+    \\columnwidth, and the scale factor differs per figure: before this was
+    added Fig. 2 was being blown up 1.19x and Fig. 4 1.09x while Fig. 3 was
+    left alone, so the same 9.4 pt axis label rendered at 11.2, 10.2 and 9.4 pt
+    in the three figures, and Fig. 2's was larger than the 10 pt body text.
+
+    Saving, measuring the crop and re-saving with a corrected figsize converges
+    in two or three passes and pins every figure to a scale factor of 1.0, so
+    the point sizes set in rcParams are the point sizes that reach the page.
+    """
+    path = FIG / name
+    dpi = plt.rcParams['savefig.dpi']
+    for _ in range(6):
+        fig.savefig(path)
+        got = Image.open(path).size[0] / dpi
+        if abs(got - target_w) < 0.005:
+            break
+        fw, fh = fig.get_size_inches()
+        k = target_w / got
+        fig.set_size_inches(fw * k, fh * k)
+    else:
+        print(f'  ! {name}: width did not converge ({got:.2f} vs {target_w})')
+    w, h = Image.open(path).size
+    print(f'{name:20s} {w / dpi:.2f} x {h / dpi:.2f} in  (scale 1.00)')
+    return path
+
+
 def proxy(color, marker, linestyle='-', lw=1.6, ms=4.6):
     """A clean legend handle.
 
@@ -153,7 +187,9 @@ def fig_fcount():
         ('Proposed (No $f$)', 'Trust + median (ours)', C_OURS, '-', 'o'),
     ]
 
-    fig, ax = plt.subplots(figsize=(FULL, 2.62))
+    # save() rescales to hit FULL exactly, so the nominal height here is set
+    # low to land the finished figure near 2.5 in rather than close to 3.
+    fig, ax = plt.subplots(figsize=(FULL, 2.28))
     fig.subplots_adjust(left=0.068, right=0.845, bottom=0.175, top=0.955)
 
     ends = []
@@ -199,9 +235,8 @@ def fig_fcount():
     for gl in ax.get_ygridlines():
         gl.set_xdata([0.0, stop])
 
-    fig.savefig(FIG / 'fig2_fcount.png')
+    save(fig, 'fig2_fcount.png', FULL)
     plt.close(fig)
-    print('fig2_fcount.png   (two columns)')
 
 
 # =====================================================================
@@ -298,9 +333,8 @@ def fig_noniid():
         fig.text(box.x0 + box.width / 2, 0.042, letter, ha='center',
                  va='bottom', fontsize=9.4, fontweight='bold', color=C_INK)
 
-    fig.savefig(FIG / 'fig3_noniid.png')
+    save(fig, 'fig3_noniid.png', FULL)
     plt.close(fig)
-    print('fig3_noniid.png   (two columns)')
 
 
 # =====================================================================
@@ -348,9 +382,8 @@ def fig_trigger():
               ncol=2, loc='lower center', bbox_to_anchor=(0.5, 1.005),
               fontsize=8.6, columnspacing=1.6, handletextpad=0.35)
 
-    fig.savefig(FIG / 'fig4_trigger.png')
+    save(fig, 'fig4_trigger.png', COL)
     plt.close(fig)
-    print('fig4_trigger.png  (one column)')
 
 
 if __name__ == '__main__':
