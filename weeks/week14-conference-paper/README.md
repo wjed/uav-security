@@ -15,7 +15,7 @@ compression; nothing was shrunk to fit.
 |---|---|
 | Conference paper | `main.tex` (compile in Overleaf; IEEEtran `conference`) |
 | Revision note | `week14_revision_note.pdf` |
-| Figures | `figures/fig1..4_*.pdf` (vector, publication quality) |
+| Figures | `figures/fig2..4_*.png` (600 dpi). Fig. 1 is your own diagram, in Overleaf |
 | Code / notebook | `14_conference_results.ipynb` + the scripts below |
 | Individual contribution statement | **Not written.** Every commit in this repo is under one name, so authorship cannot be reconstructed from history. The three of you need to write it. |
 
@@ -60,7 +60,7 @@ varies over seeds 42, 7, 123. Runs are deterministic on a given machine.
 | File | What it is |
 |---|---|
 | `main.tex` | The paper. Inline `thebibliography`, so it compiles in one pass with no BibTeX step |
-| `build_figures.py` | Builds all four figures as vector PDFs from `results/*.csv` |
+| `build_figures.py` | Builds Figs. 2-4 as 600 dpi PNGs from `results/*.csv` |
 | `build_notebook.py` | Generates the notebook, so its cells cannot drift from the scripts |
 | `build_revision_note_pdf.py` | Renders `REVISION_NOTE.md` to PDF |
 | `fl_common.py` | Shared harness: split, probes, model, attack, 9 aggregation rules, metrics |
@@ -74,9 +74,12 @@ varies over seeds 42, 7, 123. Runs are deterministic on a given machine.
 
 1. **Compile `main.tex` in Overleaf** and check the page count. The estimate is ~6 pages; the
    assignment allows 6–7.
-2. Upload the four PDFs from `figures/`. The `preview_*.png` files are for on-screen checking
-   only and are not referenced by the paper.
-3. Write the individual contribution statement.
+2. Upload the three PNGs from `figures/`. They are 600 dpi, well above the 300 dpi IEEE asks
+   for line art.
+3. **Rename your threat-model diagram to `fig1_threat_model.png`.** The uploaded name
+   ("IT 445 Diagrams - Final Threat Model .png") has spaces and a space before the extension,
+   which `graphicx` handles inconsistently. The paper references the clean name.
+4. Write the individual contribution statement.
 
 Studies the paper only summarises in prose (adaptive attacker, hyperparameter sweep, cost scaling,
 detector ceiling, trust degradation, the failed Dirichlet partitioning) remain in

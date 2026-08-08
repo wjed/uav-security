@@ -7,13 +7,13 @@ inline without a full-width float, and all typeset at 8-9 pt so they stay
 legible at print size. Every value is read from the exported CSVs, so the
 figures cannot disagree with the tables.
 
-  fig1_system.pdf     system and threat model, redrawn
-  fig2_fcount.pdf     unknown number of compromised clients
-  fig3_noniid.pdf     robustness and failure under client heterogeneity
-  fig4_trigger.pdf    trigger generalisation
+  fig2_fcount.png     unknown number of compromised clients
+  fig3_noniid.png     robustness and failure under client heterogeneity
+  fig4_trigger.png    trigger generalisation
 
-PDF output rather than PNG: vector figures stay sharp at any zoom, which is
-what a camera-ready submission wants.
+PNG at 600 dpi. That is well above the 300 dpi IEEE asks for line art, so it
+prints cleanly, and it is easier to handle than vector output. Figure 1, the
+system and threat model, is the authors' own diagram and is not generated here.
 
 Run:  python build_figures.py
 """
@@ -76,80 +76,6 @@ def val(s):
 
 
 # =====================================================================
-# Fig 1: system and threat model
-# =====================================================================
-def fig_system():
-    """Left: the federation. Right: the threat model. Base: the defense.
-
-    Each region occupies a reserved band of the canvas, so annotations cannot
-    collide with the uplinks or spill out of their panel.
-    """
-    fig, ax = plt.subplots(figsize=(COL, 1.95))
-    ax.set_xlim(0, 100); ax.set_ylim(0, 56)
-    ax.axis('off')
-
-    def box(x, y, w, h, label, fc, ec, fs=7.3, tc=C_INK):
-        ax.add_patch(FancyBboxPatch((x, y), w, h,
-                     boxstyle='round,pad=0.7,rounding_size=1.9',
-                     linewidth=0.9, facecolor=fc, edgecolor=ec, zorder=3))
-        ax.text(x + w / 2, y + h / 2, label, ha='center', va='center',
-                fontsize=fs, color=tc, zorder=4, linespacing=1.2)
-
-    # ---------------- federation, confined to x < 62
-    box(2, 39, 56, 11.5,
-        'Coordinator\n' + r'root set $\mathcal{D}_r$  |  probes $\mathcal{S}_f$',
-        '#EDE7F4', '#5B3E96', fs=7.1)
-
-    for k, x in enumerate((1, 11.5, 22)):
-        box(x, 13, 9.5, 8, f'$U_{k+1}$', '#FFFFFF', '#777777')
-    ax.text(34, 17.0, r'$\cdots$', ha='center', va='center',
-            fontsize=8.5, color='#777777')
-    for k, x in enumerate((39, 50)):
-        box(x, 13, 10, 8, f'$U_{{{9+k}}}$', '#FBECEC', C_ATK, tc=C_ATK)
-
-    for x in (5.8, 16.3, 26.8):
-        ax.add_patch(FancyArrowPatch((x, 21.4), (24, 38.4), arrowstyle='-|>',
-                     mutation_scale=5.5, lw=0.6, color='#A0A0A0', zorder=1))
-    for x in (44, 55):
-        ax.add_patch(FancyArrowPatch((x, 21.4), (38, 38.4), arrowstyle='-|>',
-                     mutation_scale=5.5, lw=1.1, color=C_ATK, zorder=2))
-    ax.add_patch(FancyArrowPatch((6, 38.4), (3.2, 21.4), arrowstyle='-|>',
-                 mutation_scale=5.5, lw=0.7, color='#5B3E96',
-                 linestyle=(0, (2.5, 1.8)), zorder=1))
-
-    ax.text(0.5, 29.5, r'$\omega(t)$', fontsize=6.7, color='#5B3E96', ha='left')
-    ax.text(30.0, 29.5, r'$\omega_i^{I}(t),\ \mathrm{Acc}_i$', fontsize=6.7,
-            color='#777777', ha='center')
-    ax.text(16, 9.6, 'honest', fontsize=6.5, color='#777777', ha='center')
-    ax.text(49, 9.6, 'compromised', fontsize=6.5, color=C_ATK,
-            ha='center', fontweight='bold')
-
-    # ---------------- threat model, reserved band x > 64
-    ax.add_patch(FancyBboxPatch((64.5, 12.5), 34.5, 38,
-                 boxstyle='round,pad=0.7,rounding_size=1.9',
-                 linewidth=0.85, facecolor='#FDF6F6', edgecolor=C_ATK, zorder=3))
-    ax.text(81.8, 46.6, 'Threat model', ha='center', va='center',
-            fontsize=7.1, color=C_ATK, fontweight='bold', zorder=4)
-    for y, s in ((39.5, 'A1  poison $p{=}40\\%$ of\n        each attacker\'s spoofed rows'),
-                 (28.0, 'A2  scale update by $\\gamma{=}3$'),
-                 (20.5, 'A3  report $\\widehat{\\mathrm{Acc}}_m{=}0.99$')):
-        ax.text(66.5, y, s, fontsize=6.6, color=C_ATK, ha='left', va='top',
-                zorder=4, linespacing=1.4)
-
-    # ---------------- defense
-    ax.add_patch(Rectangle((1, 0), 98, 6.0, facecolor='#EAF3EE',
-                           edgecolor=C_OURS, lw=0.85, zorder=0))
-    ax.text(50, 3.0,
-            r'score $\omega_i$ by behaviour on $\mathcal{S}_f$ '
-            r'$-$ never by $\mathrm{Acc}_i$',
-            ha='center', va='center', fontsize=7.0, color=C_OURS)
-
-    fig.savefig(FIG / 'fig1_system.pdf'); fig.savefig(FIG / 'preview_fig1.png', dpi=200)
-    plt.close(fig)
-    print('fig1_system.pdf')
-
-
-# =====================================================================
 # Fig 2: unknown number of compromised clients
 # =====================================================================
 def fig_fcount():
@@ -182,9 +108,9 @@ def fig_fcount():
     ax.set_ylim(-0.09, 0.345)
     ax.legend(ncol=2, loc='upper left', columnspacing=0.9,
               handlelength=1.9, handletextpad=0.5, borderpad=0.2)
-    fig.savefig(FIG / 'fig2_fcount.pdf'); fig.savefig(FIG / 'preview_fig2.png', dpi=200)
+    fig.savefig(FIG / 'fig2_fcount.png')
     plt.close(fig)
-    print('fig2_fcount.pdf')
+    print('fig2_fcount.png')
 
 
 # =====================================================================
@@ -240,9 +166,9 @@ def fig_noniid():
     a2.text(0.985, 0.90, '(b)', transform=a2.transAxes, ha='right',
             fontsize=8.0, fontweight='bold')
 
-    fig.savefig(FIG / 'fig3_noniid.pdf'); fig.savefig(FIG / 'preview_fig3.png', dpi=200)
+    fig.savefig(FIG / 'fig3_noniid.png')
     plt.close(fig)
-    print('fig3_noniid.pdf')
+    print('fig3_noniid.png')
 
 
 # =====================================================================
@@ -272,11 +198,11 @@ def fig_trigger():
     ax.set_ylabel('backdoor lift')
     ax.set_ylim(-0.15, 0.44)
     ax.legend(loc='upper right', handletextpad=0.4, borderpad=0.2)
-    fig.savefig(FIG / 'fig4_trigger.pdf'); fig.savefig(FIG / 'preview_fig4.png', dpi=200)
+    fig.savefig(FIG / 'fig4_trigger.png')
     plt.close(fig)
-    print('fig4_trigger.pdf')
+    print('fig4_trigger.png')
 
 
 if __name__ == '__main__':
-    fig_system(); fig_fcount(); fig_noniid(); fig_trigger()
-    print(f'\nwrote 4 figures to {FIG}')
+    fig_fcount(); fig_noniid(); fig_trigger()
+    print(f'\nwrote 3 figures to {FIG}')

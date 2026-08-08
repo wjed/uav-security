@@ -33,7 +33,7 @@ Everything that did not serve that chain was cut.
 | **Fig. 2** (unknown attacker count) | The strongest differentiator: existing rules need f, we do not |
 | **Fig. 3** (heterogeneity) | The honest boundary, and the empirical justification for keeping the median backstop |
 | **Fig. 4** (trigger generalization) | Supports the scoped claim that the trigger feature need not be known |
-| **Fig. 1** (system/threat model) | Redrawn; carries the three attack steps compactly |
+| **Fig. 1** (system/threat model) | The authors' own diagram, showing the three attack steps and the inflated weight path |
 | **Algorithm 1** | Shortened from 20 lines to 11; the method is the technical center |
 
 ## Removed from the main paper
@@ -77,15 +77,17 @@ is now inline (`thebibliography`) rather than BibTeX, so the paper compiles in o
 
 ## Figures
 
-All four rebuilt at publication quality and re-exported as **vector PDF** rather than PNG:
+Figures 2 to 4 rebuilt at publication quality and exported as **600 dpi PNG**, twice the 300 dpi
+IEEE asks for line art:
 
 - single IEEE column width (3.4 in) so none needs a full-width float
-- 6.5–8.5 pt type, legible at print size
+- 6.5 to 8.5 pt type, legible at print size
 - consistent colour role across figures (red = attack/undefended, green = proposed, purple =
   Multi-Krum, blue = FLTrust, grey = median)
-- Fig. 1 redrawn from scratch: the previous version had annotations colliding with the uplink
-  arrows and text overflowing its panel. The diagram, threat model and defense now occupy reserved
-  bands that cannot overlap.
+
+Figure 1 is the authors' own diagram rather than a generated one. It shows the three attack steps
+and, importantly, the path by which the inflated self-reported accuracy drives the aggregation
+weight toward its maximum, which is the specific vulnerability the paper targets.
 
 ## One thing we did not do
 
@@ -100,8 +102,8 @@ distinguish the method: no attacker-count parameter, and per-client attribution.
 | File | What it is |
 |---|---|
 | `main.tex` | The paper, IEEEtran `conference` class, inline bibliography |
-| `figures/fig1..4_*.pdf` | The four figures, vector, publication quality |
-| `build_figures.py` | Regenerates all four from the CSVs |
+| `figures/fig2..4_*.png` | Figs. 2-4 at 600 dpi; Fig. 1 is supplied by the authors |
+| `build_figures.py` | Regenerates Figs. 2-4 from the CSVs |
 | `14_conference_results.ipynb` | Executed notebook reproducing Table I and Figs. 2–4 |
 | `fl_common.py`, `fl_runner.py` | The shared harness (split, model, attack, 9 aggregation rules, metrics) |
 | `exp_*.py`, `run_all.py` | The experiments behind the reported results |
