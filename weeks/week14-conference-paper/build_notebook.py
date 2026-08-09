@@ -4,7 +4,7 @@ Generate 14_conference_results.ipynb: exactly the results reported in the
 conference paper, and nothing else.
 
 Deliberately narrower than the Week 12 notebook. The conference paper reports
-three tables and four figures; this notebook reproduces those and stops.
+two tables and four figures; this notebook reproduces those and stops.
 Anything the paper only summarises in a sentence is left in the Week 12
 artifact rather than repeated here, which is the editorial rule the paper
 follows too.
@@ -27,11 +27,11 @@ code = lambda t: cells.append(nbf.v4.new_code_cell(t.strip('\n')))
 md(r"""
 # Results for the Conference Paper
 
-**Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing Detection**
+**Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing Detection in UAV Networks**
 Group 1: Will Jedrzejczak, Cole Walther, Dilpreet Gill
 
 This notebook reproduces exactly the results reported in the paper:
-**Tables I, II and III** and **Figures 2, 3 and 4**. Every value is read from an
+**Tables I and II** and **Figures 2, 3 and 4**. Every value is read from an
 exported CSV, so the notebook, the tables and the figures cannot disagree.
 
 Studies the paper only summarises in prose (hyperparameter sweep, cost scaling,
@@ -172,7 +172,7 @@ display(Image(filename=str(FIG / 'fig4_trigger.png'), width=430))
 
 md(r"""
 ---
-## Table II: defense-aware adversary
+## Defense-aware adversary (reported in prose, no table)
 
 `lambda` weights an evasion term that trains the compromised clients to answer
 the probes like the honest cohort. The tension is the point: the trigger requires
@@ -191,7 +191,7 @@ display(Markdown(
 
 md(r"""
 ---
-## Table III: per-client attribution
+## Table II: per-client attribution
 
 12 rounds x 3 seeds = 36 client-rounds per client. A client counts as flagged in
 a round when its trust falls below half the uniform share of 0.100. This is the

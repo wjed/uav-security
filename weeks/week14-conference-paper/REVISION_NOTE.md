@@ -1,15 +1,17 @@
 # Revision Note: Full Manuscript to IEEE Conference Paper
 
-**Paper:** Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing Detection
+**Paper:** Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing
+Detection in UAV Networks
 **Group 1:** Will Jedrzejczak, Cole Walther, Dilpreet Gill
 
 This was a rebuild around one story, not a compression. Nothing was shrunk to fit; sections were
 removed, merged or rewritten based on whether they advance the argument a reviewer has to be
 convinced by.
 
-**Result:** 15 pages, 12 tables/figures, 25 subsections becomes ~7 pages, 3 tables and 4 figures,
+**Result:** 15 pages, 12 tables/figures, 25 subsections becomes ~7 pages, 2 tables and 4 figures,
 12 references. The title changed to lead with the mechanism rather than the property, since the
-mechanism is the contribution.
+mechanism is the contribution; "in UAV Networks" was kept, since UAV is a topical keyword that
+affects how a communications symposium routes the paper.
 
 ---
 
@@ -30,8 +32,7 @@ Everything that did not serve that chain was cut.
 | Element | Why it stays |
 |---|---|
 | **Table I** (10-row comparison, full width) | Proves the attack works, inflation makes it worse, median and FLTrust leave residual lift, Multi-Krum is competitive, and ours attributes per client |
-| **Table II** (adaptive attacker) | Answers the first question a reviewer asks of any trust mechanism: what if the attacker knows about it |
-| **Table III** (per-client attribution) | The evidence behind the attribution claim, and the honest-false-flag cost of it |
+| **Table II** (per-client attribution) | The evidence behind the attribution claim, and the honest-false-flag cost of it |
 | **Fig. 2** (unknown attacker count) | The strongest differentiator: existing rules need f, we do not |
 | **Fig. 3** (heterogeneity) | The honest boundary, and the empirical justification for keeping the median backstop |
 | **Fig. 4** (trigger generalization) | Supports the scoped claim that the trigger feature need not be known |
@@ -51,11 +52,11 @@ matters.
   the five numbers that matter (0.907 centralised vs 0.529 federated, 0.974 deeper, 0.993 boosted,
   0.224 logistic) and the argument that lift is unaffected by where the baseline sits
 - **Cost scaling plots** and the two-denominator table -- two sentences in §V-G
-- **Adaptive-attacker figure** -- the table is kept as Table II, the figure is not
+- **Adaptive-attacker table and figure** -- the sweep is reported in prose in §V-E, with all eight cited values checked against the CSV
 - **Feature-separability table** (10 rows) -- replaced by two sentences giving the range (*d* =
   0.306 down to 0.152 probed, 0.018 and 0.001 excluded)
 - **False-positive breakdown table** -- folded into the honest-false-flag column of Table I and the
-  per-client rows of Table III
+  per-client rows of Table II
 - **Failed Dirichlet experiment** -- cut entirely; the working partition is described in one sentence
 - **Preprocessing table** and per-step row counts -- reduced to two sentences
 - **Round-progression, sensitivity and FLTrust-only figures** -- the tables carry the same numbers
@@ -85,28 +86,24 @@ matters.
   lift, the honest false-flag rate, and the two rules that had been relegated to a sentence (Krum
   and trimmed mean), so nothing in it is "omitted for space" any more.
 - The figures were rebuilt from scratch rather than patched; see **Figures** below.
-- Every value in Tables I, II and III is checked against its exported CSV by a script, so a
-  hand-typed table cannot drift from the run that produced it.
+- Every value in Tables I and II, and every adaptive-attacker value cited in prose, is checked
+  against its exported CSV by a script, so a hand-typed number cannot drift from the run that
+  produced it.
 
 ## Where we departed from the brief, and why
 
 Three deliberate departures, flagged here rather than left to be noticed.
 
-1. **Two result tables beyond the four core elements.** The brief asks for roughly four major
-   result figures/tables and lists the full adaptive-attacker table and the extensive
-   false-positive breakdown among the things to move out. The four core elements are all present
-   and carry the argument (Table I, Figs. 2, 3, 4). We additionally kept a **3-row** adaptive
-   attacker table (Table II) and a **10-row** per-client attribution table (Table III), which are
-   compact versions rather than the full ones, and which fit because the paper runs to the 7 pages
-   the brief allows. The reasoning: "what if the attacker knows about the probe" is the first
-   question a reviewer asks of any trust mechanism, and per-client attribution is one of the two
-   claimed differentiators, so showing it seemed better than asserting it. **If you would rather
-   they came out, each is already summarized in the surrounding prose and can be deleted without
-   touching the argument.**
+1. **One result table beyond the four core elements.** The brief asks for roughly four major
+   result figures/tables. The four core elements carry the argument (Table I, Figs. 2, 3, 4). We
+   kept one more, the **10-row per-client attribution table (Table II)**, because attribution is
+   one of the paper's two claimed differentiators and showing it beats asserting it. The
+   adaptive-attacker table was cut and its sweep now appears in prose.
 
-2. **Section balance is tilted toward results.** The brief suggests 1.2-1.5 pages for the proposed
-   method and 1.3-1.6 for setup plus results plus discussion. We are at roughly 0.65 and 4.3. The
-   method section is complete but lean, and the results carry more than their suggested share.
+2. **Section balance is still tilted toward results.** The brief suggests 1.2-1.5 pages for the
+   proposed method and 1.3-1.6 for setup plus results plus discussion. Cutting the adaptive table
+   and adding a design-rationale and complexity paragraph to §III-B moved the method from 0.65 to
+   0.81 pages, but results still carry more than their suggested share.
 
 3. **The detector-ceiling limitation is a paragraph, not one or two sentences.** It was expanded
    because it retracts a claim an earlier draft made, and a retraction seemed worth stating in

@@ -24,8 +24,8 @@
 
 \begin{document}
 
-\title{Receiver-Domain Behavioral Probing for\\
-Backdoor-Resilient Federated GPS Spoofing Detection}
+\title{Receiver-Domain Behavioral Probing for Backdoor-Resilient\\
+Federated GPS Spoofing Detection in UAV Networks}
 
 \author{\IEEEauthorblockN{Will Jedrzejczak, Cole Walther, Dilpreet Gill}
 \IEEEauthorblockA{\textit{Department of Computer Science} \\
@@ -275,8 +275,22 @@ Every quantity in Eqs.~\eqref{eq:slice}--\eqref{eq:agg} is computed by the
 coordinator from data it holds; $\mathrm{Acc}_i$ appears nowhere, so A3 has no
 channel through which to act. The two layers play different roles: trust
 identifies compromised clients, and the median bounds the damage of any single
-mis-scored update. Algorithm~\ref{alg:round} states one round; client-side work
-is unchanged from ordinary FL.
+mis-scored update.
+
+Two properties of Eq.~\eqref{eq:susp} are worth stating explicitly. First, the
+cohort statistics are a median and a MAD rather than a mean and a standard
+deviation, because the clients being scored include the ones under suspicion. A
+mean and a standard deviation have a breakdown point of zero, so one
+compromised client can drag the very statistic used to detect it, whereas a
+median and a MAD tolerate corruption of up to half the cohort, which is exactly
+the $M<N/2$ the threat model already assumes. Second, the coordinator's work is
+$|F_{\mathrm{probe}}|\,N$ forward passes over $\mathcal{D}_r^{\mathrm{spoof}}$
+per round plus one accuracy evaluation per client, so it is linear in both
+fleet size and probed-feature count, needs no backward pass, and adds nothing
+to client compute or to the uplink, since it reads only the parameters a client
+already transmits. Section~\ref{sec:cost} reports the measured cost.
+Algorithm~\ref{alg:round} states one round; client-side work is unchanged from
+ordinary FL.
 
 \begin{algorithm}[!t]
 \caption{One round with behavioral probing}
@@ -508,42 +522,23 @@ Every attack above is fixed: the compromised clients do not know they are being
 probed. A defense-aware adversary does, and can add an evasion term to its
 local objective, training on probe-style slices built from its own spoofed rows
 to keep predicting \emph{spoofed} where a probe would drive a feature to its
-benign-high value, so that its answers resemble the honest cohort's.
-Table~\ref{tab:adaptive} sweeps the weight $\lambda$ on that term.
+benign-high value, so that its answers resemble the honest cohort's. We sweep
+the weight $\lambda$ on that term over $\{0,2,10\}$, holding everything else at
+the nominal configuration.
 
 Evasion works on the trust computation and is useless anyway. Mean attacker
-trust rises from $0.0001$ to $0.0834$ at $\lambda=2$, close to the uniform
-share of $0.100$, so the coordinator largely stops penalizing the compromised
-clients. But the backdoor they were protecting no longer exists: the trigger
-requires calling a benign-high input authentic while the evasion term trains
-the same model to call it spoofed, and \emph{undefended} lift has already
-fallen to $-0.1433$ at $\lambda=2$ and $-0.4782$ at $\lambda=10$. An adversary
-that hides from receiver-domain probing has, by that act, disarmed itself. This
-follows from what the probe measures rather than from any parameter setting:
-the probe evaluates the same input region the backdoor must corrupt, so evading
-it and exploiting it are one degree of freedom pulled in opposite directions.
-
-\begin{table}[!t]
-\caption{Defense-aware adversary. Evasion raises attacker trust only by
-destroying the backdoor it protects. The $\lambda{=}0$ row is the nominal
-attack on an earlier harness revision, within one standard deviation of
-Table~\ref{tab:main}.}
-\label{tab:adaptive}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{6.5pt}
-\renewcommand{\arraystretch}{1.22}
-\begin{tabular}{@{}c ccc@{}}
-\toprule
-\textbf{Evasion} & \textbf{Undefended} & \textbf{Defended} & \textbf{Mean Attacker} \\
-\textbf{Strength $\lambda$} & \textbf{Lift} & \textbf{Lift} & \textbf{Trust} \\
-\midrule
-$0$ (nominal) & $+0.2457$ & $-0.0253$ & $0.0001$ \\
-$2$           & $-0.1433$ & $-0.0534$ & $0.0834$ \\
-$10$          & $-0.4782$ & $-0.0829$ & $0.0740$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+trust rises from $0.0001$ at $\lambda=0$ to $0.0834$ at $\lambda=2$, close to
+the uniform share of $0.100$, so the coordinator largely stops penalizing the
+compromised clients. But the backdoor they were protecting no longer exists:
+the trigger requires calling a benign-high input authentic while the evasion
+term trains the same model to call it spoofed, and \emph{undefended} lift has
+already fallen from $+0.2457$ to $-0.1433$ at $\lambda=2$ and to $-0.4782$ at
+$\lambda=10$, with defended lift at $-0.0253$, $-0.0534$ and $-0.0829$ across
+the sweep. An adversary that hides from receiver-domain probing has, by that
+act, disarmed itself. This follows from what the probe measures rather than
+from any parameter setting: the probe evaluates the same input region the
+backdoor must corrupt, so evading it and exploiting it are one degree of
+freedom pulled in opposite directions.
 
 \subsection{Per-Client Attribution}
 \label{sec:attrib}
@@ -594,6 +589,7 @@ $U_{10}$ & \textbf{Attacker} & $\mathbf{0.000 \pm 0.000}$ & $\mathbf{36/36}$ & $
 \end{table}
 
 \subsection{Root Set, Parameters, and Server Cost}
+\label{sec:cost}
 
 The coordinator's root set is the mechanism's one trust assumption, so its
 sensitivity matters. Shrinking it tenfold, from $6{,}000$ rows to $600$, moves

@@ -3,7 +3,7 @@
 **Group 1 (Will Jedrzejczak, Cole Walther, Dilpreet Gill).**
 
 The full manuscript rebuilt as a conference submission: **15 pages and 12 tables/figures becomes
-~7 pages, 3 tables and 4 figures.** This was a rebuild around one research story, not a
+~7 pages, 2 tables and 4 figures.** This was a rebuild around one research story, not a
 compression; nothing was shrunk to fit.
 
 **Paper title changed** to lead with the mechanism rather than the property:
@@ -40,10 +40,10 @@ evidence it generates itself. Four result elements carry the argument, in order:
 
 Three supporting subsections follow the four elements:
 
-- **Table II** -- a defense-aware attacker. Evasion raises attacker trust toward the uniform share
-  but destroys the backdoor doing it: undefended lift falls from +0.2457 to -0.4782.
-- **Table III** -- per-client attribution. Attackers flagged 72/72 client-rounds at 0.000 trust,
+- **Table II** -- per-client attribution. Attackers flagged 72/72 client-rounds at 0.000 trust,
   honest clients 1/288, and no honest client-round is ever driven to zero.
+- **Defense-aware attacker** (prose, §V-E) -- evasion raises attacker trust toward the uniform
+  share but destroys the backdoor doing it: undefended lift falls from +0.2457 to -0.4782.
 - **Root set, parameters, cost** -- a 10x smaller root set costs almost nothing; a 30%-corrupted
   one drops detection to 83.3%.
 
