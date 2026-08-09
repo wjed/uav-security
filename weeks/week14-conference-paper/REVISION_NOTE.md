@@ -8,8 +8,8 @@ This was a rebuild around one story, not a compression. Nothing was shrunk to fi
 removed, merged or rewritten based on whether they advance the argument a reviewer has to be
 convinced by.
 
-**Result:** 15 pages, 12 tables/figures, 25 subsections becomes ~7 pages, 2 tables and 4 figures,
-12 references. The title changed to lead with the mechanism rather than the property, since the
+**Result:** 15 pages, 12 tables/figures, 25 subsections becomes ~7 pages, 1 table and 4 figures,
+15 references. The title changed to lead with the mechanism rather than the property, since the
 mechanism is the contribution; "in UAV Networks" was kept, since UAV is a topical keyword that
 affects how a communications symposium routes the paper.
 
@@ -32,7 +32,6 @@ Everything that did not serve that chain was cut.
 | Element | Why it stays |
 |---|---|
 | **Table I** (10-row comparison, full width) | Proves the attack works, inflation makes it worse, median and FLTrust leave residual lift, Multi-Krum is competitive, and ours attributes per client |
-| **Table II** (per-client attribution) | The evidence behind the attribution claim, and the honest-false-flag cost of it |
 | **Fig. 2** (unknown attacker count) | The strongest differentiator: existing rules need f, we do not |
 | **Fig. 3** (heterogeneity) | The honest boundary, and the empirical justification for keeping the median backstop |
 | **Fig. 4** (trigger generalization) | Supports the scoped claim that the trigger feature need not be known |
@@ -92,22 +91,36 @@ matters.
 
 ## Where we departed from the brief, and why
 
-Three deliberate departures, flagged here rather than left to be noticed.
+One departure remains, flagged here rather than left to be noticed. The brief suggests 1.3-1.6
+pages for setup plus results plus discussion; after the Sunday-review compression we are at 2.89.
+The four core result elements plus Table I account for 1.45 pages of that on their own, so the
+prose around them is roughly 1.4 pages. Cutting further would mean dropping one of the four
+elements.
 
-1. **One result table beyond the four core elements.** The brief asks for roughly four major
-   result figures/tables. The four core elements carry the argument (Table I, Figs. 2, 3, 4). We
-   kept one more, the **10-row per-client attribution table (Table II)**, because attribution is
-   one of the paper's two claimed differentiators and showing it beats asserting it. The
-   adaptive-attacker table was cut and its sweep now appears in prose.
+## Second advisor review (Sunday meeting)
 
-2. **Section balance is still tilted toward results.** The brief suggests 1.2-1.5 pages for the
-   proposed method and 1.3-1.6 for setup plus results plus discussion. Cutting the adaptive table
-   and adding a design-rationale and complexity paragraph to §III-B moved the method from 0.65 to
-   0.81 pages, but results still carry more than their suggested share.
+Four comments, all acted on.
 
-3. **The detector-ceiling limitation is a paragraph, not one or two sentences.** It was expanded
-   because it retracts a claim an earlier draft made, and a retraction seemed worth stating in
-   full.
+- **Author block reformatted** to match the reference ICC paper: names, one shared affiliation, then
+  emails, with no superscript markers. Dr. Hasan added as an author.
+- **System and threat model enlarged** from 0.78 to 1.29 pages. Added the round protocol and what
+  the coordinator can and cannot observe, the motivation for accuracy weighting so the attacked
+  design is treated fairly, a formal capability and knowledge model for the adversary, its
+  objective as a constrained maximization, and the reasoning behind each of A1, A2 and A3
+  (including that gamma = 3 is well below the full-replacement value of N).
+- **Methodology enlarged** from 0.81 to 1.58 pages, and given a spine. A new *Design Requirements*
+  subsection states the four constraints R1-R4 that any replacement for Eq. (2) has to satisfy, and
+  the rest of the section is organised as meeting them; R2, R3 and R4 are then referenced by the
+  results that test them. Probe construction now justifies its three design choices individually,
+  the suspicion equation names the alternative each element rejects, and a *Composition, Cost and
+  Scope* subsection covers why two layers, why A3 is structurally inert, and the per-round cost.
+- **Results cut** from 4.20 to 2.89 pages. The adaptive-attacker and per-client-attribution tables
+  are gone (both restated their own prose), captions were tightened, and every results subsection
+  was compressed. The four core result elements are untouched.
+- **More references for the self-report framing**, so the problem does not rest on one paper:
+  Yin *et al.* for coordinate-wise median and trimmed mean, which we had been using uncited, plus
+  Kang *et al.* and Kairouz *et al.* for the wider reputation- and contribution-weighted family.
+  12 references becomes 15, inside the 12-15 the brief asks for.
 
 ## What the first compile changed
 

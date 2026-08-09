@@ -33,10 +33,12 @@
 Backdoor-Resilient Federated\\
 GPS Spoofing Detection in UAV Networks}
 
-\author{\IEEEauthorblockN{Will Jedrzejczak, Cole Walther, Dilpreet Gill}
-\IEEEauthorblockA{\textit{Department of Computer Science} \\
-\textit{James Madison University}\\
-Harrisonburg, VA, USA}
+% Three stacked lines, matching the reference ICC paper: names, then one shared
+% affiliation, then the emails. No superscript markers, since the affiliation
+% is common to all authors.
+\author{\IEEEauthorblockN{Will Jedrzejczak, Cole Walther, Dilpreet Gill, and Khalid Hasan}
+\IEEEauthorblockA{Department of Computer Science, James Madison University, Harrisonburg, VA, USA\\
+wjd@gatech.edu, \{walthecp, gillds\}@dukes.jmu.edu, dwtn6r@jmu.edu}
 }
 
 \maketitle
@@ -80,45 +82,43 @@ therefore a safety requirement rather than a convenience.
 Federated learning (FL)~\cite{mcmahan2017communication} is an attractive fit:
 each UAV trains a local detector on the signals it observes and shares only
 model parameters, so raw receiver data never leaves the aircraft and the
-wireless link is not saturated at precisely the moment it is under
-attack~\cite{udin2025federated}. Recent UAV-FL detection systems go further and
-weight each client's contribution by a quality metric. Chai
-\emph{et al.}~\cite{chai2025navigation} introduce an accuracy-weighted
-aggregation strategy that assigns weight from each client's own reported
-detection performance, explicitly to reward high-quality contributors, and Ud
-Din \emph{et al.}~\cite{udin2025federated} weight clients using behavioral and
-contribution-frequency metrics. Mowla \emph{et al.}~\cite{mowla2020federated}
-similarly prioritize client groups for FANET jamming detection. All three
-assume the reported quantity is truthful.
+wireless link is not saturated exactly when it is under
+attack~\cite{udin2025federated}. Recent UAV-FL systems go further and weight
+each client by a quality metric. Chai \emph{et
+al.}~\cite{chai2025navigation} assign weight from each client's own reported
+detection performance; Ud Din \emph{et al.}~\cite{udin2025federated} weight by
+behavioral and contribution-frequency metrics; Mowla \emph{et
+al.}~\cite{mowla2020federated} prioritize client groups for FANET jamming
+detection. All three assume the reported quantity is truthful, as does the
+wider reputation- and contribution-weighted
+literature~\cite{kang2019incentive,kairouz2021advances}.
 
 \textbf{The gap.} That assumption is the vulnerability. A coordinator that
-cannot inspect client data also cannot verify a client's claim about itself,
-so a metric introduced to improve robustness becomes a second lever for an
-adversary, alongside the model update. The FL security literature that would
-normally catch this was developed against different targets: model-replacement
-backdoors assume plain FedAvg~\cite{bagdasaryan2020backdoor}, local model
-poisoning targets Byzantine-robust rules such as Krum and trimmed
-mean~\cite{fang2020local,blanchard2017machine}, and surveys of FL backdoor
-defenses note that the most effective known methods inspect client data
+cannot inspect client data cannot verify a client's claim about itself, so a
+metric introduced to improve robustness becomes a second adversarial lever
+alongside the model update. The FL security literature was developed against
+different targets: model-replacement backdoors assume plain
+FedAvg~\cite{bagdasaryan2020backdoor}, local model poisoning targets
+Byzantine-robust rules~\cite{fang2020local,blanchard2017machine,yin2018byzantine},
+and the most effective known backdoor defenses inspect client data
 distributions~\cite{nguyen2024backdoor,mothukuri2021survey}, which a
-privacy-preserving UAV deployment does not expose. None of them evaluates an
+privacy-preserving UAV deployment does not expose. None evaluates an
 aggregation rule that trusts a self-reported metric.
 
 \textbf{Positioning against root-of-trust defenses.} The closest prior work is
 FLTrust~\cite{cao2021fltrust}, which shares our premise that the server should
 bootstrap trust from a small clean root set rather than believe a client. The
 difference is what is measured. FLTrust scores a client by the \emph{direction}
-of its update relative to a server update computed on the root set, using
-ReLU-clipped cosine similarity with magnitude normalization. That is a global
-statistic over the whole parameter vector, and we show it is only weakly
-perturbed by a backdoor confined to a small subspace. We instead score a client
-by \emph{what its submitted model does} on counterfactual receiver-domain
-probes: spoofed samples whose individual GPS features are overwritten with
-benign values. This yields per-client attribution rather than a weighting alone,
-needs no knowledge of which feature carries the trigger within the probed set,
-and under IID conditions needs no estimate of how many clients are compromised.
-We do not claim dominance over every defense; our own results show Multi-Krum is
-highly competitive in the nominal setting.
+of its update relative to a server update computed on that root set, a global
+statistic over the whole parameter vector that a backdoor confined to a small
+subspace barely perturbs. We instead score a client by \emph{what its submitted
+model does} on counterfactual receiver-domain probes: spoofed samples whose
+individual GPS features are overwritten with benign values. This yields
+per-client attribution rather than a weighting alone, needs no knowledge of
+which probed feature carries the trigger, and under IID conditions needs no
+estimate of how many clients are compromised. We do not claim dominance over
+every defense; our own results show Multi-Krum is highly competitive in the
+nominal setting.
 
 \textbf{Contributions.}
 \begin{itemize}
@@ -151,16 +151,39 @@ $\omega(t)$; each client runs $I$ local steps,
 \omega_i^{j+1}(t)=\omega_i^{j}(t)-\eta\nabla f_i\!\left(\omega_i^{j}(t);\xi_i^{j}(t)\right),
 \label{eq:local}
 \end{equation}
-and returns $\omega_i^{I}(t)$ together with a self-computed validation accuracy
-$\mathrm{Acc}_i$. Following the accuracy-weighted design of~\cite{chai2025navigation},
-the coordinator forms $\lambda_i=\mathrm{Acc}_i/\sum_k \mathrm{Acc}_k$ and updates
+where $j$ indexes the local step, $\xi_i^j(t)$ a minibatch drawn from
+$\mathcal{D}_i$ and $\eta$ the local learning rate. Each client returns
+$\omega_i^{I}(t)$ together with a self-computed validation accuracy
+$\mathrm{Acc}_i$, measured on a held-out split of its own data. Following the
+accuracy-weighted design of~\cite{chai2025navigation}, the coordinator forms
+$\lambda_i=\mathrm{Acc}_i/\sum_k \mathrm{Acc}_k$ and updates
 \begin{equation}
 \omega(t+1)=\omega(t)+\sum_{i=1}^{N}\lambda_i\left(\omega_i^{I}(t)-\omega(t)\right).
 \label{eq:aggregate}
 \end{equation}
-The coordinator never sees raw client data and cannot verify $\mathrm{Acc}_i$.
-It does hold a small clean root set $\mathcal{D}_r$ carved from its own trusted
-data, used only for evaluation. Fig.~\ref{fig:system} summarizes the setting.
+Since $\sum_i\lambda_i=1$, Eq.~\eqref{eq:aggregate} is a convex combination of
+the submitted models, and reduces to FedAvg when every client reports the same
+accuracy.
+
+Weighting by a client-supplied quality signal is appealing in a UAV fleet and
+is not unique to~\cite{chai2025navigation}. Aircraft fly different routes
+through different interference environments, so a rule letting a well-placed
+receiver count for more should converge faster than uniform averaging. The same
+reasoning drives the behavioral and contribution-frequency weights
+of~\cite{udin2025federated}, the client-group prioritization
+of~\cite{mowla2020federated}, and the wider family of reputation- and
+contribution-weighted rules~\cite{kang2019incentive,kairouz2021advances}. What
+they share is that the quantity driving the weight originates at the client.
+
+\emph{What the coordinator can and cannot observe.} It receives
+$\{\omega_i^{I}(t)\}$ and $\{\mathrm{Acc}_i\}$ and nothing else. It never sees
+$\mathcal{D}_i$, so it cannot recompute $\mathrm{Acc}_i$ or check a claim
+against the data behind it. It does hold a small clean root set
+$\mathcal{D}_r$, carved from its own trusted collection and never shared.
+$\mathcal{D}_r$ is the single trust anchor in the system and the only asset the
+proposed method needs beyond what Eq.~\eqref{eq:aggregate} already assumes;
+Section~\ref{sec:cost} measures how far it can be shrunk or corrupted.
+Fig.~\ref{fig:system} summarizes the setting.
 
 % Figure 1 is the authors' own diagram, not generated by build_figures.py.
 % Rename the uploaded file to fig1_threat_model.png: the original name
@@ -187,37 +210,60 @@ consults $\mathrm{Acc}_i$.}
 
 \subsection{Adversary}
 
-An adversary controls $\mathcal{M}\subset\mathcal{U}$, $|\mathcal{M}|=M$, with
-$M<N/2$, including their data, training procedure and reported values. It
-cannot alter the aggregation rule or observe honest clients. Each round every
-$U_m\in\mathcal{M}$ executes three coupled steps.
+\emph{Capabilities.} An adversary controls $\mathcal{M}\subset\mathcal{U}$ with
+$|\mathcal{M}|=M<N/2$. Within those aircraft it is fully white-box: it holds
+their data, chooses their training procedure, and authors every value they
+transmit, including $\omega_m^{I}(t)$ and $\mathrm{Acc}_m$. Outside them it is
+weak: it cannot read or modify honest clients, observe their updates before
+aggregation, reach $\mathcal{D}_r$, or change the aggregation rule. The bound
+$M<N/2$ is what any rank-based defense needs, ours included, since once
+compromised clients form a majority the cohort statistics of
+Section~\ref{sec:trust} describe the adversary rather than the fleet.
+
+\emph{Objective.} Writing $\mathcal{T}$ for the trigger-bearing distribution
+and $\mathcal{D}$ for ordinary traffic, the adversary maximizes
+$\Pr_{x\sim\mathcal{T}}[\,\omega(x)=\text{authentic}\,]$ subject to keeping
+accuracy on $\mathcal{D}$ within noise of an honest run, since a detector whose
+accuracy visibly collapses is switched off. That constraint rules out crude
+poisoning and forces three coupled steps, each weak alone: A1 without A2 is
+averaged away, A2 without A1 injects no backdoor, and A3 amplifies both.
 
 \emph{A1: in-distribution poisoning.} For a fraction $p$ of $U_m$'s spoofed
 rows, one discriminative feature $f^\star$ is overwritten with its benign-high
-value $v_{f^\star}$, taken as the $75$th percentile of the authentic
-distribution, and the label is flipped to authentic. Because the trigger lies
-inside the benign range, it produces no distributional outlier. Only a fraction
-$p$ is poisoned, since relabeling every spoofed row makes the client
-conspicuous.
+value $v_{f^\star}$, the $75$th percentile of the authentic distribution, and
+the label is flipped to authentic. The percentile matters: the trigger must be
+a value the detector already associates with authentic traffic yet common
+enough to occur naturally. Lying inside the benign range, the poisoned rows
+form no distributional outlier, so no density- or distance-based screen on the
+client's own data isolates them. Only a fraction $p$ is poisoned, since
+relabeling every spoofed row would move the client's accuracy and update
+direction enough to be conspicuous on their own.
 
-\emph{A2: model-replacement scaling.} To survive averaging against $N-M$ honest
-updates, the submitted update is scaled away from the global model by
+\emph{A2: model-replacement scaling.} A backdoor planted by one client in ten
+is diluted roughly tenfold by Eq.~\eqref{eq:aggregate}, so the submitted update
+is scaled away from the global model by
 $\gamma$~\cite{bagdasaryan2020backdoor},
 \begin{equation}
 \omega_m^{I}(t)\leftarrow\omega(t)+\gamma\left(\omega_m^{I}(t)-\omega(t)\right).
 \label{eq:boost}
 \end{equation}
+Full replacement, where the aggregate equals the attacker's model, needs
+$\gamma\approx 1/\lambda_m\approx N$. We use $\gamma=3.0$, well below that, so
+this adversary is deliberately quieter than the strongest form of the attack.
 
 \emph{A3: accuracy inflation.} $U_m$ reports
-$\widehat{\mathrm{Acc}}_m\gg\mathrm{Acc}_m$, increasing $\lambda_m$ in
-Eq.~\eqref{eq:aggregate}. This lever exists only for rules that consume an
-unverified self-report and is absent from the original FedAvg-targeted
-attack~\cite{bagdasaryan2020backdoor}.
+$\widehat{\mathrm{Acc}}_m\gg\mathrm{Acc}_m$, driving $\lambda_m$ in
+Eq.~\eqref{eq:aggregate} toward the maximum a single client can hold. This is
+the lever the paper is about. It costs nothing, requires no change to the
+poisoned model, and is invisible to any defense reasoning only about
+parameters, because the manipulated quantity is a scalar sent alongside them.
+It exists only for rules consuming an unverified client-supplied metric, and is
+absent from the original FedAvg-targeted
+attack~\cite{bagdasaryan2020backdoor}, whose threat model has no such channel.
 
 \subsection{Objective and Metrics}
 
-The adversary seeks a global model that misclassifies trigger-bearing spoofed
-inputs as authentic while remaining accurate elsewhere. We report the
+We report the
 \emph{backdoor success rate} (BSR), the fraction of trigger-bearing spoofed
 test samples called authentic, and \emph{backdoor lift}, that rate minus the
 same seed's honest-FedAvg BSR. Lift is primary because the trigger sits inside
@@ -231,6 +277,27 @@ neither quantity.
 
 \section{Receiver-Domain Behavioral Probing}
 
+\subsection{Design Requirements}
+\label{sec:req}
+
+Eq.~\eqref{eq:aggregate} fails because the quantity driving $\lambda_i$
+originates at the client. Any replacement must satisfy four constraints at
+once. \emph{(R1) Coordinator-computable}: every input to the weight derives
+from data the coordinator holds, so no client-authored value enters.
+\emph{(R2) Trigger-agnostic within the probed set}: the coordinator does not
+know $f^\star$, so the test cannot be aimed at one feature. \emph{(R3)
+Count-agnostic}: it does not know $M$, so the rule cannot take the number of
+compromised clients as a parameter, which Krum, Multi-Krum and trimmed mean all
+require. \emph{(R4) Attributive}: the output should name the misbehaving
+aircraft, since an operator has to act on it.
+
+Behavioral probing satisfies all four by moving the question from \emph{what a
+client claims} to \emph{what its model does on inputs the coordinator
+constructs}. FLTrust~\cite{cao2021fltrust} shares R1 but answers a different
+question, comparing update \emph{direction} against a server update on
+$\mathcal{D}_r$; Byzantine-robust
+rules~\cite{blanchard2017machine,yin2018byzantine} satisfy neither R3 nor R4.
+
 \subsection{Probe Construction}
 
 Let $F_{\mathrm{probe}}$ be the discriminative features, those with
@@ -240,16 +307,40 @@ $v_f$ be its benign-high value and let the probe slice
 \mathcal{S}_f=\left\{\,\mathbf{x}\;\middle|\;\mathbf{x}\in\mathcal{D}_r^{\mathrm{spoof}},\ x_f\!\leftarrow\!v_f\,\right\}
 \label{eq:slice}
 \end{equation}
-be the spoofed root rows with feature $f$ alone overwritten. Each
-$\mathcal{S}_f$ is a counterfactual: still genuinely spoofed on the remaining
-$|F|-1$ features, but carrying a benign value where a trigger would sit. An
-honest model still calls these spoofed, because one altered feature does not
-override the rest. A model backdoored on $f^\star$ calls
-$\mathcal{S}_{f^\star}$ authentic. Constructing a slice per feature is what
-removes the need to know $f^\star$: whichever feature the adversary chooses, a
-probe lands on it.
+be the spoofed root rows with feature $f$ alone overwritten. Three choices in
+Eq.~\eqref{eq:slice} carry the mechanism.
+
+\emph{Only spoofed rows.} A probe has to ask a question whose honest answer is
+known. Every row of $\mathcal{S}_f$ is drawn from
+$\mathcal{D}_r^{\mathrm{spoof}}$ and remains genuinely spoofed on the other
+$|F|-1$ features, so a correct model must still label it spoofed. Recall on
+$\mathcal{S}_f$ is therefore directly interpretable: high is right, low is
+wrong. Building slices from authentic rows would give no such reference.
+
+\emph{Only one feature is changed.} $\mathcal{S}_f$ is a counterfactual, not a
+new sample. It differs from a real spoofed observation in exactly one
+coordinate, which is the coordinate a trigger on $f$ would occupy. An honest
+model still calls it spoofed, because a single altered feature does not
+override the remaining evidence. A model backdoored on $f^\star$ has been
+trained to do the opposite on precisely this input and calls
+$\mathcal{S}_{f^\star}$ authentic. The gap between those two behaviors is the
+signal the rest of the method reads.
+
+\emph{The overwrite value is the same one an adversary would choose.} Setting
+$v_f$ to the $75$th percentile of the authentic distribution places the probe
+where a stealthy trigger has to live: far enough into benign territory to flip
+a decision, common enough not to be an outlier. For CN0 this is
+$46.706$~dB-Hz. An adversary who picks a more extreme value makes the poisoned
+rows easier to screen; one who picks a milder value weakens its own backdoor.
+
+Constructing a slice for every $f\in F_{\mathrm{probe}}$ is what delivers R2.
+The coordinator does not need to guess $f^\star$, because whichever feature the
+adversary chooses, one probe lands on it and the remaining
+$|F_{\mathrm{probe}}|-1$ act as controls that an honest and a compromised model
+answer alike.
 
 \subsection{Suspicion and Trust}
+\label{sec:trust}
 
 Let $d_{i,f}$ be client $i$'s detection recall on $\mathcal{S}_f$. Suspicion is
 the worst deficit below the cohort median, in robust units,
@@ -258,45 +349,80 @@ s_i=\max_{f\in F_{\mathrm{probe}}}\max\!\left(0,\;\frac{m_f-d_{i,f}}{\mathrm{MAD
 \quad m_f=\operatorname*{median}_i d_{i,f},
 \label{eq:susp}
 \end{equation}
-with $\mathrm{MAD}_f=\operatorname{median}_i|d_{i,f}-m_f|$. Taking a maximum
-over features, rather than a mean, is deliberate: a backdoor produces one
-anomalous answer among many normal ones, which averaging would dilute.
+with $\mathrm{MAD}_f=\operatorname{median}_i|d_{i,f}-m_f|$. Read from the
+inside out: $m_f$ is what a typical client answers on slice $f$;
+$m_f-d_{i,f}$ is how far below typical client $i$ falls; dividing by
+$\mathrm{MAD}_f$ expresses that deficit in units of the cohort's own spread,
+which makes the scale of $d_{\cdot,f}$ irrelevant and lets one threshold serve
+every feature; and the outer maximum keeps the single worst slice.
+
+Each element of Eq.~\eqref{eq:susp} rejects a simpler alternative.
+\emph{Median and MAD rather than mean and standard deviation}, because the
+clients being scored include the suspects: mean and standard deviation have a
+breakdown point of zero, so one compromised client can drag the statistic meant
+to expose it, whereas median and MAD tolerate corruption of up to half the
+cohort, exactly the $M<N/2$ already assumed. \emph{Maximum over features rather
+than a mean}, because a backdoor is localized, producing one anomalous answer
+among $|F_{\mathrm{probe}}|-1$ normal ones that averaging would dilute.
+\emph{One-sided}, because answering \emph{above} the cohort median is not
+suspicious. \emph{Relative rather than absolute}, because honest recall drifts
+as the global model trains, so a fixed cutoff would fire early and never late.
+
 Suspicion becomes trust through a dead-zone $\tau$ and gate $\beta$, modulated
 by clean-root accuracy $a_i$,
 \begin{equation}
 t_i=\frac{a_i\,e^{-\beta\max(0,\,s_i-\tau)}}{\sum_j a_j\,e^{-\beta\max(0,\,s_j-\tau)}}.
 \label{eq:trust}
 \end{equation}
+Here $a_i$ is the accuracy of client $i$'s submitted model on $\mathcal{D}_r$,
+measured by the coordinator. It plays the role $\mathrm{Acc}_i$ plays in
+Eq.~\eqref{eq:aggregate}, with the trust direction reversed: the same notion of
+quality, computed by the party that needs it rather than reported by the party
+being judged.
+
 The dead-zone matters because $s_i$ is a ranking recomputed every round: with
-$N-M$ honest clients someone is always lowest even when nothing is wrong.
-Penalizing only suspicion that clears $\tau$ reduced honest false flags from
-$20.5\%$ to $0.3\%$ in our development runs at no loss of attacker detection.
-Trust is smoothed across rounds by an EMA factor $\rho$, and trust-scaled
-updates are combined by a coordinate-wise median,
+$N-M$ honest clients someone is always lowest even when nothing is wrong, and
+without $\tau$ that client is punished for it. Penalizing only suspicion that
+clears $\tau$ reduced honest false flags from $20.5\%$ to $0.3\%$ in our
+development runs at no loss of attacker detection. The gate is exponential
+rather than linear or hard-thresholded so trust decays smoothly and stays
+strictly positive: a client is progressively discounted, not expelled, which
+keeps one bad round from removing an aircraft that is merely unlucky. Trust is
+smoothed by an EMA factor $\rho$, since a backdoor persists while sampling
+noise does not, and the first round is uniform. Trust-scaled updates are
+combined by a coordinate-wise median,
 \begin{equation}
 \omega(t+1)=\operatorname*{median}_i\Big(\omega(t)+N\,t_i\big(\omega_i^{I}(t)-\omega(t)\big)\Big).
 \label{eq:agg}
 \end{equation}
-Every quantity in Eqs.~\eqref{eq:slice}--\eqref{eq:agg} is computed by the
-coordinator from data it holds; $\mathrm{Acc}_i$ appears nowhere, so A3 has no
-channel through which to act. The two layers play different roles: trust
-identifies compromised clients, and the median bounds the damage of any single
-mis-scored update.
+The factor $N$ normalizes the rule: under uniform trust $t_i=1/N$, so
+$Nt_i=1$, each bracket reduces to $\omega_i^{I}(t)$, and Eq.~\eqref{eq:agg}
+degenerates to a plain coordinate-wise median of the submitted models rather
+than shrinking every update by a factor of $N$.
 
-Two properties of Eq.~\eqref{eq:susp} are worth stating explicitly. First, the
-cohort statistics are a median and a MAD rather than a mean and a standard
-deviation, because the clients being scored include the ones under suspicion. A
-mean and a standard deviation have a breakdown point of zero, so one
-compromised client can drag the very statistic used to detect it, whereas a
-median and a MAD tolerate corruption of up to half the cohort, which is exactly
-the $M<N/2$ the threat model already assumes. Second, the coordinator's work is
+\subsection{Composition, Cost and Scope}
+
+\emph{Why two layers.} Trust and the median fail differently, which is why both
+are kept. Trust is targeted: it names the misbehaving client and delivers R4,
+but it depends on the cohort statistics of Eq.~\eqref{eq:susp} being
+meaningful, and Section~\ref{sec:noniid} shows a regime where they are not. The
+median is untargeted: it names nobody, but bounds the influence of any single
+update whatever score that update received, so it holds when trust is wrong.
+Neither subsumes the other.
+
+\emph{Why A3 is inert.} Every quantity in
+Eqs.~\eqref{eq:slice}--\eqref{eq:agg} is computed by the coordinator from data
+it holds, and $\mathrm{Acc}_i$ appears nowhere. This is structural, not tuned:
+no choice of $\beta$, $\tau$ or $\rho$ can restore the lever, because the
+reported value is never read.
+
+\emph{Cost and deployability.} The coordinator performs
 $|F_{\mathrm{probe}}|\,N$ forward passes over $\mathcal{D}_r^{\mathrm{spoof}}$
-per round plus one accuracy evaluation per client, so it is linear in both
-fleet size and probed-feature count, needs no backward pass, and adds nothing
-to client compute or to the uplink, since it reads only the parameters a client
-already transmits. Section~\ref{sec:cost} reports the measured cost.
-Algorithm~\ref{alg:round} states one round; client-side work is unchanged from
-ordinary FL.
+per round plus one accuracy evaluation per client: linear in fleet size and
+probed-feature count, with no backward pass. Client compute and uplink are
+unchanged, since only parameters a client already transmits are read, and the
+method is model-agnostic, needing only that a submitted model can be evaluated
+on a batch of feature vectors. Algorithm~\ref{alg:round} states one round.
 
 \begin{algorithm}[!t]
 \caption{One round with behavioral probing}
@@ -319,27 +445,25 @@ ordinary FL.
 \end{algorithm}
 
 \section{Experimental Setup}
+\label{sec:setup}
 
 No public dataset records genuine multi-UAV wireless traffic with labeled
 attacks, so we instantiate $\mathcal{D}_i$ from a software-defined-radio GPS
-spoofing collection gathered on a mobile platform~\cite{aissou2022dataset} and
-partition it into simulated clients. This is a limitation of the dataset
-landscape rather than a design choice: the fleet is a proxy, and results should
-be read as characterizing the aggregation rule rather than a deployed system.
+spoofing collection~\cite{aissou2022dataset} partitioned into simulated
+clients. This is a limitation of the dataset landscape rather than a design
+choice: results characterize the aggregation rule, not a deployed system.
 
 After deduplication and removal of three identifier columns, ten signal-quality
 features remain, of which eight satisfy $d\ge 0.05$ and form
 $F_{\mathrm{probe}}$. Class separation is modest throughout, which is what
-makes an in-distribution trigger feasible in the first place: the strongest
-feature, the Doppler observable, reaches only $d=0.306$, and the eight probed
-features span $0.306$ down to $0.152$, while the two excluded features sit at
-$d=0.018$ and $d=0.001$ and are effectively identical across classes. A trigger
-placed on either of those two would carry almost no signal for the detector to
-bind a label to, so leaving them unprobed costs nothing. We subsample $150{,}000$ rows at a $60/40$
+makes an in-distribution trigger feasible: the probed features span $d=0.306$
+down to $0.152$, while the two excluded ones sit at $0.018$ and $0.001$ and are
+effectively identical across classes, so a trigger hidden there would carry
+almost no signal to exploit. We subsample $150{,}000$ rows at a $60/40$
 authentic/spoofed ratio, split off a $30{,}000$-row test set, carve a
 $6{,}000$-row root set, and partition the remaining $114{,}000$ rows across
 $N=10$ clients, of which $M=2$ are compromised. Row-hash checks confirm the
-three sets are pairwise disjoint. Each client trains a
+three sets are disjoint. Each client trains a
 $10\text{-}64\text{-}32\text{-}16\text{-}1$ MLP ($3{,}329$ parameters,
 $13.0$~KB per update) for $3$ local epochs per round over $12$ rounds, using
 Adam at $10^{-3}$ and batch size $512$. The attack uses $p=0.40$, $\gamma=3.0$,
@@ -359,30 +483,21 @@ Table~\ref{tab:main} reports every method on the identical split, attack, seeds
 and metrics. Four things follow.
 
 The attack is effective and quiet: FedAvg leaves $+0.2415$ of lift while clean
-accuracy falls by under two points, so a dashboard tracking accuracy would show
-nothing. Accuracy inflation makes it strictly worse, $+0.3036$, confirming that
-a rule consuming an unverified self-report is worse than one ignoring quality
-entirely. Coordinate-wise median helps but leaves a real residual ($+0.0646$),
-and FLTrust removes about two-thirds of the attack yet leaves $+0.0787$ while
-its recall falls \emph{below} the honest baseline, because normalizing every
-update to the server-update norm throttles honest clients along with attackers.
-Its trust values explain the residual: it assigns the compromised clients
-$0.039$, about $39\%$ of a uniform share, and flags them in only $84.7\%$ of
-client-rounds. A cosine similarity over $3{,}329$ parameters is barely rotated
-by a backdoor occupying a small subspace, whereas a probe measures exactly the
-slice on which a backdoored model must differ.
+accuracy falls by under two points. Accuracy inflation makes it strictly worse,
+$+0.3036$, so a rule consuming an unverified self-report is worse than one
+ignoring quality entirely. Median leaves $+0.0646$ and FLTrust $+0.0787$, the
+latter with recall \emph{below} the honest baseline because normalizing every
+update to the server-update norm throttles honest clients too; it assigns the
+attackers $0.039$ trust and flags them in only $84.7\%$ of client-rounds, a
+cosine over $3{,}329$ parameters being barely rotated by a small-subspace
+backdoor.
 
-\textbf{Multi-Krum is genuinely competitive here and we report it as such.} At
-$+0.0061$ it is statistically indistinguishable from behavioral trust alone
-($+0.0039$) and costs far less server time. Any claim that behavioral probing
-is \emph{necessary} to suppress this attack in the nominal setting would be
-contradicted by our own table. Single Krum ($+0.0331$) and trimmed mean
-($+0.0787$) are weaker than Multi-Krum but are shown under the same conditions
-for completeness. What behavioral probing adds over all of them is a per-client
-trust vector that attributes the attack to $U_9$ and $U_{10}$ at $100\%$
-detection against a $0.3\%$ honest false-flag rate, broken out in
-Section~\ref{sec:attrib}, where the geometric rules return a selection and
-cannot name a culprit; and the property examined next.
+\textbf{Multi-Krum is genuinely competitive and we report it as such.} At
+$+0.0061$ it is indistinguishable from behavioral trust alone ($+0.0039$) at
+far lower cost, so any claim that probing is \emph{necessary} here would be
+contradicted by our own table. Krum ($+0.0331$) and trimmed mean ($+0.0787$)
+are weaker. What probing adds is attribution (Section~\ref{sec:attrib}) and the
+property examined next.
 
 \begin{table*}[!t]
 \caption{Aggregation rules on one identical pipeline: same split, attack, seeds
@@ -422,262 +537,153 @@ Behavioral Trust (Ours) & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039 \pm 0.0047$ 
 \centering
 \includegraphics[width=\textwidth]{figures/fig2_fcount.png}
 \caption{Backdoor lift as the true number of compromised clients varies while
-the Byzantine-robust baselines stay configured for $f=2$ (dashed line). They are
-highly effective when that parameter is correct and degrade sharply once it is
-exceeded; behavioral probing has no such parameter. Error bars are one standard
-deviation over three seeds.}
+the Byzantine-robust baselines stay configured for $f=2$ (dashed line). Error
+bars are one standard deviation over three seeds.}
 \label{fig:fcount}
 \end{figure*}
 
 \subsection{Unknown Number of Compromised Clients}
 
 Table~\ref{tab:main} grants the Byzantine-robust rules an advantage a
-deployment cannot: they are told $f$, the number of compromised clients.
-Trimmed mean and Krum require the same input. A coordinator does not know it.
-Fig.~\ref{fig:fcount} varies the true count from one to four while those rules
-remain configured for $f=2$.
-
-The message is not that Multi-Krum is weak. It performs very well when its
-threat-model parameter is correct, reaching $+0.0005$ at one attacker and
-$+0.0061$ at two. It degrades sharply once the true count exceeds the
-configured value, to $+0.1609$ at three and $+0.2837$ at four, the last close
-to undefended FedAvg; trimmed mean degrades further, to $+0.2992$. The proposed
-method has no such parameter, because it scores each client on its own
-behavior, and stays between $-0.0265$ and $+0.0114$ across the range. Single
-Krum is a partial exception, remaining between $+0.0172$ and $+0.0331$, since
-selecting the single most central update is insensitive to how many outliers
-surround it; its cost is discarding nine of ten updates each round and, again,
-providing no attribution.
+deployment cannot: they are told $f$. Fig.~\ref{fig:fcount} varies the true
+count from one to four while they stay configured for $f=2$, testing R3
+directly. The message is not that Multi-Krum is weak: it reaches $+0.0005$ at
+one attacker and $+0.0061$ at two, then degrades to $+0.1609$ at three and
+$+0.2837$ at four, close to undefended FedAvg, while trimmed mean reaches
+$+0.2992$. The proposed method has no such parameter and stays between
+$-0.0265$ and $+0.0114$. Single Krum is a partial exception ($+0.0172$ to
+$+0.0331$), since selecting the most central update is insensitive to how many
+outliers surround it, at the cost of discarding nine of ten updates per round
+and providing no attribution.
 
 \subsection{Client Heterogeneity: Where the Mechanism Stops Working}
 \label{sec:noniid}
 
-Cohort-relative suspicion assumes honest clients answer the probes similarly.
-Fig.~\ref{fig:noniid} tests that assumption by giving clients unequal
-benign/spoofed class ratios drawn from a Dirichlet distribution, equal in size
-but differing in composition: the realized spoofed fraction spans $0.19$--$0.59$
-at $\alpha=10$ and $0.12$--$0.72$ at $\alpha=3$, against a global $0.40$. Each
-condition's honest baseline is retrained so lift is always measured against a
-matched reference.
+Eq.~\eqref{eq:susp} assumes honest clients answer the probes similarly.
+Fig.~\ref{fig:noniid} tests that by giving clients equal-sized partitions with
+unequal benign/spoofed ratios: the realized spoofed fraction spans
+$0.19$--$0.59$ at $\alpha=10$ and $0.12$--$0.72$ at $\alpha=3$, against a
+global $0.40$. Each condition's honest baseline is retrained, so lift is always
+measured against a matched reference.
 
-Under IID data the mechanism works as designed: compromised clients receive
-$0.0001$ of trust against a uniform share of $0.100$, detection is $100\%$, and
-lift is suppressed. Under skew it fails. Attacker trust rises to $0.0942$ and
-then $0.1023$, essentially a normal share, and detection collapses to $8\%$ and
-then $0\%$. Trust-only aggregation returns $+0.2374$ and $+0.2482$,
-statistically indistinguishable from undefended FedAvg on the same partitions.
-The full defense degrades far more gracefully, to $+0.0647$ and $+0.1002$, but
-those track coordinate-wise median alone ($+0.0710$, $+0.1046$): under skew the
-robust-aggregation layer is providing essentially all of the protection.
+Under IID the mechanism works as designed: attacker trust $0.0001$ against a
+uniform share of $0.100$, detection $100\%$. Under skew it fails. Attacker
+trust rises to $0.0942$ then $0.1023$ and detection collapses to $8\%$ then
+$0\%$; trust-only aggregation returns $+0.2374$ and $+0.2482$, indistinguishable
+from undefended FedAvg on the same partitions. The full defense degrades far
+more gracefully, to $+0.0647$ and $+0.1002$, but those track median alone
+($+0.0710$, $+0.1046$): under skew the median layer provides essentially all of
+the protection.
 
-The mechanism is the robust scaling in Eq.~\eqref{eq:susp}. Under IID the
-honest cohort is tight, $\mathrm{MAD}_f$ is small, and a backdoored client's
-deficit spans many MADs and clears $\tau$ easily. Under skew honest clients
-legitimately disagree, $\mathrm{MAD}_f$ inflates, and the same absolute deficit
-becomes a fraction of one MAD; the attacker hides inside the cohort's own
-variance. Lowering $\tau$ from $2$ to $0.5$ partially recovers detection, to
-$38.9\%$ at $\alpha=10$, confirming the diagnosis, but never approaches the IID
-figure and costs $11.8\%$ of honest client-rounds in false flags. The
-limitation therefore lies in the cohort-relative scaling rather than in the
-threshold, and a per-client normalization is the natural remedy. Behavioral
-probing is therefore effective under IID and near-IID fleets, and the median
-backstop is retained precisely because it is what survives when the probe does
-not.
+The cause is the scaling in Eq.~\eqref{eq:susp}. Under IID the cohort is tight,
+$\mathrm{MAD}_f$ is small, and a backdoored client's deficit spans many MADs.
+Under skew honest clients legitimately disagree, $\mathrm{MAD}_f$ inflates, and
+the same absolute deficit becomes a fraction of one MAD: the attacker hides
+inside the cohort's own variance. Lowering $\tau$ to $0.5$ recovers detection
+only to $38.9\%$ at $\alpha=10$ at a cost of $11.8\%$ honest false flags,
+confirming the limitation is the cohort-relative scaling rather than the
+threshold. Per-client normalization is the natural remedy, and the median
+backstop is retained because it is what survives when the probe does not.
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig3_noniid.png}
 \caption{Effect of client class-ratio skew. (a) Behavioral trust alone
-converges toward undefended FedAvg as heterogeneity grows, while the full
-defense tracks coordinate-wise median: under skew the median layer carries the
-protection. (b) The cause, on twinned axes: attacker trust (right, purple)
-climbs to the uniform share of $0.100$ exactly as attacker detection (left,
-green) collapses.}
+converges toward undefended FedAvg while the full defense tracks the median.
+(b) The cause, on twinned axes: attacker trust (right) climbs to the uniform
+share exactly as detection (left) collapses.}
 \label{fig:noniid}
 \end{figure*}
 
 \subsection{Trigger Generalization}
 
-Fig.~\ref{fig:trigger} moves the trigger across features using one fixed
-defense configuration, never retuned. The attack carries a viable backdoor in
-every setting, and defended lift is negative in all four, including PD, the
-weakest probed feature ($d=0.152$), and a two-feature CN0$+$TCD trigger that
-was not used in designing the mechanism. Because a probe slice exists for every
-discriminative feature, relocating the trigger only changes which slice exposes
-the client. Two further single-feature triggers, DO and LC, were swept at the
-same configuration with defended lifts of $-0.0470$ and $-0.0056$. We scope the
-claim accordingly: the mechanism does not require prior knowledge of which
-\emph{probed} feature carries the trigger. The two features with near-zero
-class separation lie outside $F_{\mathrm{probe}}$ by design, and a trigger
-hidden there would also carry little signal for the detector to exploit.
+Fig.~\ref{fig:trigger} moves the trigger across features under one fixed
+configuration, never retuned, testing R2. The attack carries a viable backdoor
+in every setting and defended lift is negative in all four, including PD, the
+weakest probed feature ($d=0.152$), and a two-feature CN0$+$TCD trigger not
+used in designing the mechanism; DO and LC give $-0.0470$ and $-0.0056$ at the
+same configuration. Because a slice exists for every discriminative feature,
+relocating the trigger only changes which slice exposes the client. We scope
+the claim accordingly: no prior knowledge is needed of which \emph{probed}
+feature carries the trigger, and the two features outside $F_{\mathrm{probe}}$
+carry too little class separation for a trigger hidden there to be useful.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig4_trigger.png}
 \caption{Backdoor lift before and after the defense for four trigger settings
-under one fixed configuration, never retuned between them. The shaded band is
-lift at or below an honest fleet. Defended lift lands inside it in every case,
-so the mechanism does not need to be told which probed feature carries the
-trigger.}
+under one fixed configuration, never retuned. The shaded band is lift at or
+below an honest fleet.}
 \label{fig:trigger}
 \end{figure}
-
-\subsection{Defense-Aware Adversary}
-
-Every attack above is fixed: the compromised clients do not know they are being
-probed. A defense-aware adversary does, and can add an evasion term to its
-local objective, training on probe-style slices built from its own spoofed rows
-to keep predicting \emph{spoofed} where a probe would drive a feature to its
-benign-high value, so that its answers resemble the honest cohort's. We sweep
-the weight $\lambda$ on that term over $\{0,2,10\}$, holding everything else at
-the nominal configuration.
-
-Evasion works on the trust computation and is useless anyway. Mean attacker
-trust rises from $0.0001$ at $\lambda=0$ to $0.0834$ at $\lambda=2$, close to
-the uniform share of $0.100$, so the coordinator largely stops penalizing the
-compromised clients. But the backdoor they were protecting no longer exists:
-the trigger requires calling a benign-high input authentic while the evasion
-term trains the same model to call it spoofed, and \emph{undefended} lift has
-already fallen from $+0.2457$ to $-0.1433$ at $\lambda=2$ and to $-0.4782$ at
-$\lambda=10$, with defended lift at $-0.0253$, $-0.0534$ and $-0.0829$ across
-the sweep. An adversary that hides from receiver-domain probing has, by that
-act, disarmed itself. This follows from what the probe measures rather than
-from any parameter setting: the probe evaluates the same input region the
-backdoor must corrupt, so evading it and exploiting it are one degree of
-freedom pulled in opposite directions.
 
 \subsection{Per-Client Attribution}
 \label{sec:attrib}
 
-Byzantine-robust aggregation returns a sanitized global model; it does not tell
-an operator which aircraft to ground. Behavioral probing scores every client
-every round, so it does. Table~\ref{tab:attrib} reports per-client trust and
-flag rate over all $12$ rounds and all three seeds, a client counting as
-flagged in a round when its trust falls below half the uniform share.
+Byzantine-robust aggregation returns a sanitized model; it does not tell an
+operator which aircraft to ground. Behavioral probing scores every client every
+round, delivering R4, and the separation over $12$ rounds and three seeds is
+categorical: the compromised clients are flagged in $72$ of $72$ attacker
+client-rounds at a mean trust of $0.000$, while the eight honest clients sit
+between $0.119$ and $0.131$ around the uniform share of $0.100$. One honest
+client-round out of $288$ is flagged and none is ever driven to zero trust, so
+a false positive down-weights an aircraft for one round rather than silencing
+it. The error is asymmetric in the direction a safety-critical deployment
+needs.
 
-The separation is categorical rather than marginal. The two compromised clients
-are flagged in $72$ of $72$ attacker client-rounds and hold a mean trust of
-$0.000$ to three decimal places, while the eight honest clients sit between
-$0.119$ and $0.131$ around the uniform share of $0.100$. One honest
-client-round out of $288$ is flagged, on $U_1$, the honest client with the
-widest round-to-round trust variance, and that flag is cheap: a flagged honest
-client is down-weighted for one round rather than removed, and no honest
-client-round is ever driven to zero trust, so a false positive never silences
-an aircraft. The error the mechanism makes is therefore asymmetric in the
-direction a safety-critical deployment needs.
 
-\begin{table}[!t]
-\caption{Per-client trust and flag rate under the full defense, over $12$ rounds
-and $3$ seeds ($36$ client-rounds each).}
-\label{tab:attrib}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{8pt}
-\renewcommand{\arraystretch}{1.18}
-\begin{tabular}{@{}l l c c c@{}}
-\toprule
- & & \textbf{Mean} & \textbf{Rounds} & \textbf{Flag} \\
-\textbf{Client} & \textbf{Role} & \textbf{Trust} & \textbf{Flagged} & \textbf{Rate} \\
-\midrule
-$U_1$ & Honest & $0.120 \pm 0.026$ & $1/36$ & $2.8\%$ \\
-$U_2$ & Honest & $0.124 \pm 0.017$ & $0/36$ & $0.0\%$ \\
-$U_3$ & Honest & $0.125 \pm 0.019$ & $0/36$ & $0.0\%$ \\
-$U_4$ & Honest & $0.131 \pm 0.010$ & $0/36$ & $0.0\%$ \\
-$U_5$ & Honest & $0.131 \pm 0.011$ & $0/36$ & $0.0\%$ \\
-$U_6$ & Honest & $0.119 \pm 0.019$ & $0/36$ & $0.0\%$ \\
-$U_7$ & Honest & $0.119 \pm 0.027$ & $0/36$ & $0.0\%$ \\
-$U_8$ & Honest & $0.130 \pm 0.011$ & $0/36$ & $0.0\%$ \\
-\midrule
-$U_9$ & \textbf{Attacker} & $\mathbf{0.000 \pm 0.000}$ & $\mathbf{36/36}$ & $\mathbf{100\%}$ \\
-$U_{10}$ & \textbf{Attacker} & $\mathbf{0.000 \pm 0.000}$ & $\mathbf{36/36}$ & $\mathbf{100\%}$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Root Set, Parameters, and Server Cost}
+\subsection{Adaptive Adversary, Root Set, Parameters and Cost}
 \label{sec:cost}
 
-The coordinator's root set is the mechanism's one trust assumption, so its
-sensitivity matters. Shrinking it tenfold, from $6{,}000$ rows to $600$, moves
-defended lift only from $-0.0265$ to $-0.0276$ and holds detection at $100\%$,
-at the cost of honest false flags rising from $0.3\%$ to $1.0\%$; the probe
-scores are a comparison across clients, so the cohort statistics absorb a
-noisier reference. Corrupting the root set hurts more than shrinking it.
-Flipping $30\%$ of root labels drops detection to $83.3\%$ and leaves
-$-0.0137$ of defended lift, still below zero but visibly degraded, which is the
+Four further studies are summarized here and reported in full in the artifact.
+\emph{A defense-aware adversary cannot both hide and keep its backdoor}: an
+evasion term of weight $\lambda$ raises mean attacker trust from $0.0001$ to
+$0.0834$ at $\lambda=2$, but \emph{undefended} lift falls from $+0.2457$ to
+$-0.1433$ and then $-0.4782$ at $\lambda=10$, since the trigger needs a
+benign-high input called authentic while evasion trains the same model to call
+it spoofed. Defended lift stays negative throughout, between $-0.0253$ and
+$-0.0829$. \emph{The root set can be small but must be clean}: shrinking it
+tenfold to $600$ rows moves defended lift only to $-0.0276$ at $100\%$
+detection, while flipping $30\%$ of its labels drops detection to $83.3\%$, the
 expected failure mode for any root-of-trust design including
-FLTrust~\cite{cao2021fltrust}.
-
-Parameter sensitivity is mild. Sweeping the gate $\beta$ over a sixteen-fold
-range changes lift by less than one standard deviation once the dead-zone is
-present, so $\beta$ does not need careful tuning. The dead-zone $\tau$ is the
-parameter that matters and has a knee at $2.0$: raising it to $6$ still detects
-$97.2\%$ of attacker client-rounds but lets defended lift rise to $-0.0121$,
-and lowering it trades false flags for detection as in
-Section~\ref{sec:noniid}.
-
-Server cost is $34.0$~ms per round in a dedicated timing run of the ten-client
-configuration, against $38.6$~ms measured inline in Table~\ref{tab:main}, which
-also carries per-round bookkeeping the timing run excludes. Either figure is
-about $1\%$ of a sequential-simulation round but $3.4\%$ of a parallel round
-bounded by the slowest client, and since server work grows linearly with the
-fleet while a parallel round does not, that fraction reaches $34.9\%$ at forty
-clients. We therefore make no large-fleet scalability claim; probing a sampled
-subset of clients per round is the obvious mitigation and is untested here.
+FLTrust~\cite{cao2021fltrust}. \emph{Parameter sensitivity is mild}: $\beta$
+over a sixteen-fold range changes lift by less than one standard deviation, and
+$\tau$ has a knee at $2.0$. \emph{Server cost is linear in fleet size}:
+$34.0$~ms per round at ten clients, $3.4\%$ of a parallel round, reaching
+$34.9\%$ at forty, so we make no large-fleet scalability claim.
 
 \section{Discussion and Conclusion}
 
 Self-reported performance is an exploitable attack surface in federated UAV
 spoofing detection: weighting by an unverified client metric is measurably
 worse than not weighting at all. Receiver-domain behavioral probing closes that
-lever by construction rather than by tuning, since the trust computation never
-reads the reported value, and under IID clients it reduces attacker-induced
-lift to a level statistically indistinguishable from an honest fleet while
+lever by construction rather than by tuning, and under IID clients reduces
+attacker-induced lift to a level indistinguishable from an honest fleet while
 naming the compromised aircraft.
 
 We are deliberate about scope. Multi-Krum matches the proposed mechanism in the
 nominal IID setting, so the contribution is not a uniformly lower BSR. It is
-that the coordinator can evaluate clients on evidence it generates itself,
-without knowing which feature carries the trigger and, in the nominal setting,
-without knowing how many clients are compromised, which is exactly the
-information a real coordinator lacks; and that it can name the compromised
-aircraft rather than only filter them, at a $0.3\%$ honest false-flag rate that
-never removes an honest client outright. A defense-aware adversary does not
-change that picture, because the probe measures the same input region the
-backdoor must corrupt, so evading the probe and retaining the backdoor are
-mutually exclusive. The heterogeneity result bounds this
-honestly: cohort-relative suspicion becomes unreliable when honest clients
-legitimately disagree, and the robust-aggregation backstop is what preserves
-protection there.
+that the coordinator evaluates clients on evidence it generates itself, without
+knowing which probed feature carries the trigger (R2) or how many clients are
+compromised (R3), and that it names them (R4) at a $0.3\%$ honest false-flag
+rate that never removes a client outright.
 
-Three limitations remain. The first: the evaluation uses one single-receiver
-dataset as a proxy for a fleet, so a second signal domain is the strongest
-possible validation. The second: three seeds separate the attack effect from
-noise but cannot resolve sub-noise differences between neighboring defended
-variants, and we claim none.
-
-The third is the base detector itself, which is weak in absolute terms, and the
-cause is the federated configuration rather than the dataset. Trained centrally
-on the pooled data the same $3{,}329$-parameter architecture reaches $0.907$
-spoofing recall against $0.529$ federated, a deeper network reaches $0.974$, and
-histogram gradient boosting reaches $0.993$; only logistic regression, at
-$0.224$, falls below the federated baseline. Twelve rounds of three local
-epochs across ten clients therefore leaves real headroom, and a longer schedule
-or a larger model would recover much of it. That headroom does not distort what
-we measure: lift is paired within seed against an honest run of the identical
-configuration, so it isolates the attacker's contribution wherever the baseline
-sits, and the trigger is hard for strong models too, with the centrally trained
-paper model still calling $37.8\%$ of trigger-bearing samples authentic. We
-claim removal of attacker-induced lift, not operational detection reliability.
-Replacing the cohort-relative statistic in Eq.~\eqref{eq:susp} with a
-per-client normalization is the clearest next step, and the failure case in
-Fig.~\ref{fig:noniid} is the test it must pass.
-
-\section*{Artifact Availability}
-All experiments run through one shared harness; every table and figure is
-produced by a script that exports its values to CSV, and a single command
-reproduces them. Runs are deterministic given the fixed data seed. The dataset
-is publicly available~\cite{aissou2022dataset}.
+Three limitations remain. The evaluation uses one single-receiver dataset as a
+proxy for a fleet, so a second signal domain is the strongest possible
+validation. Three seeds cannot resolve sub-noise differences between
+neighboring defended variants, and we claim none. Finally the base detector is
+weak in absolute terms, and the cause is the federated configuration rather
+than the dataset: trained centrally the same architecture reaches $0.907$
+spoofing recall against $0.529$ federated. That headroom does not distort what
+we measure, since lift is paired within seed against an honest run of the
+identical configuration, and the trigger is hard for strong models too, the
+centrally trained model still calling $37.8\%$ of trigger-bearing samples
+authentic. We claim removal of attacker-induced lift, not operational detection
+reliability. Replacing the cohort-relative statistic of Eq.~\eqref{eq:susp}
+with a per-client normalization is the clearest next step, and
+Fig.~\ref{fig:noniid} is the test it must pass. All experiments run through one
+shared harness that exports every reported value to CSV, and a single command
+reproduces them.
 
 \begin{thebibliography}{00}
 \bibitem{mekdad2023survey} Y. Mekdad \emph{et al.}, ``A survey on security and privacy issues of UAVs,'' \emph{Computer Networks}, vol.~224, 2023.
@@ -692,6 +698,9 @@ is publicly available~\cite{aissou2022dataset}.
 \bibitem{nguyen2024backdoor} T.~D. Nguyen \emph{et al.}, ``Backdoor attacks and defenses in federated learning: Survey, challenges and future research directions,'' \emph{Eng. Appl. Artif. Intell.}, vol.~127, 2024.
 \bibitem{mothukuri2021survey} V. Mothukuri \emph{et al.}, ``A survey on security and privacy of federated learning,'' \emph{Future Gener. Comput. Syst.}, vol.~115, pp.~619--640, 2021.
 \bibitem{aissou2022dataset} G. Aissou, ``A dataset for GPS spoofing detection on unmanned aerial system,'' Mendeley Data, V3, 2022, doi:10.17632/z7dj3yyzt8.3.
+\bibitem{yin2018byzantine} D. Yin, Y. Chen, K. Ramchandran, and P. Bartlett, ``Byzantine-robust distributed learning: Towards optimal statistical rates,'' in \emph{ICML}, 2018, pp.~5650--5659.
+\bibitem{kang2019incentive} J. Kang, Z. Xiong, D. Niyato, S. Xie, and J. Zhang, ``Incentive mechanism for reliable federated learning: A joint optimization approach to combining reputation and contract theory,'' \emph{IEEE Internet Things J.}, vol.~6, no.~6, pp.~10700--10714, 2019.
+\bibitem{kairouz2021advances} P. Kairouz \emph{et al.}, ``Advances and open problems in federated learning,'' \emph{Found. Trends Mach. Learn.}, vol.~14, no.~1--2, pp.~1--210, 2021.
 \end{thebibliography}
 
 \end{document}

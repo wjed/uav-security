@@ -189,7 +189,7 @@ def fig_fcount():
 
     # save() rescales to hit FULL exactly, so the nominal height here is set
     # low to land the finished figure near 2.5 in rather than close to 3.
-    fig, ax = plt.subplots(figsize=(FULL, 2.28))
+    fig, ax = plt.subplots(figsize=(FULL, 1.96))
     fig.subplots_adjust(left=0.068, right=0.845, bottom=0.175, top=0.955)
 
     ends = []
@@ -254,7 +254,7 @@ def fig_noniid():
         return [val(d[(d['Condition'] == c) & (d['Method'] == meth)].iloc[0][col])
                 for c in conds]
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(FULL, 2.98))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(FULL, 2.57))
     fig.subplots_adjust(left=0.062, right=0.936, bottom=0.215, top=0.845,
                         wspace=0.34)
 
@@ -348,7 +348,7 @@ def fig_trigger():
     und = [val(x) for x in d['Attack lift']]
     dfd = [val(x) for x in d['Defended lift']]
 
-    fig, ax = plt.subplots(figsize=(COL, 2.52))
+    fig, ax = plt.subplots(figsize=(COL, 2.28))
     fig.subplots_adjust(left=0.185, right=0.975, bottom=0.205, top=0.845)
 
     ylo, yhi = -0.148, 0.325

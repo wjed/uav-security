@@ -4,7 +4,7 @@ Generate 14_conference_results.ipynb: exactly the results reported in the
 conference paper, and nothing else.
 
 Deliberately narrower than the Week 12 notebook. The conference paper reports
-two tables and four figures; this notebook reproduces those and stops.
+one table and four figures; this notebook reproduces those and stops.
 Anything the paper only summarises in a sentence is left in the Week 12
 artifact rather than repeated here, which is the editorial rule the paper
 follows too.
@@ -31,7 +31,7 @@ md(r"""
 Group 1: Will Jedrzejczak, Cole Walther, Dilpreet Gill
 
 This notebook reproduces exactly the results reported in the paper:
-**Tables I and II** and **Figures 2, 3 and 4**. Every value is read from an
+**Table I** and **Figures 2, 3 and 4**. Every value is read from an
 exported CSV, so the notebook, the tables and the figures cannot disagree.
 
 Studies the paper only summarises in prose (hyperparameter sweep, cost scaling,
@@ -191,7 +191,7 @@ display(Markdown(
 
 md(r"""
 ---
-## Table II: per-client attribution
+## Per-client attribution (reported in prose, no table)
 
 12 rounds x 3 seeds = 36 client-rounds per client. A client counts as flagged in
 a round when its trust falls below half the uniform share of 0.100. This is the
