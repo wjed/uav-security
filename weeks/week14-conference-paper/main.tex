@@ -9,6 +9,14 @@
 \usepackage{cite}
 \usepackage{url}
 
+% stfloats lets a double-column float sit at the BOTTOM of a page. Without it
+% \begin{table*} and \begin{figure*} may only go at the top, so once one wide
+% float is deferred the rest queue behind it: an earlier build stranded Table I
+% and Fig. 2 on the references page and Figs. 3 and 4 on the page after. If it
+% ever misbehaves, delete this line and change the [!tb] on the three wide
+% floats back to [!t]; the paper still compiles, just less tidily.
+\usepackage{stfloats}
+
 % Three of the floats span both columns (Table I, Figs. 2 and 3). With the
 % stock fractions LaTeX refuses to place a wide float on a page that already
 % carries one and defers it, which is what strands figures at the end. These
@@ -447,6 +455,36 @@ on a batch of feature vectors. Algorithm~\ref{alg:round} states one round.
 \section{Experimental Setup}
 \label{sec:setup}
 
+\begin{table*}[!tb]
+\caption{Aggregation rules on one identical pipeline: same split, attack, seeds
+and metrics. Byzantine-robust rules are told the true $f{=}2$, an advantage
+Fig.~\ref{fig:fcount} withdraws.}
+\label{tab:main}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{7pt}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabular}{@{}l ccc c cc c@{}}
+\toprule
+ & \textbf{Clean} & \textbf{Spoofing} & & \textbf{Backdoor} & \textbf{Attacker} & \textbf{Honest} & \textbf{Server} \\
+\textbf{Aggregation Rule} & \textbf{Accuracy} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} & \textbf{Detection} & \textbf{False Flag} & \textbf{(ms/Round)} \\
+\midrule
+Honest FedAvg (No Attack) & $0.7112$ & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & $1.0$ \\
+\midrule
+FedAvg (Attacked) & $0.6932$ & $0.3641$ & $0.8782$ & $+0.2415 \pm 0.0048$ & --- & --- & $1.0$ \\
+Accuracy-Weighted FedAvg~\cite{chai2025navigation} & $0.6897$ & $0.3524$ & $0.9402$ & $+0.3036 \pm 0.0124$ & $0\%$ & $0.0\%$ & $1.3$ \\
+Coordinate-Wise Median & $0.7101$ & $0.5008$ & $0.7013$ & $+0.0646 \pm 0.0074$ & --- & --- & $0.9$ \\
+Trimmed Mean ($f{=}2$) & $0.7061$ & $0.4808$ & $0.7154$ & $+0.0787 \pm 0.0065$ & --- & --- & $1.4$ \\
+Krum ($f{=}2$)~\cite{blanchard2017machine} & $0.7071$ & $0.5168$ & $0.6698$ & $+0.0331 \pm 0.0035$ & $100\%$ & --- & $1.4$ \\
+Multi-Krum ($f{=}2$)~\cite{blanchard2017machine} & $0.7108$ & $0.5282$ & $0.6428$ & $+0.0061 \pm 0.0041$ & $100\%$ & --- & $1.4$ \\
+FLTrust~\cite{cao2021fltrust} & $0.6962$ & $0.4687$ & $0.7154$ & $+0.0787 \pm 0.0176$ & $84.7\%$ & $0.0\%$ & $204.4$ \\
+\midrule
+Behavioral Trust (Ours) & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039 \pm 0.0047$ & $100\%$ & $0.3\%$ & $38.0$ \\
+\;\;$+$ Coordinate-Wise Median (Full) & $\mathbf{0.7143}$ & $\mathbf{0.5560}$ & $\mathbf{0.6101}$ & $\mathbf{-0.0265 \pm 0.0174}$ & $\mathbf{100\%}$ & $\mathbf{0.3\%}$ & $38.6$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 No public dataset records genuine multi-UAV wireless traffic with labeled
 attacks, so we instantiate $\mathcal{D}_i$ from a software-defined-radio GPS
 spoofing collection~\cite{aissou2022dataset} partitioned into simulated
@@ -477,7 +515,30 @@ paired within seed.
 
 \section{Results}
 
+% Declared before the text that discusses it, on purpose. The first compiled
+% build put Table I at the top of a page and then had to defer Figs. 2 and 3
+% together onto the next one, which read as a wall of figures. Reading this
+% float earlier lets it share a page with Table I and leaves Fig. 3 its own.
+\begin{figure*}[!tb]
+\centering
+\includegraphics[width=\textwidth]{figures/fig2_fcount.png}
+\caption{Backdoor lift as the true number of compromised clients varies while
+the Byzantine-robust baselines stay configured for $f=2$ (dashed line). Error
+bars are one standard deviation over three seeds.}
+\label{fig:fcount}
+\end{figure*}
+
 \subsection{Attack Validity and Comparison with Existing Defenses}
+
+\begin{figure*}[!tb]
+\centering
+\includegraphics[width=\textwidth]{figures/fig3_noniid.png}
+\caption{Effect of client class-ratio skew. (a) Behavioral trust alone
+converges toward undefended FedAvg while the full defense tracks the median.
+(b) The cause, on twinned axes: attacker trust (right) climbs to the uniform
+share exactly as detection (left) collapses.}
+\label{fig:noniid}
+\end{figure*}
 
 Table~\ref{tab:main} reports every method on the identical split, attack, seeds
 and metrics. Four things follow.
@@ -499,50 +560,18 @@ contradicted by our own table. Krum ($+0.0331$) and trimmed mean ($+0.0787$)
 are weaker. What probing adds is attribution (Section~\ref{sec:attrib}) and the
 property examined next.
 
-\begin{table*}[!t]
-\caption{Aggregation rules on one identical pipeline: same split, attack, seeds
-and metrics. Byzantine-robust rules are told the true $f{=}2$, an advantage
-Fig.~\ref{fig:fcount} withdraws.}
-\label{tab:main}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{7pt}
-\renewcommand{\arraystretch}{1.22}
-\begin{tabular}{@{}l ccc c cc c@{}}
-\toprule
- & \textbf{Clean} & \textbf{Spoofing} & & \textbf{Backdoor} & \textbf{Attacker} & \textbf{Honest} & \textbf{Server} \\
-\textbf{Aggregation Rule} & \textbf{Accuracy} & \textbf{Recall} & \textbf{BSR} & \textbf{Lift} & \textbf{Detection} & \textbf{False Flag} & \textbf{(ms/Round)} \\
-\midrule
-Honest FedAvg (No Attack) & $0.7112$ & $0.5292$ & $0.6367$ & $+0.0000$ & --- & --- & $1.0$ \\
-\midrule
-FedAvg (Attacked) & $0.6932$ & $0.3641$ & $0.8782$ & $+0.2415 \pm 0.0048$ & --- & --- & $1.0$ \\
-Accuracy-Weighted FedAvg~\cite{chai2025navigation} & $0.6897$ & $0.3524$ & $0.9402$ & $+0.3036 \pm 0.0124$ & $0\%$ & $0.0\%$ & $1.3$ \\
-Coordinate-Wise Median & $0.7101$ & $0.5008$ & $0.7013$ & $+0.0646 \pm 0.0074$ & --- & --- & $0.9$ \\
-Trimmed Mean ($f{=}2$) & $0.7061$ & $0.4808$ & $0.7154$ & $+0.0787 \pm 0.0065$ & --- & --- & $1.4$ \\
-Krum ($f{=}2$)~\cite{blanchard2017machine} & $0.7071$ & $0.5168$ & $0.6698$ & $+0.0331 \pm 0.0035$ & $100\%$ & --- & $1.4$ \\
-Multi-Krum ($f{=}2$)~\cite{blanchard2017machine} & $0.7108$ & $0.5282$ & $0.6428$ & $+0.0061 \pm 0.0041$ & $100\%$ & --- & $1.4$ \\
-FLTrust~\cite{cao2021fltrust} & $0.6962$ & $0.4687$ & $0.7154$ & $+0.0787 \pm 0.0176$ & $84.7\%$ & $0.0\%$ & $204.4$ \\
-\midrule
-Behavioral Trust (Ours) & $0.7112$ & $0.5307$ & $0.6406$ & $+0.0039 \pm 0.0047$ & $100\%$ & $0.3\%$ & $38.0$ \\
-\;\;$+$ Coordinate-Wise Median (Full) & $\mathbf{0.7143}$ & $\mathbf{0.5560}$ & $\mathbf{0.6101}$ & $\mathbf{-0.0265 \pm 0.0174}$ & $\mathbf{100\%}$ & $\mathbf{0.3\%}$ & $38.6$ \\
-\bottomrule
-\end{tabular}
-\end{table*}
 
-% Declared before the text that discusses it, on purpose. The first compiled
-% build put Table I at the top of a page and then had to defer Figs. 2 and 3
-% together onto the next one, which read as a wall of figures. Reading this
-% float earlier lets it share a page with Table I and leaves Fig. 3 its own.
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig2_fcount.png}
-\caption{Backdoor lift as the true number of compromised clients varies while
-the Byzantine-robust baselines stay configured for $f=2$ (dashed line). Error
-bars are one standard deviation over three seeds.}
-\label{fig:fcount}
-\end{figure*}
 
 \subsection{Unknown Number of Compromised Clients}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig4_trigger.png}
+\caption{Backdoor lift before and after the defense for four trigger settings
+under one fixed configuration, never retuned. The shaded band is lift at or
+below an honest fleet.}
+\label{fig:trigger}
+\end{figure}
 
 Table~\ref{tab:main} grants the Byzantine-robust rules an advantage a
 deployment cannot: they are told $f$. Fig.~\ref{fig:fcount} varies the true
@@ -585,15 +614,6 @@ confirming the limitation is the cohort-relative scaling rather than the
 threshold. Per-client normalization is the natural remedy, and the median
 backstop is retained because it is what survives when the probe does not.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{figures/fig3_noniid.png}
-\caption{Effect of client class-ratio skew. (a) Behavioral trust alone
-converges toward undefended FedAvg while the full defense tracks the median.
-(b) The cause, on twinned axes: attacker trust (right) climbs to the uniform
-share exactly as detection (left) collapses.}
-\label{fig:noniid}
-\end{figure*}
 
 \subsection{Trigger Generalization}
 
@@ -608,14 +628,6 @@ the claim accordingly: no prior knowledge is needed of which \emph{probed}
 feature carries the trigger, and the two features outside $F_{\mathrm{probe}}$
 carry too little class separation for a trigger hidden there to be useful.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{figures/fig4_trigger.png}
-\caption{Backdoor lift before and after the defense for four trigger settings
-under one fixed configuration, never retuned. The shaded band is lift at or
-below an honest fleet.}
-\label{fig:trigger}
-\end{figure}
 
 \subsection{Per-Client Attribution}
 \label{sec:attrib}
