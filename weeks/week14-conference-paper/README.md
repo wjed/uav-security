@@ -1,9 +1,9 @@
-# Week 14: IEEE Conference Paper (6-7 pages)
+# Week 14: Final Six-Page IEEE Conference Paper
 
 **Group 1 (Will Jedrzejczak, Cole Walther, Dilpreet Gill).**
 
 The full manuscript rebuilt as a conference submission: **15 pages and 12 tables/figures becomes
-~7 pages, 2 tables and 4 figures.** This was a rebuild around one research story, not a
+**six pages, 1 table and 4 figures.** This was a rebuild around one research story, not a
 compression; nothing was shrunk to fit.
 
 **Paper title changed** to lead with the mechanism rather than the property:
@@ -15,7 +15,7 @@ compression; nothing was shrunk to fit.
 |---|---|
 | Conference paper | `main.tex` (compile in Overleaf; IEEEtran `conference`) |
 | Revision note | `week14_revision_note.pdf` |
-| Figures | `figures/fig2..4_*.png` (600 dpi). Figs. 2-3 span both columns, Fig. 4 is one column. Fig. 1 is your own diagram, in Overleaf |
+| Figures | `figures/fig1..4_*.png` (600 dpi). Fig. 3 spans both columns; Figs. 1, 2 and 4 are one column. All four are written at exactly the width they are placed at |
 | Code / notebook | `14_conference_results.ipynb` + the scripts below |
 | Individual contribution statement | **Not written.** Every commit in this repo is under one name, so authorship cannot be reconstructed from history. The three of you need to write it. |
 

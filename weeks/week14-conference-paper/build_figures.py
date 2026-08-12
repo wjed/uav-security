@@ -35,6 +35,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from PIL import Image
 
 HERE = Path(__file__).resolve().parent
@@ -171,6 +172,87 @@ def spread(ys, gap):
         if out[prev] - out[i] < gap:
             out[i] = out[prev] - gap
     return out
+
+
+# =====================================================================
+# Fig 1: system and threat model                      (one column wide)
+# =====================================================================
+def fig_system():
+    """Redrawn to match the paper's notation and the other figures' type.
+
+    Every symbol here appears in Eqs. (1)-(7): omega for weights, f_i for the
+    local loss, D_i for a client's data, lambda for the aggregation weight,
+    gamma for the model-replacement scale, and S_f for a probe slice.
+    """
+    fig, ax = plt.subplots(figsize=(COL, 2.34))
+    fig.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99)
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.axis('off'); ax.grid(False)
+
+    def box(x0, y0, x1, y1, ec, lw=0.9, fc='none', ls='-'):
+        ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fill=fc != 'none',
+                               facecolor=fc, edgecolor=ec, linewidth=lw,
+                               linestyle=ls, zorder=2))
+
+    # ---- coordinator -------------------------------------------------
+    box(0.03, 0.70, 0.97, 0.99, C_INK, 1.0, '#F4F6F8')
+    ax.text(0.5, 0.945, 'Coordinator', ha='center', va='center',
+            fontsize=8.8, fontweight='bold', color=C_INK, zorder=3)
+    ax.text(0.5, 0.855, r'root set $\mathcal{D}_r$   probes $\{\mathcal{S}_f\}$'
+                        '\n'
+            r'trust $t_i$ (6)   median aggregation (7)',
+            ha='center', va='center', fontsize=7.6, color=C_INK,
+            linespacing=1.5, zorder=3)
+    ax.text(0.5, 0.735, r'never reads $\mathrm{Acc}_i$', ha='center',
+            va='center', fontsize=7.4, color=C_OURS, zorder=3)
+
+    # ---- clients -----------------------------------------------------
+    hon = [(0.03, 0.28, r'$U_1$', r'$\mathcal{D}_1$'),
+           (0.36, 0.61, r'$U_{N-M}$', r'$\mathcal{D}_{N-M}$')]
+    for x0, x1, name, data in hon:
+        box(x0, 0.10, x1, 0.36, C_INK, 0.9, 'white')
+        ax.text((x0 + x1) / 2, 0.315, name, ha='center', va='center',
+                fontsize=8.4, color=C_INK, zorder=3)
+        ax.text((x0 + x1) / 2, 0.225, data, ha='center', va='center',
+                fontsize=7.8, color=C_INK, zorder=3)
+        ax.text((x0 + x1) / 2, 0.145, r'$-\eta\nabla f_i$ (1)', ha='center',
+                va='center', fontsize=7.0, color='#555555', zorder=3)
+    ax.text(0.325, 0.23, r'$\cdots$', ha='center', va='center', fontsize=9,
+            color=C_INK, zorder=3)
+
+    box(0.69, 0.10, 0.97, 0.36, C_ATK, 1.1, '#FDF3F3')
+    ax.text(0.83, 0.315, r'$U_m$  (compromised)', ha='center', va='center',
+            fontsize=8.0, color=C_ATK, fontweight='bold', zorder=3)
+    ax.text(0.83, 0.232, r'A1 poison $f^\star\!\to\! v_{f^\star}$',
+            ha='center', va='center', fontsize=7.0, color=C_ATK, zorder=3)
+    ax.text(0.83, 0.162, r'A2 scale by $\gamma$ (3)', ha='center',
+            va='center', fontsize=7.0, color=C_ATK, zorder=3)
+
+    # ---- uplinks -----------------------------------------------------
+    ax.annotate('', xy=(0.155, 0.695), xytext=(0.155, 0.365),
+                arrowprops=dict(arrowstyle='-|>', color=C_INK, lw=0.9,
+                                shrinkA=0, shrinkB=0, mutation_scale=7))
+    ax.text(0.175, 0.53, r'$\omega_i,\lambda_i$', ha='left', va='center',
+            fontsize=7.4, color=C_INK)
+
+    ax.annotate('', xy=(0.83, 0.695), xytext=(0.83, 0.365),
+                arrowprops=dict(arrowstyle='-|>', color=C_ATK, lw=1.1,
+                                shrinkA=0, shrinkB=0, mutation_scale=7))
+    ax.text(0.815, 0.545, r'A3 $\widehat{\mathrm{Acc}}_m\!\gg\!\mathrm{Acc}_m$',
+            ha='right', va='center', fontsize=7.0, color=C_ATK)
+    ax.text(0.815, 0.445, r'$\Rightarrow\lambda_m\!\to\!\max$ (2)',
+            ha='right', va='center', fontsize=7.0, color=C_ATK)
+
+    # ---- broadcast ---------------------------------------------------
+    ax.annotate('', xy=(0.485, 0.365), xytext=(0.485, 0.695),
+                arrowprops=dict(arrowstyle='-|>', color='#777777', lw=0.9,
+                                linestyle=(0, (3, 2)), shrinkA=0, shrinkB=0,
+                                mutation_scale=7))
+    ax.text(0.505, 0.53, r'$\omega(t{+}1)$', ha='left', va='center',
+            fontsize=7.4, color='#555555')
+
+    save(fig, 'fig1_system.png', COL)
+    plt.close(fig)
 
 
 # =====================================================================
@@ -372,5 +454,5 @@ def fig_trigger():
 
 
 if __name__ == '__main__':
-    fig_fcount(); fig_noniid(); fig_trigger()
-    print(f'\nwrote 3 figures to {FIG}')
+    fig_system(); fig_fcount(); fig_noniid(); fig_trigger()
+    print(f'\nwrote 4 figures to {FIG}')

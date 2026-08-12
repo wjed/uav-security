@@ -1,209 +1,87 @@
-# Revision Note: Full Manuscript to IEEE Conference Paper
+# Revision Note: Final Six-Page Version
 
 **Paper:** Receiver-Domain Behavioral Probing for Backdoor-Resilient Federated GPS Spoofing
 Detection in UAV Networks
-**Group 1:** Will Jedrzejczak, Cole Walther, Dilpreet Gill
+**Authors:** Will Jedrzejczak, Cole Walther, Dilpreet Gill, Khalid Hasan
 
-This was a rebuild around one story, not a compression. Nothing was shrunk to fit; sections were
-removed, merged or rewritten based on whether they advance the argument a reviewer has to be
-convinced by.
-
-**Result:** 15 pages, 12 tables/figures, 25 subsections becomes ~7 pages, 1 table and 4 figures,
-15 references. The title changed to lead with the mechanism rather than the property, since the
-mechanism is the contribution; "in UAV Networks" was kept, since UAV is a topical keyword that
-affects how a communications symposium routes the paper.
+Seven pages to six, by selection rather than compression. Margins, font sizes and reference
+formatting are unchanged.
 
 ---
 
-## The story the paper now tells
+## 1. Technical corrections
 
-Self-reported performance is an exploitable attack lever in federated UAV spoofing detection. We
-propose receiver-domain behavioral probing, which lets the coordinator judge client models on
-evidence it generates itself. Four result elements carry the whole argument, in order:
+**Chai et al. [4] verified against the source.** Their Section IV specifies that each client
+computes its accuracy **on its own local validation set**, forms the normalized weight
+$\lambda_n$ itself, and transmits $\lambda_n$ to the server, which applies it with no verification
+step. Their Eqs. (18), (19) and (20) are our Eq. (1), $\lambda_i$ and Eq. (2). Section II-A now
+states this and cites their equation numbers. The attack motivation is confirmed. One caveat worth
+knowing: their abstract says "standardized validation set," which reads as a shared set and
+contradicts their own Section IV; we follow Section IV, the concrete specification.
 
-**attack validity → competitive comparison → key differentiator → limitation and generalization**
+**Trigger wording.** "In-distribution" is gone. The paper now says the modified feature lies within
+its own benign marginal range, and adds explicitly that we do not claim the row is jointly
+in-distribution, since a sufficiently powerful joint density model could still separate it.
 
-Everything that did not serve that chain was cut.
+**Probe explanation corrected.** The paper no longer implies an honest model labels every probe row
+spoofed. It states that recall on a slice is well below one even for honest clients, and that the
+mechanism reads a feature-specific recall deficit *relative to the cohort*.
 
----
+**Adaptive attacker softened.** Reported as a tradeoff for the evasion objective actually tested,
+with an explicit statement that we do not claim it holds for every defense-aware adversary and that
+formulations targeting the cohort statistics are untested.
 
-## Retained, and why
+**Attacker count.** "No exact attacker count, assuming an honest majority" in the abstract,
+introduction, requirement R3, results and conclusion.
 
-| Element | Why it stays |
-|---|---|
-| **Table I** (10-row comparison, full width) | Proves the attack works, inflation makes it worse, median and FLTrust leave residual lift, Multi-Krum is competitive, and ours attributes per client |
-| **Fig. 2** (unknown attacker count) | The strongest differentiator: existing rules need f, we do not |
-| **Fig. 3** (heterogeneity) | The honest boundary, and the empirical justification for keeping the median backstop |
-| **Fig. 4** (trigger generalization) | Supports the scoped claim that the trigger feature need not be known |
-| **Fig. 1** (system/threat model) | The authors' own diagram, showing the three attack steps and the inflated weight path |
-| **Algorithm 1** | Shortened from 20 lines to 11; the method is the technical center |
+**Krum terminology separated.** Table I marks Krum and Multi-Krum with a dagger defined as
+*exclusion from the selected set*; every other entry is *client flagging*. Section II-C defines both
+and states they are not interchangeable.
 
-## Removed from the main paper
+**One overhead figure.** 38.6 ms from Table I, used everywhere. The separate 34.0 ms timing run and
+the percentages derived from it are removed.
 
-All of this remains in the repository artifact and is summarized in one or two sentences where it
-matters.
+**Weak detector.** Paired lift controls for baseline performance within the evaluated
+configuration; transfer to a better-converged detector is future work. The causal claim that the
+weakness comes from the federated configuration is **withdrawn**, since the numbers supporting it
+were cut.
 
-- **Positioning table against related work** -- replaced by two compact paragraphs, per instruction
-- **Layer-ablation table** -- subsumed by Table I, which contains the same conditions
-- **Hyperparameter sweep** table and figure -- two sentences in §V-G
-- **Trust-degradation table** -- one clause; its decisive case is now Fig. 3
-- **Centralized detector-ceiling table** -- one paragraph in the Discussion limitations, keeping
-  the five numbers that matter (0.907 centralised vs 0.529 federated, 0.974 deeper, 0.993 boosted,
-  0.224 logistic) and the argument that lift is unaffected by where the baseline sits
-- **Cost scaling plots** and the two-denominator table -- two sentences in §V-G
-- **Adaptive-attacker table and figure** -- the sweep is reported in prose in §V-E, with all eight cited values checked against the CSV
-- **Feature-separability table** (10 rows) -- replaced by two sentences giving the range (*d* =
-  0.306 down to 0.152 probed, 0.018 and 0.001 excluded)
-- **False-positive breakdown table** -- folded into the honest-false-flag column of Table I and the
-  per-client rows of Table II
-- **Failed Dirichlet experiment** -- cut entirely; the working partition is described in one sentence
-- **Preprocessing table** and per-step row counts -- reduced to two sentences
-- **Round-progression, sensitivity and FLTrust-only figures** -- the tables carry the same numbers
+**Overclaim sweep.** The compiled text was searched for absolute claims (*guarantee, prove,
+eliminate, always, never, cannot, ensures, every defense*). All remaining instances are factual
+statements about the protocol or setup; the two "every defense" occurrences are disclaimers.
 
-## Rewritten rather than trimmed
+## 2. Cuts to six pages
 
-- **Abstract**: 340 → 192 words. Problem, attack, idea, one attack number, one defense number, one
-  differentiator, one scope sentence. Multi-Krum stays because it frames the differentiator; the
-  adaptive attacker, cost, trigger sweep and false-positive rate are all out.
-- **Introduction**: ~1,900 → 617 words. Related work compressed from four paragraphs of per-paper
-  summary into one gap paragraph and one FLTrust-positioning paragraph. Contributions cut from five
-  bullets to three.
-- **System and threat model**: the three attack steps are now labeled A1–A3 and expressed with
-  symbols, with one equation each where it earns one.
-- **Results**: reorganised so each subsection maps to exactly one element. §V-A to §V-D carry the
-  four elements above; §V-E to §V-G restore the adaptive attacker, per-client attribution and
-  root-set stress as full subsections rather than the single compressed paragraph they had been
-  reduced to.
-- **Discussion and Conclusion**: merged into one section.
+| Section | Before | After |
+|---|---|---|
+| Experimental setup | preprocessing commentary | parameters only |
+| Per-client attribution | one subsection | three sentences |
+| Adaptive attacker, root set, parameters, cost | four paragraphs | one paragraph |
+| Discussion and Conclusion | 3 paragraphs | **Conclusion**, 178 words |
 
-## Presentation pass
+No figure or table was removed. Fig. 2 was redrawn at one column keeping all five series.
+Fig. 1 was **regenerated** rather than shrunk: the previous diagram set its labels smaller than the
+8 pt caption beneath it and wrote $w$ and $\mathcal{L}$ where the equations use $\omega$ and $f$.
+The replacement is produced by `build_figures.py` at the same type size as Figs. 2-4 and takes its
+notation from Eqs. (1)-(7).
 
-- Every table and figure label is in Title Case, and the cryptic column heads of the first draft
-  ("Recall / BSR / Lift / Detect / ms/rd") became two-line headers that name the quantity
-  ("Spoofing Recall", "Backdoor Lift", "Attacker Detection", "Server (ms/Round)").
-- Table I moved to a full-width `table*`. It now carries clean accuracy, the standard deviation on
-  lift, the honest false-flag rate, and the two rules that had been relegated to a sentence (Krum
-  and trimmed mean), so nothing in it is "omitted for space" any more.
-- The figures were rebuilt from scratch rather than patched; see **Figures** below.
-- Every value in Tables I and II, and every adaptive-attacker value cited in prose, is checked
-  against its exported CSV by a script, so a hand-typed number cannot drift from the run that
-  produced it.
+## 3. Writing style
 
-## Where we departed from the brief, and why
+One pass over the whole manuscript. Removed "The message is not that...", "Read from the inside
+out...", "Why two layers.", "This is the lever the paper is about." and "We are deliberate about
+scope.", together with the surrounding tutorial framing.
 
-One departure remains, flagged here rather than left to be noticed. The brief suggests 1.3-1.6
-pages for setup plus results plus discussion; after the Sunday-review compression we are at 2.89.
-The four core result elements plus Table I account for 1.45 pages of that on their own, so the
-prose around them is roughly 1.4 pages. Cutting further would mean dropping one of the four
-elements.
+## 4. Consistency and reproducibility
 
-## Second advisor review (Sunday meeting)
+- Every number in Table I and in the running prose is checked against its exported CSV by script.
+- Attack parameters, seeds and defense settings appear once, in Section IV.
+- 15 references, all cited, markers [1]-[15] contiguous.
+- All four figures are written at exactly the width they are placed at, so LaTeX applies no
+  rescaling and the point sizes in the source are the ones that print.
+- `14_conference_results.ipynb` executes end to end with no errors and reproduces Table I and
+  Figs. 2-4 from the exported CSVs; `build_figures.py` regenerates all four figures.
+- Abstract, contributions, results and conclusion carry the same scoped claims.
 
-Four comments, all acted on.
-
-- **Author block reformatted** to match the reference ICC paper: names, one shared affiliation, then
-  emails, with no superscript markers. Dr. Hasan added as an author.
-- **System and threat model enlarged** from 0.78 to 1.29 pages. Added the round protocol and what
-  the coordinator can and cannot observe, the motivation for accuracy weighting so the attacked
-  design is treated fairly, a formal capability and knowledge model for the adversary, its
-  objective as a constrained maximization, and the reasoning behind each of A1, A2 and A3
-  (including that gamma = 3 is well below the full-replacement value of N).
-- **Methodology enlarged** from 0.81 to 1.58 pages, and given a spine. A new *Design Requirements*
-  subsection states the four constraints R1-R4 that any replacement for Eq. (2) has to satisfy, and
-  the rest of the section is organised as meeting them; R2, R3 and R4 are then referenced by the
-  results that test them. Probe construction now justifies its three design choices individually,
-  the suspicion equation names the alternative each element rejects, and a *Composition, Cost and
-  Scope* subsection covers why two layers, why A3 is structurally inert, and the per-round cost.
-- **Results cut** from 4.20 to 2.89 pages. The adaptive-attacker and per-client-attribution tables
-  are gone (both restated their own prose), captions were tightened, and every results subsection
-  was compressed. The four core result elements are untouched.
-- **More references for the self-report framing**, so the problem does not rest on one paper:
-  Yin *et al.* for coordinate-wise median and trimmed mean, which we had been using uncited, plus
-  Kang *et al.* and Kairouz *et al.* for the wider reputation- and contribution-weighted family.
-  12 references becomes 15, inside the 12-15 the brief asks for.
-
-## What the first compile changed
-
-Three things were only visible once the paper was actually typeset, and all three are fixed:
-
-- **Fig. 1 was being shrunk.** A `height=2.0in` cap had been added as a guard against an
-  unknown-aspect diagram. The diagram turned out to be 1.36:1, so the cap bound first and rendered
-  it 2.72 in wide inside a 3.5 in column, leaving it adrift in white space with unreadable labels.
-  The cap is gone; it now fills the column at 3.49 x 2.57 in.
-- **The table captions became walls of small caps.** IEEEtran sets table captions in small caps, so
-  the long explanatory captions turned into 4, 8 and 5 line blocks -- Table II's caption was taller
-  than Table II. All three are cut to two lines, and the definition of the detection and
-  false-flag columns moved to Section II-C, where the other metrics are defined and where it
-  belongs anyway.
-- **Figs. 2 and 3 were deferred onto one page together.** Table I took the wide-float slot on its
-  page, and both figures landed on the next one stacked back to back. Fig. 2 is now declared
-  immediately after Table I so it can share that page, leaving Fig. 3 its own.
-
-Everything else held up: 7 pages, no overfull boxes, no float page, figures placed at scale 0.997.
-
-## References
-
-12, down from 12 -- the count was already in range, but two were re-verified against source during
-the previous revision and the dataset citation was corrected to the Mendeley *Unmanned Aerial
-System* release (`10.17632/z7dj3yyzt8.3`), which matches the data actually used. The bibliography
-is now inline (`thebibliography`) rather than BibTeX, so the paper compiles in one pass with no
-`.bbl` step.
-
-## Figures
-
-Figures 2 to 4 rebuilt at publication quality and exported as **600 dpi PNG**, twice the 300 dpi
-IEEE asks for line art. The first draft put all three at one column width, which crushed five
-overlapping series into 3.4 in and stacked Fig. 3's two panels vertically. The rebuild:
-
-- **Figs. 2 and 3 span the full text width.** They carry the two arguments a reviewer has to be
-  convinced by, and they were the two that looked cramped. Fig. 3's panels now sit side by side.
-- **Fig. 2 labels its five lines directly at the right** instead of carrying a legend. A legend
-  with five entries is a second lookup for the reader and was eating a third of the plot height.
-  Labels that would collide are pushed apart automatically and keep a leader line to their curve.
-- **Fig. 3(b) uses twinned axes**: attacker detection on the left, attacker trust on the right,
-  with the uniform share of 0.100 drawn in. The point of the panel is that one collapses exactly
-  as the other rises, and that is now one picture rather than two numbers in a caption.
-- **Fig. 4** marks the region at or below an honest fleet, so "defended lift is negative" is
-  visible rather than something the reader has to work out from the axis.
-- Nothing is set below 8 pt, grids are horizontal only and stop before the label gutter, markers
-  carry a white edge so overlapping points stay separable, and legend handles are proxies without
-  the error-bar caps that `errorbar()` puts in by default.
-- **Each PNG is written at exactly the width it is placed at**, so LaTeX never rescales it. This
-  was a real bug: `bbox_inches='tight'` crops the unused margin, so the files came out 6.01, 7.18
-  and 3.21 in wide and were then stretched to `\textwidth`/`\columnwidth` by 1.19x, 1.00x and
-  1.09x. The same 9.4 pt axis label was therefore reaching the page at 11.2, 9.4 and 10.2 pt in
-  the three figures, and Fig. 2's was larger than the 10 pt body text. `save()` now measures the
-  crop and re-saves until the width is exact.
-- Table column gutters were opened up (`tabcolsep` 4 to 7 pt on Table I) after measuring each
-  table's natural width in Times at 8 pt: Table I needs 475 pt of the 516 pt available, so the
-  columns had no reason to be tight.
-- Consistent colour role across figures: red = attack/undefended, green = proposed, purple =
-  Multi-Krum and (in Fig. 3b) attacker trust, blue = FLTrust, grey = median. No colour means two
-  different things inside one figure.
-
-Figure 1 is the authors' own diagram rather than a generated one. It shows the three attack steps
-and, importantly, the path by which the inflated self-reported accuracy drives the aggregation
-weight toward its maximum, which is the specific vulnerability the paper targets.
-
-## One thing we did not do
-
-The paper does **not** claim the proposed method dominates every baseline, because our own Table I
-would contradict it. Multi-Krum is statistically indistinguishable from behavioral trust alone
-under the nominal IID setting and costs far less server time. That result is stated plainly in the
-abstract, in §V-A and in the Conclusion, and is then used to motivate the two properties that do
-distinguish the method: no attacker-count parameter, and per-client attribution.
-
-## Deliverables in this folder
-
-| File | What it is |
-|---|---|
-| `main.tex` | The paper, IEEEtran `conference` class, inline bibliography |
-| `figures/fig2..4_*.png` | Figs. 2-4 at 600 dpi. Figs. 2-3 are full text width, Fig. 4 one column; Fig. 1 is supplied by the authors |
-| `build_figures.py` | Regenerates Figs. 2-4 from the CSVs |
-| `14_conference_results.ipynb` | Executed notebook reproducing Tables I–III and Figs. 2–4 |
-| `fl_common.py`, `fl_runner.py` | The shared harness (split, model, attack, 9 aggregation rules, metrics) |
-| `exp_*.py`, `run_all.py` | The experiments behind the reported results |
-| `results/*.csv` | Every reported value, exported |
-
-Reproduce with `python run_all.py baselines attackers noniid` then `python build_figures.py`, or
-set `RUN_EXPERIMENTS = True` in the notebook.
+**Not done:** the optional rerun of the core benchmark with a better-converged federated detector.
+**To verify before submission:** the bibliographic details (volume and page ranges) of the three
+references added this round, [8] Yin et al., [14] Kang et al. and [15] Kairouz et al.
