@@ -184,58 +184,43 @@ def fig_fcount():
         ('Multi-Krum ($f{=}2$)', 'Multi-Krum (f=2)', C_MK, '--', 's'),
         ('Coordinate-Wise Median', 'Coordinate-wise median', C_MED, (0, (5, 2)), 'v'),
         ('FLTrust', 'FLTrust', C_FLT, '-.', 'D'),
-        ('Proposed (No $f$)', 'Trust + median (ours)', C_OURS, '-', 'o'),
+        ('Proposed (No Fixed $f$)', 'Trust + median (ours)', C_OURS, '-', 'o'),
     ]
 
-    # save() rescales to hit FULL exactly, so the nominal height here is set
-    # low to land the finished figure near 2.5 in rather than close to 3.
-    fig, ax = plt.subplots(figsize=(FULL, 1.96))
-    fig.subplots_adjust(left=0.068, right=0.845, bottom=0.175, top=0.955)
+    fig, ax = plt.subplots(figsize=(COL, 2.62))
+    fig.subplots_adjust(left=0.155, right=0.985, bottom=0.155, top=0.795)
 
-    ends = []
+    handles, labels = [], []
     for lab, key, c, ls, mk in series:
         s = d[d['Method'] == key]
         m = [val(x)[0] for x in s['Backdoor Lift']]
         e = [val(x)[1] for x in s['Backdoor Lift']]
         ours = 'Proposed' in lab
         ax.errorbar(counts, m, yerr=e, color=c, linestyle=ls, marker=mk,
-                    lw=2.1 if ours else 1.35,
-                    markersize=5.2 if ours else 4.2,
+                    lw=1.9 if ours else 1.2,
+                    markersize=4.4 if ours else 3.6,
                     alpha=1.0 if ours else 0.9,
                     zorder=6 if ours else 3, **EBAR, **MEK)
-        ends.append((lab, c, m[-1]))
+        handles.append(proxy(c, mk, ls, 1.9 if ours else 1.2,
+                             4.4 if ours else 3.6))
+        labels.append(lab)
 
-    # direct labels, in place of a legend
-    ylo, yhi = -0.085, 0.335
-    xlo, xhi, gutter = 0.80, 5.72, 4.20
-    ypos = spread([e[2] for e in ends], 0.031)
-    for (lab, c, y), yl in zip(ends, ypos):
-        ax.plot([4.04, gutter], [y, yl], color=c, lw=0.7, alpha=0.85,
-                solid_capstyle='round', zorder=2)
-        ax.text(gutter + 0.06, yl, lab, color=c, va='center', ha='left',
-                fontsize=8.6)
-
-    # every horizontal rule stops at the gutter, so nothing runs under a label
-    ax.plot([xlo, gutter], [0, 0], color=C_INK, lw=0.9, zorder=2,
-            solid_capstyle='butt')
+    ax.axhline(0, color=C_INK, lw=0.9, zorder=2)
     ax.axvline(2, color='#C4C4C4', lw=0.9, linestyle=(0, (2, 2)), zorder=1)
-    ax.annotate('Baselines assume $f{=}2$',
-                xy=(1.94, -0.078), fontsize=8.2, color=C_MUTE,
-                ha='right', va='bottom')
+    ax.annotate('Baselines fixed at $f{=}2$', xy=(2.08, -0.075), fontsize=7.0,
+                color=C_MUTE, ha='left', va='bottom')
 
     ax.set_xticks(counts)
-    ax.set_xlim(xlo, xhi)
-    ax.set_ylim(ylo, yhi)
+    ax.set_xlim(0.82, 4.18)
+    ax.set_ylim(-0.085, 0.335)
     ax.set_yticks([0.0, 0.1, 0.2, 0.3])
-    ax.set_xlabel('True Number of Compromised Clients (of $N{=}10$)')
+    ax.set_xlabel('True Compromised Clients (of $N{=}10$)')
     ax.set_ylabel('Backdoor Lift')
-    ax.spines['bottom'].set_bounds(xlo, gutter)
-    ax.spines['left'].set_bounds(ylo, yhi)
-    stop = (gutter - xlo) / (xhi - xlo)
-    for gl in ax.get_ygridlines():
-        gl.set_xdata([0.0, stop])
+    ax.legend(handles, labels, ncol=2, loc='lower center',
+              bbox_to_anchor=(0.46, 1.005), fontsize=6.9, columnspacing=0.9,
+              handlelength=1.9, handletextpad=0.4, labelspacing=0.32)
 
-    save(fig, 'fig2_fcount.png', FULL)
+    save(fig, 'fig2_fcount.png', COL)
     plt.close(fig)
 
 
